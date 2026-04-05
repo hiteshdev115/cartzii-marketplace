@@ -1,26 +1,104 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@theme {
+  --color-primary: #c2410c;
+  --color-primary-light: #ea580c;
+  --color-primary-dark: #9a3412;
+  --color-secondary: #1e293b;
+  --color-accent: #f59e0b;
+  --color-surface: #ffffff;
+  --color-surface-secondary: #f8fafc;
+  --color-border: #e2e8f0;
+  --color-success: #16a34a;
+  --color-warning: #d97706;
+  --color-error: #dc2626;
+  --color-info: #2563eb;
+
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+/* Focus management */
+*:focus-visible {
+  @apply outline-2 outline-offset-2 outline-primary;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+/* Skip link */
+.skip-link {
+  @apply sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[100] focus:bg-white focus:px-4 focus:py-2 focus:rounded-lg focus:shadow-lg focus:text-primary focus:font-semibold;
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* Button variants */
+.btn-primary {
+  @apply bg-primary text-white px-6 py-3 rounded-xl hover:bg-primary-dark transition-all font-semibold text-sm focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 active:scale-[0.98] cursor-pointer;
+}
+.btn-secondary {
+  @apply bg-slate-100 text-slate-800 px-6 py-3 rounded-xl hover:bg-slate-200 transition-all font-semibold text-sm focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2 cursor-pointer;
+}
+.btn-outline {
+  @apply border-2 border-primary text-primary px-6 py-3 rounded-xl hover:bg-primary hover:text-white transition-all font-semibold text-sm focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 cursor-pointer;
+}
+.btn-ghost {
+  @apply text-slate-600 px-4 py-2 rounded-lg hover:bg-slate-100 transition-all text-sm focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2 cursor-pointer;
+}
+
+/* Cards */
+.card {
+  @apply bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden transition-shadow hover:shadow-md;
+}
+.card-interactive {
+  @apply bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:-translate-y-1 hover:shadow-lg transition-all duration-300;
+}
+
+/* Badges */
+.badge-sale {
+  @apply bg-red-600 text-white px-2.5 py-0.5 rounded-full text-xs font-bold;
+}
+.badge-new {
+  @apply bg-primary text-white px-2.5 py-0.5 rounded-full text-xs font-bold;
+}
+.badge-stock {
+  @apply bg-green-100 text-green-800 px-2.5 py-1 rounded-full text-xs font-bold;
+}
+
+/* Form inputs */
+.input {
+  @apply w-full px-4 py-3 border border-gray-300 rounded-xl text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all text-sm;
+}
+.label {
+  @apply block text-sm font-semibold text-slate-800 mb-1.5;
+}
+.error-text {
+  @apply text-red-700 text-sm mt-1 font-medium;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+html {
+  scroll-behavior: smooth;
 }
