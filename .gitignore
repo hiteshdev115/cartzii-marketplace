@@ -22,6 +22,8 @@
 /deploy
 deploy.tar.gz
 
+/fresh-deploy
+
 # misc
 .DS_Store
 *.pem
