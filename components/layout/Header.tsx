@@ -146,7 +146,7 @@ export function Header() {
               {/* Account */}
               <Link
                 href={buildCountryPath(locale, '/auth/login')}
-                className="hidden sm:flex p-2 hover:bg-slate-100 rounded-lg"
+                className="p-2 hover:bg-slate-100 rounded-lg"
                 aria-label={t('account')}
               >
                 <User className="w-5 h-5 text-slate-600" />

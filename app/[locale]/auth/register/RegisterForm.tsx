@@ -66,7 +66,10 @@ export function RegisterForm() {
           />
           <label className="flex items-start gap-2 text-sm text-slate-600">
             <input type="checkbox" className="rounded border-gray-300 text-primary mt-0.5" {...register('agreeTerms')} />
-            <span>{t('agreeTerms')}</span>
+            <span>{t.rich('agreeTerms', {
+              terms: (chunks) => <a href="#" className="text-primary hover:underline">{chunks}</a>,
+              privacy: (chunks) => <a href="#" className="text-primary hover:underline">{chunks}</a>,
+            })}</span>
           </label>
           <Button type="submit" className="w-full flex items-center justify-center gap-2" disabled={isSubmitting}>
             <UserPlus className="w-4 h-4" /> {isSubmitting ? t('creating') : t('register')}
