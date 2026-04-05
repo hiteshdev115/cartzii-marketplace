@@ -11,7 +11,9 @@ import { useState } from 'react';
 export function CartSummary() {
   const t = useTranslations('Cart');
   const locale = useLocale();
-  const subtotal = useCartStore((s) => s.getSubtotal());
+  const subtotal = useCartStore((s) =>
+    s.items.reduce((sum, item) => sum + (item.product.salePrice || item.product.price) * item.quantity, 0)
+  );
   const [promoCode, setPromoCode] = useState('');
 
   const shipping = subtotal >= 50 ? 0 : 9.99;

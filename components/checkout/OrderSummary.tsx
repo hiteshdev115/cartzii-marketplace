@@ -9,7 +9,9 @@ export function OrderSummary() {
   const t = useTranslations('Cart');
   const locale = useLocale();
   const items = useCartStore((s) => s.items);
-  const subtotal = useCartStore((s) => s.getSubtotal());
+  const subtotal = useCartStore((s) =>
+    s.items.reduce((sum, item) => sum + (item.product.salePrice || item.product.price) * item.quantity, 0)
+  );
   const shipping = subtotal >= 50 ? 0 : 9.99;
   const tax = subtotal * 0.08;
   const total = subtotal + shipping + tax;

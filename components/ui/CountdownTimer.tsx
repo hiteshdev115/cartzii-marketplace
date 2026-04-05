@@ -11,14 +11,16 @@ interface CountdownTimerProps {
 
 export function CountdownTimer({ endDate, compact }: CountdownTimerProps) {
   const t = useTranslations('Deals');
-  const [time, setTime] = useState<ReturnType<typeof getTimeRemaining> | null>(() => {
-    if (typeof window === 'undefined') return null;
-    return getTimeRemaining(endDate);
-  });
+  const [time, setTime] = useState<ReturnType<typeof getTimeRemaining> | null>(null);
 
   useEffect(() => {
-    const timer = setInterval(() => setTime(getTimeRemaining(endDate)), 1000);
-    return () => clearInterval(timer);
+    const update = () => setTime(getTimeRemaining(endDate));
+    const immediate = setTimeout(update, 0);
+    const timer = setInterval(update, 1000);
+    return () => {
+      clearTimeout(immediate);
+      clearInterval(timer);
+    };
   }, [endDate]);
 
   if (!time) {

@@ -23,8 +23,8 @@ export function Header() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const hydrated = useHydrated();
-  const cartCount = useCartStore((s) => s.getItemCount());
-  const wishlistCount = useWishlistStore((s) => s.getItemCount());
+  const cartCount = useCartStore((s) => s.items.reduce((sum, item) => sum + item.quantity, 0));
+  const wishlistCount = useWishlistStore((s) => s.items.length);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 10);
@@ -38,7 +38,6 @@ export function Header() {
 
   const navAfterCategories = [
     { label: tNav('deals'), href: buildCountryPath(locale, '/deals') },
-    { label: tNav('about'), href: buildCountryPath(locale, '/about') },
   ];
 
   const handleSearch = (e: React.FormEvent) => {

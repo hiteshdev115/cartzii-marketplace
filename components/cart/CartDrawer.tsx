@@ -20,7 +20,9 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
   const items = useCartStore((s) => s.items);
   const removeItem = useCartStore((s) => s.removeItem);
   const updateQuantity = useCartStore((s) => s.updateQuantity);
-  const getSubtotal = useCartStore((s) => s.getSubtotal);
+  const subtotal = useCartStore((s) =>
+    s.items.reduce((sum, item) => sum + (item.product.salePrice || item.product.price) * item.quantity, 0)
+  );
 
   if (!isOpen) return null;
 
@@ -100,7 +102,7 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
           <div className="border-t p-4 space-y-3">
             <div className="flex justify-between text-sm">
               <span className="text-slate-600">{t('subtotal')}</span>
-              <span className="font-bold text-lg">{formatPrice(getSubtotal(), locale)}</span>
+              <span className="font-bold text-lg">{formatPrice(subtotal, locale)}</span>
             </div>
             <p className="text-xs text-slate-400">{t('shippingNote')}</p>
             <Link
