@@ -37,7 +37,7 @@ jobs:
 
       - name: Prepare deployment artifact
         run: |
-          mkdir -p deploy
+          mkdir -p deploy/.next
           # Copy standalone server
           cp -r .next/standalone/* deploy/
           # Copy static assets
