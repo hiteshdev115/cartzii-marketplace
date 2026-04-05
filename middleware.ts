@@ -1,19 +1,50 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { countries } from '@/config/countries';
 
+const ALLOWED_COUNTRIES = new Set(['US', 'CA']);
+
+function getGeoCountry(request: NextRequest): string | null {
+  // Nginx GeoIP sets this header
+  return request.headers.get('x-country-code') || null;
+}
+
+function mapGeoToPath(geoCountry: string): string {
+  switch (geoCountry) {
+    case 'CA':
+      return 'ca';
+    case 'US':
+    default:
+      return 'us';
+  }
+}
+
 export default function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Redirect root to /us
+  // Allow the geo-blocked page to render without redirect loops
+  if (pathname === '/blocked') {
+    return NextResponse.next();
+  }
+
+  const geoCountry = getGeoCountry(request);
+
+  // Block users outside US and CA (only when header is present, i.e. behind Nginx)
+  if (geoCountry && !ALLOWED_COUNTRIES.has(geoCountry)) {
+    return NextResponse.rewrite(new URL('/blocked', request.url));
+  }
+
+  // Redirect root to geo-detected country path
   if (pathname === '/') {
-    return NextResponse.redirect(new URL('/us', request.url));
+    const countryPath = geoCountry ? mapGeoToPath(geoCountry) : 'us';
+    return NextResponse.redirect(new URL(`/${countryPath}`, request.url));
   }
 
   const segments = pathname.split('/').filter(Boolean);
   const country = segments[0]?.toLowerCase();
 
   if (!countries[country]) {
-    return NextResponse.redirect(new URL('/us', request.url));
+    const countryPath = geoCountry ? mapGeoToPath(geoCountry) : 'us';
+    return NextResponse.redirect(new URL(`/${countryPath}`, request.url));
   }
 
   const countryConfig = countries[country];
@@ -38,5 +69,5 @@ export default function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/', '/(us|ca)/:path*'],
+  matcher: ['/', '/blocked', '/(us|ca)/:path*'],
 };
