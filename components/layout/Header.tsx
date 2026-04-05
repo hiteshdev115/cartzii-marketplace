@@ -20,6 +20,7 @@ export function Header() {
   const tNav = useTranslations('Nav');
   const locale = useLocale();
   const [scrolled, setScrolled] = useState(false);
+  const [visible, setVisible] = useState(true);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const hydrated = useHydrated();
@@ -27,8 +28,14 @@ export function Header() {
   const wishlistCount = useWishlistStore((s) => s.items.length);
 
   useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 10);
-    window.addEventListener('scroll', handleScroll);
+    let lastScrollY = window.scrollY;
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      setScrolled(currentScrollY > 10);
+      setVisible(currentScrollY <= 10 || currentScrollY < lastScrollY);
+      lastScrollY = currentScrollY;
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
@@ -52,8 +59,9 @@ export function Header() {
       <AnnouncementBar />
       <div
         className={cn(
-          'sticky top-0 z-40 bg-white/80 backdrop-blur-lg border-b border-gray-100 transition-shadow',
-          scrolled && 'shadow-sm'
+          'fixed top-0 left-0 right-0 z-40 bg-white/80 backdrop-blur-lg border-b border-gray-100 transition-all duration-300',
+          scrolled ? 'shadow-sm' : '',
+          visible ? 'translate-y-0' : '-translate-y-full'
         )}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
@@ -62,7 +70,7 @@ export function Header() {
             <div className="flex items-center gap-3">
               <MobileNav />
               <Link href={buildCountryPath(locale, '/')} className="flex items-center gap-2">
-                <Image src="/assets/cartzii-logo-nt.png" alt="Cartzii" width={150} height={40} className="object-contain" priority />
+                <Image src="/assets/cartzii-logo-wt-bg.png" alt="Cartzii" width={150} height={40} className="object-contain" priority />
               </Link>
             </div>
 
@@ -171,6 +179,8 @@ export function Header() {
           )}
         </div>
       </div>
+      {/* Spacer for fixed header */}
+      <div className="h-16" />
     </header>
   );
 }
