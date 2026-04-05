@@ -3,8 +3,6 @@ import { getMessages, getTranslations } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { routing } from "@/i18n/routing";
 import {
-  getCountryFromLocale,
-  getCountryConfig,
   buildCountryPath,
   allLocales,
 } from "@/config/countries";
@@ -58,7 +56,6 @@ export default async function LocaleLayout({ children, params }: Props) {
   }
 
   const messages = await getMessages();
-  const country = getCountryFromLocale(locale);
   const lang = locale.split("-")[0];
   const dir = ["ar", "he", "fa", "ur"].includes(lang) ? "rtl" : "ltr";
 

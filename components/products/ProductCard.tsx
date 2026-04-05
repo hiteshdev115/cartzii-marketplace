@@ -7,7 +7,6 @@ import { useLocale } from 'next-intl';
 import { buildCountryPath } from '@/config/countries';
 import { formatPrice } from '@/lib/utils';
 import { StarRating } from '@/components/ui/StarRating';
-import { Badge } from '@/components/ui/Badge';
 import { useWishlistStore } from '@/stores/wishlistStore';
 import { useCartStore } from '@/stores/cartStore';
 import { Product } from '@/types';

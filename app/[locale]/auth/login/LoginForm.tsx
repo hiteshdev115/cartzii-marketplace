@@ -25,7 +25,7 @@ export function LoginForm() {
     resolver: zodResolver(loginSchema),
   });
 
-  const onSubmit = async (data: LoginFormData) => {
+  const onSubmit = async (_data: LoginFormData) => {
     // Demo: simulate login
     await new Promise((r) => setTimeout(r, 1000));
     alert('Login successful! (demo)');

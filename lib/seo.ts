@@ -1,7 +1,5 @@
 import { buildCountryPath, allLocales } from '@/config/countries';
 
-const BASE_URL = 'https://cartzii.com';
-
 export function generateAlternates(baseUrl: string, pagePath: string, currentLocale: string) {
   const languages: Record<string, string> = {
     'x-default': `${baseUrl}${buildCountryPath('en-US', pagePath)}`,

@@ -11,7 +11,7 @@ import { generateProductJsonLd } from '@/lib/seo';
 import { buildCountryPath } from '@/config/countries';
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string; slug: string }> }) {
-  const { locale, slug } = await params;
+  const { slug } = await params;
   const product = getProductBySlug(slug);
   if (!product) return {};
   return {

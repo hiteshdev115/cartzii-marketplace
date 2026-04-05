@@ -1,9 +1,8 @@
-import { getTranslations } from 'next-intl/server';
 import { Breadcrumb } from '@/components/layout/Breadcrumb';
 import { ShieldCheck, Truck, HeartHandshake, Globe, Users, Award } from 'lucide-react';
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
-  const { locale } = await params;
+  await params;
   return {
     title: 'About Us - Cartzii',
     description: 'Learn about Cartzii - your trusted marketplace for quality products.',
@@ -11,7 +10,6 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
 }
 
 export default async function AboutPage() {
-  const t = await getTranslations('Common');
 
   const values = [
     { icon: ShieldCheck, title: 'Quality First', description: 'We curate only the best products from trusted brands and sellers.' },
@@ -76,7 +74,7 @@ export default async function AboutPage() {
           At Cartzii, we believe shopping should be simple, secure, and satisfying.
           Our mission is to provide a marketplace where quality meets convenience,
           offering customers the products they love with the service they deserve.
-          From electronics to fashion, home goods to wellness — we've got you covered.
+          From electronics to fashion, home goods to wellness — we&apos;ve got you covered.
         </p>
       </section>
     </main>

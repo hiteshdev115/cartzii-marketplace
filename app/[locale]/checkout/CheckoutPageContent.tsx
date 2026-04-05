@@ -8,7 +8,6 @@ import { PaymentForm } from '@/components/checkout/PaymentForm';
 import { OrderSummary } from '@/components/checkout/OrderSummary';
 import { Breadcrumb } from '@/components/layout/Breadcrumb';
 import { useCartStore } from '@/stores/cartStore';
-import { ShippingFormData } from '@/lib/validators';
 import { CheckCircle, Package } from 'lucide-react';
 import Link from 'next/link';
 import { useLocale } from 'next-intl';
@@ -24,7 +23,7 @@ export function CheckoutPageContent() {
 
   const steps = [t('shipping'), t('payment'), t('confirmation')];
 
-  const handleShippingSubmit = (_data: ShippingFormData) => {
+  const handleShippingSubmit = () => {
     setStep(1);
   };
 

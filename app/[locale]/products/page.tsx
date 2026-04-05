@@ -1,5 +1,5 @@
 import { getTranslations } from 'next-intl/server';
-import { allProducts, allCategories } from '@/lib/mockData';
+import { allProducts } from '@/lib/mockData';
 import { ProductGrid } from '@/components/products/ProductGrid';
 import { ProductFilters } from '@/components/products/ProductFilters';
 import { ActiveFilterChips } from '@/components/products/ActiveFilterChips';

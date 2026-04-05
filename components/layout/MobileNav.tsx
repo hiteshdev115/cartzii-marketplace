@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useSyncExternalStore } from 'react';
 import { createPortal } from 'react-dom';
-import { Menu, X, Home, ShoppingBag, Tag, Sparkles, User, Heart, ChevronDown, ChevronRight, Globe } from 'lucide-react';
+import { Menu, X, Home, Tag, Sparkles, User, Heart, ChevronDown, ChevronRight, Globe } from 'lucide-react';
 import { useTranslations, useLocale } from 'next-intl';
 import { buildCountryPath, getCountryFromLocale, countries } from '@/config/countries';
 import { allCategories } from '@/lib/mockData';
@@ -84,7 +84,7 @@ const mobileLocaleLabels: Record<string, string> = {
   'fr-CA': 'Français',
 };
 
-function MobileRegionSwitcher({ locale, onClose }: { locale: string; onClose: () => void }) {
+function MobileRegionSwitcher({ locale }: { locale: string }) {
   const country = getCountryFromLocale(locale);
   const countryConfig = countries[country];
   const pathname = usePathname();
@@ -98,7 +98,7 @@ function MobileRegionSwitcher({ locale, onClose }: { locale: string; onClose: ()
 
   const switchTo = (targetLocale: string) => {
     if (targetLocale === locale) return;
-    window.location.href = buildCountryPath(targetLocale, getPagePath());
+    window.location.assign(buildCountryPath(targetLocale, getPagePath()));
   };
 
   return (
@@ -154,16 +154,14 @@ function MobileRegionSwitcher({ locale, onClose }: { locale: string; onClose: ()
 
 export function MobileNav() {
   const [open, setOpen] = useState(false);
-  const [mounted, setMounted] = useState(false);
   const t = useTranslations('Nav');
   const ta = useTranslations('Accessibility');
   const locale = useLocale();
 
   const [categoriesOpen, setCategoriesOpen] = useState(false);
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const emptySubscribe = () => () => {};
+  const mounted = useSyncExternalStore(emptySubscribe, () => true, () => false);
 
   const navLinks = [
     { label: t('home'), href: buildCountryPath(locale, '/'), icon: Home },
@@ -254,7 +252,7 @@ export function MobileNav() {
               </ul>
             </nav>
             <div className="border-t p-4 space-y-2">
-              <MobileRegionSwitcher locale={locale} onClose={() => setOpen(false)} />
+              <MobileRegionSwitcher locale={locale} />
               <Link
                 href={buildCountryPath(locale, '/account/wishlist')}
                 onClick={() => setOpen(false)}

@@ -10,7 +10,7 @@ interface ReviewFormProps {
   productId: string;
 }
 
-export function ReviewForm({ productId }: ReviewFormProps) {
+export function ReviewForm({ productId: _productId }: ReviewFormProps) {
   const t = useTranslations('ProductDetail');
   const [rating, setRating] = useState(0);
   const [title, setTitle] = useState('');

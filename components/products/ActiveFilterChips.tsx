@@ -3,10 +3,8 @@
 import { useFilterStore } from '@/stores/filterStore';
 import { allCategories } from '@/lib/mockData';
 import { X, Star } from 'lucide-react';
-import { useTranslations } from 'next-intl';
 
 export function ActiveFilterChips() {
-  const t = useTranslations('Products');
   const filters = useFilterStore();
 
   const hasPriceFilter = filters.priceRange[0] > 0 || filters.priceRange[1] < 500;

@@ -25,7 +25,7 @@ export function RegisterForm() {
     resolver: zodResolver(registerSchema),
   });
 
-  const onSubmit = async (data: RegisterFormData) => {
+  const onSubmit = async (_data: RegisterFormData) => {
     await new Promise((r) => setTimeout(r, 1000));
     alert('Account created! (demo)');
   };

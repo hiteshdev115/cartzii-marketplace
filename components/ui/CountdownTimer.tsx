@@ -11,10 +11,12 @@ interface CountdownTimerProps {
 
 export function CountdownTimer({ endDate, compact }: CountdownTimerProps) {
   const t = useTranslations('Deals');
-  const [time, setTime] = useState<ReturnType<typeof getTimeRemaining> | null>(null);
+  const [time, setTime] = useState<ReturnType<typeof getTimeRemaining> | null>(() => {
+    if (typeof window === 'undefined') return null;
+    return getTimeRemaining(endDate);
+  });
 
   useEffect(() => {
-    setTime(getTimeRemaining(endDate));
     const timer = setInterval(() => setTime(getTimeRemaining(endDate)), 1000);
     return () => clearInterval(timer);
   }, [endDate]);

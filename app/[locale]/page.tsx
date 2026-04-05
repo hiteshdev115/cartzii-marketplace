@@ -1,4 +1,3 @@
-import { useTranslations } from 'next-intl';
 import { getTranslations } from 'next-intl/server';
 import { HeroBanner } from '@/components/home/HeroBanner';
 import { FeaturedCategories } from '@/components/home/FeaturedCategories';

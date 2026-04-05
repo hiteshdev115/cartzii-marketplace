@@ -11,11 +11,13 @@ export function LiveRegion({ message, assertive = false }: LiveRegionProps) {
   const [announced, setAnnounced] = useState('');
 
   useEffect(() => {
-    if (message) {
-      setAnnounced('');
-      const timer = setTimeout(() => setAnnounced(message), 100);
-      return () => clearTimeout(timer);
-    }
+    if (!message) return;
+    const clearTimer = setTimeout(() => setAnnounced(''), 0);
+    const announceTimer = setTimeout(() => setAnnounced(message), 100);
+    return () => {
+      clearTimeout(clearTimer);
+      clearTimeout(announceTimer);
+    };
   }, [message]);
 
   return (

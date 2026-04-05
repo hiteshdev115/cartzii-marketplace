@@ -3,7 +3,7 @@
 import { useTranslations } from 'next-intl';
 import { useFilterStore } from '@/stores/filterStore';
 import { allCategories } from '@/lib/mockData';
-import { X, SlidersHorizontal, ChevronDown, Star } from 'lucide-react';
+import { X, SlidersHorizontal, ChevronDown } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 
 function FilterDropdown({
