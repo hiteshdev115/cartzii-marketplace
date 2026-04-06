@@ -6,14 +6,19 @@ import { ProductFilters } from '@/components/products/ProductFilters';
 import { ActiveFilterChips } from '@/components/products/ActiveFilterChips';
 import { Breadcrumb } from '@/components/layout/Breadcrumb';
 import { buildCountryPath } from '@/config/countries';
+import { generateAlternates } from '@/lib/seo';
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string; slug: string }> }) {
-  const { slug } = await params;
+  const { locale, slug } = await params;
   const category = allCategories.find((c) => c.slug === slug);
   if (!category) return {};
+  const alternates = generateAlternates(process.env.NEXT_PUBLIC_BASE_URL || 'https://cartzii.com', `/categories/${slug}`, locale);
   return {
+    // TODO: Use category SEO from API: category.metatitle || `${category.name} - Cartzii`
     title: `${category.name} - Cartzii`,
+    // TODO: Use category SEO from API: category.metadescription || category.description
     description: category.description,
+    alternates,
   };
 }
 

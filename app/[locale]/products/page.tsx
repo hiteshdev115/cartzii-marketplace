@@ -4,13 +4,16 @@ import { ProductGrid } from '@/components/products/ProductGrid';
 import { ProductFilters } from '@/components/products/ProductFilters';
 import { ActiveFilterChips } from '@/components/products/ActiveFilterChips';
 import { Breadcrumb } from '@/components/layout/Breadcrumb';
+import { generateAlternates } from '@/lib/seo';
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: 'Metadata' });
+  const alternates = generateAlternates(process.env.NEXT_PUBLIC_BASE_URL || 'https://cartzii.com', '/products', locale);
   return {
     title: t('productsTitle'),
     description: t('productsDescription'),
+    alternates,
   };
 }
 
