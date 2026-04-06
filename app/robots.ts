@@ -9,6 +9,6 @@ export default function robots(): MetadataRoute.Robots {
         disallow: ['/account/', '/checkout/', '/auth/'],
       },
     ],
-    sitemap: 'https://cartzii.com/sitemap.xml',
+    sitemap: `${process.env.NEXT_PUBLIC_BASE_URL || 'https://cartzii.com'}/sitemap.xml`,
   };
 }

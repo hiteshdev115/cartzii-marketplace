@@ -1,11 +1,14 @@
 import { Breadcrumb } from '@/components/layout/Breadcrumb';
 import { ShieldCheck, Truck, HeartHandshake, Globe, Users, Award } from 'lucide-react';
+import { generateAlternates } from '@/lib/seo';
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
-  await params;
+  const { locale } = await params;
+  const alternates = generateAlternates(process.env.NEXT_PUBLIC_BASE_URL || 'https://cartzii.com', '/about', locale);
   return {
     title: 'About Us - Cartzii',
     description: 'Learn about Cartzii - your trusted marketplace for quality products.',
+    alternates,
   };
 }
 
