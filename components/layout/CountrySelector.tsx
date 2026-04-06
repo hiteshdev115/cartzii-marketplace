@@ -43,7 +43,7 @@ export function CountrySelector() {
       setOpen(false);
       return;
     }
-    window.location.href = buildCountryPath(targetLocale, getPagePath());
+    window.location.assign(buildCountryPath(targetLocale, getPagePath()));
   };
 
   const currentLangLabel = localeLabels[locale] ?? 'English';
