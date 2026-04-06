@@ -55,7 +55,11 @@ jobs:
           password: ${{ secrets.QA_SSH_PASSWORD }}
           port: 22
           script: |
+            export NVM_DIR="$HOME/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
             pm2 stop ${{ env.PM2_APP_NAME }} 2>/dev/null || true
+            pm2 delete ${{ env.PM2_APP_NAME }} 2>/dev/null || true
+            chmod -R u+rwx ${{ env.APP_DIR }} 2>/dev/null || true
             rm -rf ${{ env.APP_DIR }}
             mkdir -p ${{ env.APP_DIR }}
 
