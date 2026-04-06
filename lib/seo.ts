@@ -54,6 +54,12 @@ export function generateProductJsonLd(product: {
   };
 }
 
+/**
+ * Generates Schema.org Product JSON-LD with AggregateOffer for products that have
+ * multiple variants (e.g., different sizes, colors, or SKUs). Use this instead of
+ * `generateProductJsonLd` when a product has variant-level pricing so that search
+ * engines can display a price range rather than a single price.
+ */
 export function generateVariantProductJsonLd(product: {
   name: string;
   description: string;
@@ -72,7 +78,9 @@ export function generateVariantProductJsonLd(product: {
 }) {
   const prices = product.offers.map((o) => o.price);
   if (prices.length === 0) {
-    throw new Error('generateVariantProductJsonLd requires at least one offer');
+    throw new Error(
+      `Product '${product.name}' has no offers. At least one offer is required for generateVariantProductJsonLd.`
+    );
   }
   return {
     '@context': 'https://schema.org',
@@ -95,7 +103,7 @@ export function generateVariantProductJsonLd(product: {
         url: product.url,
       })),
     },
-    ...(product.rating && {
+    ...(product.rating !== undefined && product.reviewCount !== undefined && {
       aggregateRating: {
         '@type': 'AggregateRating',
         ratingValue: product.rating,
