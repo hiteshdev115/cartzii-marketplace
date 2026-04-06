@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useSyncExternalStore } from 'react';
 import { createPortal } from 'react-dom';
-import { Menu, X, Home, Tag, Sparkles, User, Heart, ChevronDown, ChevronRight, Globe } from 'lucide-react';
+import { Menu, X, Home, Tag, Sparkles, User, Heart, ChevronDown, ChevronRight, Globe, ShoppingBag } from 'lucide-react';
 import { useTranslations, useLocale } from 'next-intl';
 import { buildCountryPath, getCountryFromLocale, countries } from '@/config/countries';
 import { allCategories } from '@/lib/mockData';
@@ -89,6 +89,9 @@ function MobileRegionSwitcher({ locale }: { locale: string }) {
   const countryConfig = countries[country];
   const pathname = usePathname();
 
+  // US only has English — no need to show region/language switcher
+  if (country === 'us') return null;
+
   const getPagePath = () => {
     const localePrefix = `/${locale}`;
     return pathname.startsWith(localePrefix)
@@ -103,32 +106,10 @@ function MobileRegionSwitcher({ locale }: { locale: string }) {
 
   return (
     <div className="px-4 py-2 mb-2 space-y-3">
-      <div>
-        <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-2">
-          <Globe className="w-3.5 h-3.5" /> Country
-        </p>
-        <div className="flex gap-2">
-          {mobileCountryOptions.map((opt) => (
-            <button
-              key={opt.code}
-              onClick={() => switchTo(countries[opt.code].defaultLocale)}
-              className={cn(
-                'flex-1 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors',
-                country === opt.code
-                  ? 'bg-primary text-white'
-                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-              )}
-            >
-              {opt.flag} {opt.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
       {countryConfig.locales.length > 1 && (
         <div>
-          <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
-            Language
+          <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-2">
+            <Globe className="w-3.5 h-3.5" /> Language
           </p>
           <div className="flex gap-2">
             {countryConfig.locales.map((loc) => (
@@ -165,6 +146,7 @@ export function MobileNav() {
 
   const navLinks = [
     { label: t('home'), href: buildCountryPath(locale, '/'), icon: Home },
+    { label: t('shop'), href: buildCountryPath(locale, '/products'), icon: ShoppingBag },
   ];
 
   const navLinksAfter = [

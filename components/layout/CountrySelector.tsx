@@ -7,11 +7,6 @@ import { countries, getCountryFromLocale, buildCountryPath } from '@/config/coun
 import { ChevronDown, Check, Globe } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-const countryOptions = [
-  { code: 'us', label: 'United States', flag: '🇺🇸' },
-  { code: 'ca', label: 'Canada', flag: '🇨🇦' },
-];
-
 const localeLabels: Record<string, string> = {
   'en-US': 'English',
   'en-CA': 'English',
@@ -21,9 +16,11 @@ const localeLabels: Record<string, string> = {
 export function CountrySelector() {
   const locale = useLocale();
   const currentCountry = getCountryFromLocale(locale);
+
+  // US only has English — no need to show country/language selector
+  if (currentCountry === 'us') return null;
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
-  const [expandedCountry, setExpandedCountry] = useState<string | null>(null);
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -49,7 +46,6 @@ export function CountrySelector() {
     window.location.href = buildCountryPath(targetLocale, getPagePath());
   };
 
-  const currentOpt = countryOptions.find((o) => o.code === currentCountry);
   const currentLangLabel = localeLabels[locale] ?? 'English';
 
   return (
@@ -58,65 +54,32 @@ export function CountrySelector() {
         onClick={() => setOpen(!open)}
         className="flex items-center gap-1.5 px-2.5 py-1.5 text-sm text-slate-600 hover:bg-gray-100 rounded-lg transition-colors border border-gray-200"
         aria-expanded={open}
-        aria-label={`Region: ${currentOpt?.label}, Language: ${currentLangLabel}`}
+        aria-label={`Language: ${currentLangLabel}`}
       >
         <Globe className="w-4 h-4" aria-hidden="true" />
-        <span className="hidden sm:inline">{currentOpt?.flag} {currentOpt?.code.toUpperCase()} / {currentLangLabel}</span>
-        <span className="sm:hidden">{currentOpt?.flag}</span>
+        <span className="hidden sm:inline">🇨🇦 {currentLangLabel}</span>
+        <span className="sm:hidden">🇨🇦</span>
         <ChevronDown className={cn('w-3.5 h-3.5 transition-transform', open && 'rotate-180')} aria-hidden="true" />
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full mt-1 min-w-[220px] bg-white rounded-xl shadow-lg border border-gray-100 py-1 z-50">
-          {countryOptions.map((opt) => {
-            const isActive = currentCountry === opt.code;
-            const countryConfig = countries[opt.code];
-            const hasMultipleLangs = countryConfig.locales.length > 1;
-            const isExpanded = expandedCountry === opt.code;
-
-            return (
-              <div key={opt.code}>
-                <button
-                  onClick={() => {
-                    if (hasMultipleLangs) {
-                      setExpandedCountry(isExpanded ? null : opt.code);
-                    } else {
-                      switchTo(countryConfig.defaultLocale);
-                    }
-                  }}
-                  className={cn(
-                    'flex items-center justify-between gap-2 w-full px-3 py-2.5 text-sm transition-colors',
-                    isActive ? 'text-primary font-medium bg-primary/5' : 'text-slate-700 hover:bg-gray-50'
-                  )}
-                >
-                  <span className="flex items-center gap-2">
-                    <span aria-hidden="true">{opt.flag}</span>
-                    {opt.label}
-                  </span>
-                  {hasMultipleLangs ? (
-                    <ChevronDown className={cn('w-3.5 h-3.5 text-slate-400 transition-transform', isExpanded && 'rotate-180')} />
-                  ) : (
-                    isActive && <Check className="w-4 h-4 text-primary" aria-hidden="true" />
-                  )}
-                </button>
-
-                {hasMultipleLangs && isExpanded && (
-                  <div className="bg-slate-50 py-1">
-                    {countryConfig.locales.map((loc) => (
-                      <button
-                        key={loc}
-                        onClick={() => switchTo(loc)}
-                        className="flex items-center justify-between gap-2 w-full px-6 py-2 text-sm text-slate-600 hover:bg-slate-100 transition-colors"
-                      >
-                        <span>{localeLabels[loc] ?? loc}</span>
-                        {locale === loc && <Check className="w-4 h-4 text-primary" aria-hidden="true" />}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            );
-          })}
+        <div className="absolute right-0 top-full mt-1 min-w-[180px] bg-white rounded-xl shadow-lg border border-gray-100 py-1 z-50">
+          <p className="px-3 py-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">
+            Language
+          </p>
+          {countries[currentCountry].locales.map((loc) => (
+            <button
+              key={loc}
+              onClick={() => switchTo(loc)}
+              className={cn(
+                'flex items-center justify-between gap-2 w-full px-3 py-2.5 text-sm transition-colors',
+                locale === loc ? 'text-primary font-medium bg-primary/5' : 'text-slate-700 hover:bg-gray-50'
+              )}
+            >
+              <span>{localeLabels[loc] ?? loc}</span>
+              {locale === loc && <Check className="w-4 h-4 text-primary" aria-hidden="true" />}
+            </button>
+          ))}
         </div>
       )}
     </div>

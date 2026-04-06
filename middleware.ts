@@ -35,7 +35,7 @@ export default function middleware(request: NextRequest) {
 
   // Redirect root to geo-detected country path
   if (pathname === '/') {
-    const countryPath = geoCountry ? mapGeoToPath(geoCountry) : 'us';
+    const countryPath = geoCountry ? mapGeoToPath(geoCountry) : 'ca';
     return NextResponse.redirect(new URL(`/${countryPath}`, request.url));
   }
 
@@ -43,7 +43,7 @@ export default function middleware(request: NextRequest) {
   const country = segments[0]?.toLowerCase();
 
   if (!countries[country]) {
-    const countryPath = geoCountry ? mapGeoToPath(geoCountry) : 'us';
+    const countryPath = geoCountry ? mapGeoToPath(geoCountry) : 'ca';
     return NextResponse.redirect(new URL(`/${countryPath}`, request.url));
   }
 

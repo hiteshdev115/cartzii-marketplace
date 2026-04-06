@@ -41,6 +41,7 @@ export function Header() {
 
   const navBeforeCategories = [
     { label: tNav('home'), href: buildCountryPath(locale, '/') },
+    { label: tNav('shop'), href: buildCountryPath(locale, '/products') },
   ];
 
   const navAfterCategories = [
