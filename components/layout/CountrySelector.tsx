@@ -16,12 +16,12 @@ const localeLabels: Record<string, string> = {
 export function CountrySelector() {
   const locale = useLocale();
   const currentCountry = getCountryFromLocale(locale);
-
-  // US only has English — no need to show country/language selector
-  if (currentCountry === 'us') return null;
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+
+  // US only has English — no need to show country/language selector
+  if (currentCountry === 'us') return null;
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {

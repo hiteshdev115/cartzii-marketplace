@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useSyncExternalStore } from 'react';
+import { useState, useSyncExternalStore } from 'react';
 import { createPortal } from 'react-dom';
 import { Menu, X, Home, Tag, Sparkles, User, Heart, ChevronDown, ChevronRight, Globe, ShoppingBag } from 'lucide-react';
 import { useTranslations, useLocale } from 'next-intl';
@@ -72,11 +72,6 @@ function MobileCategoryTree({
     </ul>
   );
 }
-
-const mobileCountryOptions = [
-  { code: 'us', label: 'United States', flag: '🇺🇸' },
-  { code: 'ca', label: 'Canada', flag: '🇨🇦' },
-];
 
 const mobileLocaleLabels: Record<string, string> = {
   'en-US': 'English',
