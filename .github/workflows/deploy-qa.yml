@@ -47,7 +47,10 @@ jobs:
           # Copy PM2 ecosystem config
           cp ecosystem.config.js deploy/
 
-      - name: Prepare target directory
+      - name: Create deployment archive
+        run: cd deploy && tar czf ../deploy.tar.gz .
+
+      - name: Deploy to QA server via SSH
         uses: appleboy/ssh-action@v1.2.2
         with:
           host: ${{ secrets.QA_SSH_HOST }}
@@ -57,25 +60,25 @@ jobs:
           script: |
             export NVM_DIR="$HOME/.nvm"
             [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+
+            # Stop app and clean target
             pm2 stop ${{ env.PM2_APP_NAME }} 2>/dev/null || true
             pm2 delete ${{ env.PM2_APP_NAME }} 2>/dev/null || true
             chmod -R u+rwx ${{ env.APP_DIR }} 2>/dev/null || true
             rm -rf ${{ env.APP_DIR }}
             mkdir -p ${{ env.APP_DIR }}
 
-      - name: Deploy to QA server via SSH
+      - name: Upload deployment archive
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.QA_SSH_HOST }}
           username: ${{ secrets.QA_SSH_USERNAME }}
           password: ${{ secrets.QA_SSH_PASSWORD }}
           port: 22
-          source: "deploy/*"
-          target: ${{ env.APP_DIR }}
-          strip_components: 1
-          overwrite: true
+          source: "deploy.tar.gz"
+          target: "/tmp"
 
-      - name: Restart application on QA server
+      - name: Extract and start application
         uses: appleboy/ssh-action@v1.2.2
         with:
           host: ${{ secrets.QA_SSH_HOST }}
@@ -87,13 +90,12 @@ jobs:
             [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
 
             cd ${{ env.APP_DIR }}
+            tar xzf /tmp/deploy.tar.gz
+            rm -f /tmp/deploy.tar.gz
 
             # Install PM2 globally if not present
             command -v pm2 >/dev/null 2>&1 || npm install -g pm2
 
-            # Stop existing app if running, then start fresh
-            pm2 stop ${{ env.PM2_APP_NAME }} 2>/dev/null || true
-            pm2 delete ${{ env.PM2_APP_NAME }} 2>/dev/null || true
             pm2 start ecosystem.config.js
             pm2 save
 
