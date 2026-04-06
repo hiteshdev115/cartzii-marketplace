@@ -25,6 +25,7 @@ export function RegisterForm() {
     resolver: zodResolver(registerSchema),
   });
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const onSubmit = async (_data: RegisterFormData) => {
     await new Promise((r) => setTimeout(r, 1000));
     alert('Account created! (demo)');

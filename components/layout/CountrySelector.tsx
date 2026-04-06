@@ -20,9 +20,6 @@ export function CountrySelector() {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
-  // US only has English — no need to show country/language selector
-  if (currentCountry === 'us') return null;
-
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
@@ -30,6 +27,9 @@ export function CountrySelector() {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  // US only has English — no need to show country/language selector
+  if (currentCountry === 'us') return null;
 
   const getPagePath = () => {
     const localePrefix = `/${locale}`;

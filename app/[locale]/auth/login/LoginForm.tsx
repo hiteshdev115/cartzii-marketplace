@@ -25,6 +25,7 @@ export function LoginForm() {
     resolver: zodResolver(loginSchema),
   });
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const onSubmit = async (_data: LoginFormData) => {
     // Demo: simulate login
     await new Promise((r) => setTimeout(r, 1000));
