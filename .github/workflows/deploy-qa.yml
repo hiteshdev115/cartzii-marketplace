@@ -47,6 +47,18 @@ jobs:
           # Copy PM2 ecosystem config
           cp ecosystem.config.js deploy/
 
+      - name: Prepare target directory
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          host: ${{ secrets.QA_SSH_HOST }}
+          username: ${{ secrets.QA_SSH_USERNAME }}
+          password: ${{ secrets.QA_SSH_PASSWORD }}
+          port: 22
+          script: |
+            pm2 stop ${{ env.PM2_APP_NAME }} 2>/dev/null || true
+            rm -rf ${{ env.APP_DIR }}
+            mkdir -p ${{ env.APP_DIR }}
+
       - name: Deploy to QA server via SSH
         uses: appleboy/scp-action@v0.1.7
         with:
