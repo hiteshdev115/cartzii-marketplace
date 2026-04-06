@@ -7,16 +7,20 @@ import { ProductTabs } from '@/components/products/ProductTabs';
 import { RelatedProducts } from '@/components/products/RelatedProducts';
 import { ReviewForm } from '@/components/products/ReviewForm';
 import { Breadcrumb } from '@/components/layout/Breadcrumb';
-import { generateProductJsonLd } from '@/lib/seo';
-import { buildCountryPath } from '@/config/countries';
+import { generateProductJsonLd, generateAlternates } from '@/lib/seo';
+import { buildCountryPath, getCountryConfig } from '@/config/countries';
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string; slug: string }> }) {
   const { locale, slug } = await params;
   const product = getProductBySlug(slug);
   if (!product) return {};
+  const alternates = generateAlternates(process.env.NEXT_PUBLIC_BASE_URL || 'https://cartzii.com', `/products/${slug}`, locale);
   return {
+    // TODO: Use country-specific SEO from API: countrySeo?.metatitle || product.name
     title: product.name,
+    // TODO: Use country-specific SEO from API: countrySeo?.metadescription || product.shortDescription
     description: product.shortDescription,
+    alternates,
     openGraph: {
       title: product.name,
       description: product.shortDescription,
@@ -40,11 +44,11 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
     image: product.images[0],
     sku: product.sku,
     price: product.salePrice || product.price,
-    currency: 'USD',
+    currency: getCountryConfig(locale).currency,
     availability: product.inStock ? 'InStock' : 'OutOfStock',
     rating: product.rating,
     reviewCount: product.reviewCount,
-    url: `https://cartzii.com${buildCountryPath(locale, `/products/${product.slug}`)}`,
+    url: `${process.env.NEXT_PUBLIC_BASE_URL || 'https://cartzii.com'}${buildCountryPath(locale, `/products/${product.slug}`)}`,
   });
 
   return (
