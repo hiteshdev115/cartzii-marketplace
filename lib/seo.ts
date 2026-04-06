@@ -71,6 +71,9 @@ export function generateVariantProductJsonLd(product: {
   }[];
 }) {
   const prices = product.offers.map((o) => o.price);
+  if (prices.length === 0) {
+    throw new Error('generateVariantProductJsonLd requires at least one offer');
+  }
   return {
     '@context': 'https://schema.org',
     '@type': 'Product',

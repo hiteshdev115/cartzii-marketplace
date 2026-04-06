@@ -14,7 +14,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
 
   const staticPages = allLocales.flatMap((locale) =>
     staticPaths.map(({ path, changeFrequency, priority }) => ({
-      url: `${BASE_URL}${buildCountryPath(locale, path || '/')}`,
+      url: `${BASE_URL}${buildCountryPath(locale, path)}`,
       lastModified: new Date(),
       changeFrequency,
       priority,
