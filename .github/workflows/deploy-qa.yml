@@ -65,6 +65,7 @@ jobs:
       - name: Create deployment archive
         run: |
           cd deploy && tar czf ../deploy.tar.gz .
+          cd ..
           ls -lh deploy.tar.gz
 
       - name: Stop app and clean target
@@ -88,6 +89,10 @@ jobs:
             echo "=== Cleaning app directory ==="
             rm -rf ${{ env.APP_DIR }}
             mkdir -p ${{ env.APP_DIR }}
+
+            echo "=== Cleaning /tmp deploy artifact ==="
+            rm -f /tmp/deploy.tar.gz
+
             echo "=== Directory cleaned ==="
             ls -la ${{ env.APP_DIR }}
 
@@ -99,7 +104,7 @@ jobs:
           password: ${{ secrets.QA_SSH_PASSWORD }}
           port: 22
           source: "deploy.tar.gz"
-          target: ${{ env.APP_DIR }}
+          target: "/tmp"
 
       - name: Extract and start application
         uses: appleboy/ssh-action@v1.2.2
@@ -112,13 +117,14 @@ jobs:
             export NVM_DIR="$HOME/.nvm"
             [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
 
+            echo "=== Verify archive exists ==="
+            ls -lh /tmp/deploy.tar.gz
+
             cd ${{ env.APP_DIR }}
 
-            echo "=== Files before extraction ==="
-            ls -la
-
-            tar xzf deploy.tar.gz
-            rm -f deploy.tar.gz
+            echo "=== Extracting archive ==="
+            tar xzf /tmp/deploy.tar.gz
+            rm -f /tmp/deploy.tar.gz
 
             echo "=== Files after extraction ==="
             ls -la
@@ -129,10 +135,10 @@ jobs:
 
             echo "=== Starting PM2 ==="
             pm2 start ecosystem.config.js
-            sleep 2
+            sleep 3
             pm2 list
-            echo "=== PM2 logs (last 20 lines) ==="
-            pm2 logs ${{ env.PM2_APP_NAME }} --nostream --lines 20 || true
+            echo "=== PM2 logs (last 30 lines) ==="
+            pm2 logs ${{ env.PM2_APP_NAME }} --nostream --lines 30 || true
 
             pm2 save
             echo "=== Deployment complete ==="
