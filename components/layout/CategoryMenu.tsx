@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { ChevronDown, ChevronRight, Loader2 } from 'lucide-react';
 import { useTranslations, useLocale } from 'next-intl';
@@ -62,8 +62,8 @@ export function CategoryMenu() {
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    if (!open || hasFetched.current) return;
+  const triggerFetch = useCallback(() => {
+    if (hasFetched.current) return;
     setLoading(true);
     fetchCategories()
       .then((data) => {
@@ -72,11 +72,12 @@ export function CategoryMenu() {
       })
       .catch(() => setCategories([]))
       .finally(() => setLoading(false));
-  }, [open]);
+  }, []);
 
   const handleEnter = () => {
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
     setOpen(true);
+    triggerFetch();
   };
 
   const handleLeave = () => {
@@ -110,7 +111,10 @@ export function CategoryMenu() {
         className="flex items-center gap-1 px-4 py-2 text-sm font-medium text-slate-600 hover:text-primary rounded-lg hover:bg-slate-50 transition-colors"
         aria-expanded={open}
         aria-haspopup="true"
-        onClick={() => setOpen((v) => !v)}
+        onClick={() => {
+          setOpen((v) => !v);
+          if (!open) triggerFetch();
+        }}
       >
         {t('products')}
         <ChevronDown className={cn('w-4 h-4 transition-transform', open && 'rotate-180')} />

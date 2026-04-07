@@ -81,13 +81,12 @@ async function request<T>(
   endpoint: string,
   config?: RequestConfig,
 ): Promise<T> {
-  const { params, body, skipGuestToken: _, headers: __, ...fetchOpts } =
-    config ?? {};
+  const { params, body, ...rest } = config ?? {};
 
   const url = buildUrl(endpoint, params);
 
   const res = await fetch(url, {
-    ...fetchOpts,
+    ...rest,
     headers: buildHeaders(config),
     body: body ? JSON.stringify(body) : undefined,
   });
