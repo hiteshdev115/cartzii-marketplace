@@ -86,9 +86,20 @@ jobs:
             pm2 stop all 2>/dev/null || true
             pm2 delete all 2>/dev/null || true
 
+            echo "=== Kill any process on port 3003 ==="
+            lsof -ti:3003 | xargs kill -9 2>/dev/null || true
+            fuser -k 3003/tcp 2>/dev/null || true
+            sleep 1
+            echo "=== Port 3003 check after kill ==="
+            lsof -i:3003 || echo "Port 3003 is free"
+
             echo "=== Cleaning app directory ==="
             rm -rf ${{ env.APP_DIR }}
             mkdir -p ${{ env.APP_DIR }}
+
+            echo "=== Also cleaning old deploy dirs ==="
+            rm -rf /home/cartziidev/fresh-deploy 2>/dev/null || true
+            rm -rf /home/cartziidev/deploy 2>/dev/null || true
 
             echo "=== Cleaning /tmp deploy artifact ==="
             rm -f /tmp/deploy.tar.gz
@@ -135,10 +146,16 @@ jobs:
 
             echo "=== Starting PM2 ==="
             pm2 start ecosystem.config.js
-            sleep 3
+            sleep 5
             pm2 list
             echo "=== PM2 logs (last 30 lines) ==="
             pm2 logs ${{ env.PM2_APP_NAME }} --nostream --lines 30 || true
+
+            echo "=== Verify port 3003 is occupied by our process ==="
+            lsof -i:3003 || echo "WARNING: Nothing listening on port 3003!"
+
+            echo "=== Quick health check ==="
+            curl -s -o /dev/null -w "HTTP Status: %{http_code}\n" http://localhost:3003/ || echo "WARNING: Health check failed"
 
             pm2 save
             echo "=== Deployment complete ==="
