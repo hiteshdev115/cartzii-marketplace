@@ -16,7 +16,10 @@ export function FeaturedCategories() {
   useEffect(() => {
     fetchRootCategories()
       .then((data) => setCategories(data.slice(0, 8)))
-      .catch(() => setCategories([]));
+      .catch((err) => {
+        console.error('[FeaturedCategories] API error:', err);
+        setCategories([]);
+      });
   }, []);
 
   return (

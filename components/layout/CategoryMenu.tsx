@@ -70,7 +70,10 @@ export function CategoryMenu() {
         setCategories(data);
         hasFetched.current = true;
       })
-      .catch(() => setCategories([]))
+      .catch((err) => {
+        console.error('[CategoryMenu] API error:', err);
+        setCategories([]);
+      })
       .finally(() => setLoading(false));
   }, []);
 
