@@ -53,14 +53,18 @@ jobs:
       - name: Prepare deployment artifact
         run: |
           rm -rf deploy
-          mkdir -p deploy/.next
-          cp -r .next/standalone/* deploy/
+          mkdir -p deploy
+          # Use cp -a with dot-source to include hidden dirs (.next/, .env.production)
+          cp -a .next/standalone/. deploy/
           cp -r .next/static deploy/.next/static
           cp -r public deploy/public
           cp ecosystem.config.js deploy/
           echo "=== Deploy artifact contents ==="
           ls -la deploy/
+          echo "=== .next contents ==="
           ls -la deploy/.next/
+          echo "=== BUILD_ID ==="
+          cat deploy/.next/BUILD_ID
 
       - name: Create deployment archive
         run: |
@@ -82,24 +86,20 @@ jobs:
             echo "=== Current PM2 processes ==="
             pm2 list || true
 
-            echo "=== Stopping all PM2 processes ==="
-            pm2 stop all 2>/dev/null || true
-            pm2 delete all 2>/dev/null || true
+            echo "=== Stopping marketplace only ==="
+            pm2 stop ${{ env.PM2_APP_NAME }} 2>/dev/null || true
+            pm2 delete ${{ env.PM2_APP_NAME }} 2>/dev/null || true
 
             echo "=== Kill any process on port 3003 ==="
             lsof -ti:3003 | xargs kill -9 2>/dev/null || true
             fuser -k 3003/tcp 2>/dev/null || true
             sleep 1
-            echo "=== Port 3003 check after kill ==="
-            lsof -i:3003 || echo "Port 3003 is free"
 
-            echo "=== Cleaning app directory ==="
-            rm -rf ${{ env.APP_DIR }}
-            mkdir -p ${{ env.APP_DIR }}
-
-            echo "=== Also cleaning old deploy dirs ==="
-            rm -rf /home/cartziidev/fresh-deploy 2>/dev/null || true
-            rm -rf /home/cartziidev/deploy 2>/dev/null || true
+            echo "=== Cleaning app directory (from parent to handle ownership) ==="
+            cd /home/cartziidev
+            mv cartzii-marketplace cartzii-marketplace-old 2>/dev/null || true
+            rm -rf cartzii-marketplace-old &
+            mkdir -p cartzii-marketplace
 
             echo "=== Cleaning /tmp deploy artifact ==="
             rm -f /tmp/deploy.tar.gz
@@ -139,20 +139,23 @@ jobs:
 
             echo "=== Files after extraction ==="
             ls -la
+            echo "=== .next contents ==="
+            ls -la .next/
             echo "=== Build ID ==="
             cat .next/BUILD_ID || echo "ERROR: No BUILD_ID found"
 
             command -v pm2 >/dev/null 2>&1 || npm install -g pm2
 
-            echo "=== Starting PM2 ==="
+            echo "=== Starting marketplace ==="
             pm2 start ecosystem.config.js
             sleep 5
-            pm2 list
-            echo "=== PM2 logs (last 30 lines) ==="
-            pm2 logs ${{ env.PM2_APP_NAME }} --nostream --lines 30 || true
 
-            echo "=== Verify port 3003 is occupied by our process ==="
-            lsof -i:3003 || echo "WARNING: Nothing listening on port 3003!"
+            echo "=== Ensure API server is also running ==="
+            pm2 describe cartzii-api >/dev/null 2>&1 || (cd /home/cartziidev/cartzii-api-server && pm2 start ecosystem.config.cjs) || true
+
+            pm2 list
+            echo "=== PM2 logs (last 10 lines) ==="
+            pm2 logs ${{ env.PM2_APP_NAME }} --nostream --lines 10 || true
 
             echo "=== Quick health check ==="
             curl -s -o /dev/null -w "HTTP Status: %{http_code}\n" http://localhost:3003/ || echo "WARNING: Health check failed"
