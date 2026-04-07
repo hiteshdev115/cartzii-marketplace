@@ -2,11 +2,11 @@
 
 import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
-import { ChevronDown, ChevronRight } from 'lucide-react';
+import { ChevronDown, ChevronRight, Loader2 } from 'lucide-react';
 import { useTranslations, useLocale } from 'next-intl';
 import { buildCountryPath } from '@/config/countries';
 import { Category } from '@/types';
-import { allCategories } from '@/lib/mockData';
+import { fetchCategories } from '@/lib/api';
 import { cn } from '@/lib/utils';
 
 function SubcategoryPanel({
@@ -56,8 +56,23 @@ export function CategoryMenu() {
   const t = useTranslations('Nav');
   const locale = useLocale();
   const [open, setOpen] = useState(false);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loading, setLoading] = useState(false);
+  const hasFetched = useRef(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open || hasFetched.current) return;
+    setLoading(true);
+    fetchCategories()
+      .then((data) => {
+        setCategories(data);
+        hasFetched.current = true;
+      })
+      .catch(() => setCategories([]))
+      .finally(() => setLoading(false));
+  }, [open]);
 
   const handleEnter = () => {
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
@@ -103,11 +118,19 @@ export function CategoryMenu() {
 
       {open && (
         <div className="absolute top-full left-0 mt-1 bg-white rounded-xl shadow-xl border border-gray-100 z-50 min-w-[14rem]">
-          <SubcategoryPanel
-            categories={allCategories}
-            locale={locale}
-            onClose={() => setOpen(false)}
-          />
+          {loading ? (
+            <div className="flex items-center justify-center py-8 px-12">
+              <Loader2 className="w-5 h-5 animate-spin text-primary" />
+            </div>
+          ) : categories.length === 0 ? (
+            <p className="px-4 py-6 text-sm text-slate-400">No categories found</p>
+          ) : (
+            <SubcategoryPanel
+              categories={categories}
+              locale={locale}
+              onClose={() => setOpen(false)}
+            />
+          )}
         </div>
       )}
     </div>

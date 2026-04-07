@@ -1,15 +1,23 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import { buildCountryPath } from '@/config/countries';
-import { allCategories } from '@/lib/mockData';
+import { fetchRootCategories } from '@/lib/api';
+import { Category } from '@/types';
 import Link from 'next/link';
 import Image from 'next/image';
 
 export function FeaturedCategories() {
   const t = useTranslations('Home');
   const locale = useLocale();
-  const categories = allCategories.slice(0, 8);
+  const [categories, setCategories] = useState<Category[]>([]);
+
+  useEffect(() => {
+    fetchRootCategories()
+      .then((data) => setCategories(data.slice(0, 8)))
+      .catch(() => setCategories([]));
+  }, []);
 
   return (
     <section className="py-16 bg-white">

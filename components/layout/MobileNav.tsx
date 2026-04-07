@@ -1,11 +1,11 @@
 'use client';
 
-import { useState, useSyncExternalStore } from 'react';
+import { useState, useSyncExternalStore, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { Menu, X, Home, Tag, Sparkles, User, Heart, ChevronDown, ChevronRight, Globe, ShoppingBag } from 'lucide-react';
 import { useTranslations, useLocale } from 'next-intl';
 import { buildCountryPath, getCountryFromLocale, countries } from '@/config/countries';
-import { allCategories } from '@/lib/mockData';
+import { fetchCategories } from '@/lib/api';
 import { Category } from '@/types';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -135,6 +135,24 @@ export function MobileNav() {
   const locale = useLocale();
 
   const [categoriesOpen, setCategoriesOpen] = useState(false);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [catLoading, setCatLoading] = useState(false);
+  const hasFetchedCats = useRef(false);
+
+  const handleCategoriesToggle = () => {
+    const next = !categoriesOpen;
+    setCategoriesOpen(next);
+    if (next && !hasFetchedCats.current) {
+      setCatLoading(true);
+      fetchCategories()
+        .then((data) => {
+          setCategories(data);
+          hasFetchedCats.current = true;
+        })
+        .catch(() => setCategories([]))
+        .finally(() => setCatLoading(false));
+    }
+  };
 
   const emptySubscribe = () => () => {};
   const mounted = useSyncExternalStore(emptySubscribe, () => true, () => false);
@@ -190,7 +208,7 @@ export function MobileNav() {
                 {/* Expandable Categories */}
                 <li>
                   <button
-                    onClick={() => setCategoriesOpen(!categoriesOpen)}
+                    onClick={handleCategoriesToggle}
                     className="flex items-center gap-3 px-4 py-3 w-full rounded-xl text-slate-700 hover:bg-slate-100 transition-colors"
                   >
                     <Tag className="w-5 h-5 text-slate-400" />
@@ -204,12 +222,20 @@ export function MobileNav() {
                   </button>
                   {categoriesOpen && (
                     <div className="mt-1 mb-2">
-                      <MobileCategoryTree
-                        categories={allCategories}
-                        locale={locale}
-                        depth={0}
-                        onClose={() => setOpen(false)}
-                      />
+                      {catLoading ? (
+                        <div className="flex justify-center py-4">
+                          <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                        </div>
+                      ) : categories.length === 0 ? (
+                        <p className="px-4 py-3 text-sm text-slate-400">No categories found</p>
+                      ) : (
+                        <MobileCategoryTree
+                          categories={categories}
+                          locale={locale}
+                          depth={0}
+                          onClose={() => setOpen(false)}
+                        />
+                      )}
                     </div>
                   )}
                 </li>

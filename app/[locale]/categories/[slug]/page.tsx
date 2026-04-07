@@ -1,6 +1,8 @@
 import { getTranslations } from 'next-intl/server';
 import { notFound } from 'next/navigation';
-import { allCategories, getProductsByCategory } from '@/lib/mockData';
+import { getProductsByCategory } from '@/lib/mockData';
+import { fetchCategoryTree } from '@/lib/api';
+import { Category } from '@/types';
 import { ProductGrid } from '@/components/products/ProductGrid';
 import { ProductFilters } from '@/components/products/ProductFilters';
 import { ActiveFilterChips } from '@/components/products/ActiveFilterChips';
@@ -8,12 +10,25 @@ import { Breadcrumb } from '@/components/layout/Breadcrumb';
 import { buildCountryPath } from '@/config/countries';
 import { generateAlternates } from '@/lib/seo';
 
+/** Recursively find a category by slug in the tree */
+function findBySlug(cats: Category[], slug: string): Category | undefined {
+  for (const cat of cats) {
+    if (cat.slug === slug) return cat;
+    if (cat.subcategories) {
+      const found = findBySlug(cat.subcategories, slug);
+      if (found) return found;
+    }
+  }
+}
+
 export async function generateMetadata({ params }: { params: Promise<{ locale: string; slug: string }> }) {
   const { locale, slug } = await params;
-  const category = allCategories.find((c) => c.slug === slug);
+  let category: Category | undefined;
+  try {
+    const tree = await fetchCategoryTree();
+    category = findBySlug(tree, slug);
+  } catch { /* fall through */ }
   if (!category) return {};
-  // TODO: Use country-specific SEO from API: category.metatitle || `${category.name} - Cartzii`
-  // TODO: Use country-specific SEO from API: category.metadescription || category.description
   const alternates = generateAlternates(process.env.NEXT_PUBLIC_BASE_URL || 'https://cartzii.com', `/categories/${slug}`, locale);
   return {
     title: `${category.name} - Cartzii`,
@@ -24,7 +39,12 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
 
 export default async function CategoryPage({ params }: { params: Promise<{ locale: string; slug: string }> }) {
   const { locale, slug } = await params;
-  const category = allCategories.find((c) => c.slug === slug);
+
+  let category: Category | undefined;
+  try {
+    const tree = await fetchCategoryTree();
+    category = findBySlug(tree, slug);
+  } catch { /* fall through */ }
   if (!category) notFound();
 
   const t = await getTranslations({ locale, namespace: 'Products' });
