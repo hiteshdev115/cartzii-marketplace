@@ -19,7 +19,7 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
 
 export default function HomePage() {
   return (
-    <main data-build="20250407-v2">
+    <main>
       <HeroBanner />
       <FeaturedCategories />
       <TrendingProducts />
