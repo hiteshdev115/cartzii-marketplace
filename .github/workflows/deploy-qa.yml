@@ -38,22 +38,36 @@ jobs:
           NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
           NEXT_PUBLIC_GUEST_API_TOKEN: ${{ secrets.NEXT_PUBLIC_GUEST_API_TOKEN }}
 
+      - name: Verify build output
+        run: |
+          echo "=== Build ID ==="
+          cat .next/BUILD_ID
+          echo ""
+          echo "=== Standalone check ==="
+          ls -la .next/standalone/server.js
+          echo "=== Static chunks count ==="
+          find .next/static -name "*.js" | wc -l
+          echo "=== API endpoint in build ==="
+          grep -rl "api/v1/categories" .next/static/ || echo "WARNING: API endpoints not found in static chunks"
+
       - name: Prepare deployment artifact
         run: |
+          rm -rf deploy
           mkdir -p deploy/.next
-          # Copy standalone server
           cp -r .next/standalone/* deploy/
-          # Copy static assets
           cp -r .next/static deploy/.next/static
-          # Copy public assets
           cp -r public deploy/public
-          # Copy PM2 ecosystem config
           cp ecosystem.config.js deploy/
+          echo "=== Deploy artifact contents ==="
+          ls -la deploy/
+          ls -la deploy/.next/
 
       - name: Create deployment archive
-        run: cd deploy && tar czf ../deploy.tar.gz .
+        run: |
+          cd deploy && tar czf ../deploy.tar.gz .
+          ls -lh deploy.tar.gz
 
-      - name: Deploy to QA server via SSH
+      - name: Stop app and clean target
         uses: appleboy/ssh-action@v1.2.2
         with:
           host: ${{ secrets.QA_SSH_HOST }}
@@ -64,12 +78,18 @@ jobs:
             export NVM_DIR="$HOME/.nvm"
             [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
 
-            # Stop app and clean target
-            pm2 stop ${{ env.PM2_APP_NAME }} 2>/dev/null || true
-            pm2 delete ${{ env.PM2_APP_NAME }} 2>/dev/null || true
-            chmod -R u+rwx ${{ env.APP_DIR }} 2>/dev/null || true
+            echo "=== Current PM2 processes ==="
+            pm2 list || true
+
+            echo "=== Stopping all PM2 processes ==="
+            pm2 stop all 2>/dev/null || true
+            pm2 delete all 2>/dev/null || true
+
+            echo "=== Cleaning app directory ==="
             rm -rf ${{ env.APP_DIR }}
             mkdir -p ${{ env.APP_DIR }}
+            echo "=== Directory cleaned ==="
+            ls -la ${{ env.APP_DIR }}
 
       - name: Upload deployment archive
         uses: appleboy/scp-action@v0.1.7
@@ -79,7 +99,7 @@ jobs:
           password: ${{ secrets.QA_SSH_PASSWORD }}
           port: 22
           source: "deploy.tar.gz"
-          target: "/tmp"
+          target: ${{ env.APP_DIR }}
 
       - name: Extract and start application
         uses: appleboy/ssh-action@v1.2.2
@@ -93,13 +113,26 @@ jobs:
             [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
 
             cd ${{ env.APP_DIR }}
-            tar xzf /tmp/deploy.tar.gz
-            rm -f /tmp/deploy.tar.gz
 
-            # Install PM2 globally if not present
+            echo "=== Files before extraction ==="
+            ls -la
+
+            tar xzf deploy.tar.gz
+            rm -f deploy.tar.gz
+
+            echo "=== Files after extraction ==="
+            ls -la
+            echo "=== Build ID ==="
+            cat .next/BUILD_ID || echo "ERROR: No BUILD_ID found"
+
             command -v pm2 >/dev/null 2>&1 || npm install -g pm2
 
+            echo "=== Starting PM2 ==="
             pm2 start ecosystem.config.js
-            pm2 save
+            sleep 2
+            pm2 list
+            echo "=== PM2 logs (last 20 lines) ==="
+            pm2 logs ${{ env.PM2_APP_NAME }} --nostream --lines 20 || true
 
-            echo "Deployment to qa.cartzii.com complete!"
+            pm2 save
+            echo "=== Deployment complete ==="
