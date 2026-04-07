@@ -143,6 +143,7 @@ export async function fetchCategoryById(
   };
 }
 
+
 /**
  * Breadcrumb trail from root to a given category.
  * Used by: Breadcrumb on category pages.
