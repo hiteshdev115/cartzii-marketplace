@@ -1,7 +1,7 @@
 'use client';
 
 import Image from 'next/image';
-import { useState, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -12,11 +12,17 @@ interface ProductGalleryProps {
 
 export function ProductGallery({ images, productName }: ProductGalleryProps) {
   const [selected, setSelected] = useState(0);
+  const prevImagesRef = useRef(images);
 
   // Reset to first image when the images array changes (e.g. variant switch)
-  useEffect(() => {
-    setSelected(0);
-  }, [images]);
+  if (prevImagesRef.current !== images) {
+    prevImagesRef.current = images;
+    if (selected >= images.length) {
+      setSelected(0);
+    } else if (selected !== 0) {
+      setSelected(0);
+    }
+  }
 
   const prev = () => setSelected((i) => (i === 0 ? images.length - 1 : i - 1));
   const next = () => setSelected((i) => (i === images.length - 1 ? 0 : i + 1));

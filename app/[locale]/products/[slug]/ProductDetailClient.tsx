@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { getCountryFromLocale, buildCountryPath, getCountryConfig } from '@/config/countries';
 import { fetchProductBySlug } from '@/lib/api/products';
@@ -24,12 +24,15 @@ export function ProductDetailClient({ slug }: ProductDetailClientProps) {
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [activeImages, setActiveImages] = useState<string[]>([]);
+  const fetchIdRef = useRef(0);
 
   useEffect(() => {
     const country = getCountryFromLocale(locale);
-    setLoading(true);
+    const id = ++fetchIdRef.current;
+    let cancelled = false;
     fetchProductBySlug(slug, country)
       .then((result) => {
+        if (cancelled || id !== fetchIdRef.current) return;
         if (!result) {
           setNotFound(true);
         } else {
@@ -38,7 +41,10 @@ export function ProductDetailClient({ slug }: ProductDetailClientProps) {
           setActiveImages(result.product.images);
         }
       })
-      .finally(() => setLoading(false));
+      .finally(() => {
+        if (!cancelled && id === fetchIdRef.current) setLoading(false);
+      });
+    return () => { cancelled = true; };
   }, [slug, locale]);
 
   const handleVariantChange = useCallback((images: string[], price: number, salePrice?: number, discount?: number) => {
