@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import { Heart, ShoppingCart, Truck, RotateCcw, Shield } from 'lucide-react';
 import { Product } from '@/types';
@@ -15,9 +15,10 @@ import { useHydrated } from '@/hooks/useHydration';
 
 interface ProductInfoProps {
   product: Product;
+  onVariantChange?: (images: string[], price: number, salePrice?: number, discount?: number) => void;
 }
 
-export function ProductInfo({ product }: ProductInfoProps) {
+export function ProductInfo({ product, onVariantChange }: ProductInfoProps) {
   const t = useTranslations('ProductDetail');
   const locale = useLocale();
   const addToCart = useCartStore((s) => s.addItem);
@@ -30,6 +31,27 @@ export function ProductInfo({ product }: ProductInfoProps) {
   const [selectedSize, setSelectedSize] = useState(product.sizes?.[0]);
   const [quantity, setQuantity] = useState(1);
 
+  const findMatchingVariant = useCallback((color?: string, size?: string) => {
+    if (!product.detailVariants?.length) return undefined;
+    // Try exact match (color + size)
+    let match = product.detailVariants.find(
+      (v) => (!color || v.color === color) && (!size || v.size === size),
+    );
+    // Fallback: match by color only
+    if (!match && color) {
+      match = product.detailVariants.find((v) => v.color === color);
+    }
+    return match;
+  }, [product.detailVariants]);
+
+  // Notify parent when variant selection changes
+  useEffect(() => {
+    const variant = findMatchingVariant(selectedColor, selectedSize);
+    if (variant && onVariantChange) {
+      onVariantChange(variant.images, variant.price, variant.salePrice, variant.discount);
+    }
+  }, [selectedColor, selectedSize, findMatchingVariant, onVariantChange]);
+
   const handleAddToCart = () => {
     addToCart(product, quantity, selectedColor, selectedSize);
   };
@@ -39,7 +61,6 @@ export function ProductInfo({ product }: ProductInfoProps) {
       {/* Brand & Badges */}
       <div className="flex items-center gap-2">
         <span className="text-sm text-slate-500">{product.brand}</span>
-        {product.isNew && <Badge variant="new">NEW</Badge>}
         {product.onSale && <Badge variant="sale">SALE</Badge>}
       </div>
 

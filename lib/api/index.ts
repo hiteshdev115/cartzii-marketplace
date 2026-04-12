@@ -10,3 +10,4 @@ export {
   fetchCategoryBreadcrumb,
 } from './categories';
 export type { APIBreadcrumbItem } from './categories';
+export { fetchAllProducts, fetchProductBySlug } from './products';

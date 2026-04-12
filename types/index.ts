@@ -27,6 +27,8 @@ export interface Product {
   isBestSeller: boolean;
   specifications: Record<string, string>;
   createdAt: string;
+  /** Full variant details – populated on detail page only */
+  detailVariants?: DetailVariant[];
 }
 
 export interface ProductVariant {
@@ -34,6 +36,21 @@ export interface ProductVariant {
   value: string;
   hex?: string;
   image?: string;
+}
+
+/** Full variant data used on the product detail page */
+export interface DetailVariant {
+  variantId: string;
+  sku: string;
+  color?: string;
+  colorHex?: string;
+  size?: string;
+  images: string[];
+  price: number;
+  salePrice?: number;
+  discount?: number;
+  stockCount: number;
+  inStock: boolean;
 }
 
 export interface Category {

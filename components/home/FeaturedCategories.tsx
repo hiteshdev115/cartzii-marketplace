@@ -37,13 +37,17 @@ export function FeaturedCategories() {
               className="group card-interactive p-6 flex flex-col items-center text-center"
             >
               <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
-                <Image
-                  src={cat.image}
-                  alt={cat.name}
-                  width={40}
-                  height={40}
-                  className="rounded-lg object-cover"
-                />
+                {cat.image ? (
+                  <Image
+                    src={cat.image}
+                    alt={cat.name}
+                    width={40}
+                    height={40}
+                    className="rounded-lg object-cover"
+                  />
+                ) : (
+                  <span className="text-2xl font-bold text-primary/60">{cat.name.charAt(0)}</span>
+                )}
               </div>
               <h3 className="text-sm font-semibold text-slate-900">{cat.name}</h3>
               <p className="text-xs text-slate-500 mt-1">{cat.productCount} products</p>

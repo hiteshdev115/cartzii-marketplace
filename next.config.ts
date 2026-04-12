@@ -9,6 +9,8 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       { protocol: "https", hostname: "images.unsplash.com" },
       { protocol: "https", hostname: "placehold.co" },
+      { protocol: "https", hostname: "staging-api.cartzii.com" },
+      { protocol: "https", hostname: "pub-e0f1bdc809544c0cb31dcf32dd668394.r2.dev" },
     ],
   },
 };

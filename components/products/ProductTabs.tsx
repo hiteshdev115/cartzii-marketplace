@@ -50,9 +50,12 @@ export function ProductTabs({ product, reviews }: ProductTabsProps) {
       {/* Tab content */}
       <div className="py-6">
         {activeTab === 'description' && (
-          <div id="panel-description" role="tabpanel" className="prose prose-slate max-w-none">
-            <p className="text-slate-600 leading-relaxed">{product.description}</p>
-          </div>
+          <div
+            id="panel-description"
+            role="tabpanel"
+            className="prose prose-slate max-w-none prose-li:text-slate-600 prose-p:text-slate-600 prose-ul:space-y-1"
+            dangerouslySetInnerHTML={{ __html: product.description }}
+          />
         )}
 
         {activeTab === 'specifications' && (

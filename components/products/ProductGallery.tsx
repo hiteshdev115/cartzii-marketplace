@@ -1,7 +1,8 @@
 'use client';
 
 import Image from 'next/image';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface ProductGalleryProps {
@@ -12,10 +13,18 @@ interface ProductGalleryProps {
 export function ProductGallery({ images, productName }: ProductGalleryProps) {
   const [selected, setSelected] = useState(0);
 
+  // Reset to first image when the images array changes (e.g. variant switch)
+  useEffect(() => {
+    setSelected(0);
+  }, [images]);
+
+  const prev = () => setSelected((i) => (i === 0 ? images.length - 1 : i - 1));
+  const next = () => setSelected((i) => (i === images.length - 1 ? 0 : i + 1));
+
   return (
     <div className="space-y-4">
-      {/* Main image */}
-      <div className="relative aspect-square overflow-hidden rounded-2xl bg-slate-100">
+      {/* Main image with arrows */}
+      <div className="relative aspect-square overflow-hidden rounded-2xl bg-slate-100 group">
         <Image
           src={images[selected]}
           alt={`${productName} - view ${selected + 1}`}
@@ -24,6 +33,40 @@ export function ProductGallery({ images, productName }: ProductGalleryProps) {
           className="object-cover"
           priority
         />
+
+        {images.length > 1 && (
+          <>
+            <button
+              onClick={prev}
+              className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/80 backdrop-blur-sm shadow-md flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white"
+              aria-label="Previous image"
+            >
+              <ChevronLeft className="w-5 h-5 text-slate-700" />
+            </button>
+            <button
+              onClick={next}
+              className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/80 backdrop-blur-sm shadow-md flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white"
+              aria-label="Next image"
+            >
+              <ChevronRight className="w-5 h-5 text-slate-700" />
+            </button>
+
+            {/* Dot indicators */}
+            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
+              {images.map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => setSelected(i)}
+                  className={cn(
+                    'w-2 h-2 rounded-full transition-all',
+                    selected === i ? 'bg-white w-4' : 'bg-white/50 hover:bg-white/80'
+                  )}
+                  aria-label={`Go to image ${i + 1}`}
+                />
+              ))}
+            </div>
+          </>
+        )}
       </div>
 
       {/* Thumbnails */}

@@ -41,7 +41,7 @@ export function ProductCard({ product }: ProductCardProps) {
           {product.onSale && product.discount && (
             <span className="badge-sale absolute top-3 left-3">-{product.discount}%</span>
           )}
-          {product.isNew && <span className="badge-new absolute top-3 right-3">NEW</span>}
+
         </div>
       </Link>
 
@@ -60,7 +60,7 @@ export function ProductCard({ product }: ProductCardProps) {
             {product.name}
           </h3>
         </Link>
-        <StarRating value={product.rating} size="sm" />
+        <StarRating value={product.rating} size="sm" reviewCount={product.reviewCount} />
         <div className="flex items-center gap-2 mt-2">
           <span className="text-lg font-bold text-primary">
             {formatPrice(product.salePrice || product.price, locale)}
