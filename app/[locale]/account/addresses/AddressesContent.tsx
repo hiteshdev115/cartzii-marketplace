@@ -26,9 +26,9 @@ export function AddressesContent() {
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [toast, setToast] = useState<{ message: string; type: ToastType } | null>(null);
 
-  function showToast(message: string, type: ToastType) {
+  const showToast = useCallback((message: string, type: ToastType) => {
     setToast({ message, type });
-  }
+  }, []);
 
   useEffect(() => {
     if (userId) fetchAddresses(Number(userId));

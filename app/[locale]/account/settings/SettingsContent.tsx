@@ -8,6 +8,7 @@ import { Select } from '@/components/ui/Select';
 import { Button } from '@/components/ui/Button';
 import { Toast, type ToastType } from '@/components/ui/Toast';
 import { useState, useEffect, useRef } from 'react';
+import Image from 'next/image';
 import { User, MapPin, ChevronRight, Camera, Lock } from 'lucide-react';
 import { useAddressStore } from '@/stores/addressStore';
 import { useAuthStore } from '@/stores/authStore';
@@ -54,7 +55,7 @@ export function SettingsContent() {
   });
   const [passwordErrors, setPasswordErrors] = useState<Record<string, string>>({});
   const [savingPassword, setSavingPassword] = useState(false);
-  const [loadingProfile, setLoadingProfile] = useState(true);
+  const [loadingProfile, setLoadingProfile] = useState(!!userId);
 
   useEffect(() => {
     if (userId) fetchAddresses(Number(userId));
@@ -62,7 +63,7 @@ export function SettingsContent() {
 
   // Fetch full user profile from API on mount
   useEffect(() => {
-    if (!userId) { setLoadingProfile(false); return; }
+    if (!userId) return;
     let cancelled = false;
     (async () => {
       const result = await fetchUserProfile(Number(userId));
@@ -225,7 +226,7 @@ export function SettingsContent() {
             <div className="relative">
               <div className="w-20 h-20 rounded-full bg-slate-100 flex items-center justify-center overflow-hidden border-2 border-slate-200">
                 {previewUrl ? (
-                  <img src={previewUrl} alt="Profile" className="w-full h-full object-cover" />
+                  <Image src={previewUrl} alt="Profile" className="w-full h-full object-cover" width={80} height={80} unoptimized />
                 ) : (
                   <User className="w-8 h-8 text-slate-400" />
                 )}

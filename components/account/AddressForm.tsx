@@ -7,7 +7,6 @@ import { Select } from '@/components/ui/Select';
 import { Button } from '@/components/ui/Button';
 import { addressSchema, type AddressFormData } from '@/lib/validators';
 import { fetchAllCountries, fetchStatesByCountry } from '@/lib/api';
-import type { CountryOption, StateOption } from '@/lib/api';
 import { getCountryFromLocale } from '@/config/countries';
 import type { ApiAddress } from '@/types';
 import { X } from 'lucide-react';
@@ -69,10 +68,7 @@ export function AddressForm({ address, onSubmit, onCancel, loading }: AddressFor
 
   // ---- Fetch states when country changes ----
   useEffect(() => {
-    if (!form.country) {
-      setStateOptions([]);
-      return;
-    }
+    if (!form.country) return;
     let cancelled = false;
     async function load() {
       setLoadingStates(true);
@@ -92,7 +88,10 @@ export function AddressForm({ address, onSubmit, onCancel, loading }: AddressFor
     setForm((prev) => {
       const next = { ...prev, [field]: value };
       // Reset state when country changes
-      if (field === 'country') next.state = '';
+      if (field === 'country') {
+        next.state = '';
+        if (!value) setStateOptions([]);
+      }
       return next;
     });
     if (errors[field]) setErrors((prev) => { const next = { ...prev }; delete next[field]; return next; });
