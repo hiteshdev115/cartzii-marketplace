@@ -8,14 +8,18 @@ import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { Breadcrumb } from '@/components/layout/Breadcrumb';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { buildCountryPath } from '@/config/countries';
-import { UserPlus, Eye, EyeOff } from 'lucide-react';
+import { api, ApiError } from '@/lib/api/client';
+import { UserPlus, Eye, EyeOff, Phone } from 'lucide-react';
 import { useState } from 'react';
 
 export function RegisterForm() {
   const t = useTranslations('Auth');
   const locale = useLocale();
+  const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
+  const [apiError, setApiError] = useState<string | null>(null);
 
   const {
     register,
@@ -25,10 +29,26 @@ export function RegisterForm() {
     resolver: zodResolver(registerSchema),
   });
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const onSubmit = async (_data: RegisterFormData) => {
-    await new Promise((r) => setTimeout(r, 1000));
-    alert('Account created! (demo)');
+  const onSubmit = async (data: RegisterFormData) => {
+    setApiError(null);
+    try {
+      await api.post('/api/v1/register', {
+        firstName: data.fullName,
+        email: data.email,
+        password: data.password,
+        phone: data.phone,
+      });
+      router.push(buildCountryPath(locale, '/auth/login') + '?registered=true');
+    } catch (error) {
+      if (error instanceof ApiError) {
+        const body = error.body as Record<string, unknown> | null;
+        setApiError(
+          (body?.message as string) || t('registrationFailed'),
+        );
+      } else {
+        setApiError(t('registrationFailed'));
+      }
+    }
   };
 
   return (
@@ -38,9 +58,25 @@ export function RegisterForm() {
         <h1 className="text-2xl font-bold text-slate-900 mb-2">{t('createAccount')}</h1>
         <p className="text-sm text-slate-500 mb-6">{t('registerSubtitle')}</p>
 
+        {apiError && (
+          <div className="mb-4 rounded-lg bg-red-50 border border-red-200 p-3 text-sm text-red-700">
+            {apiError}
+          </div>
+        )}
+
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <Input label={t('fullName')} {...register('fullName')} error={errors.fullName?.message} />
           <Input label={t('email')} type="email" {...register('email')} error={errors.email?.message} autoComplete="email" />
+          <div className="relative">
+            <Input
+              label={t('phone')}
+              type="tel"
+              {...register('phone')}
+              error={errors.phone?.message}
+              autoComplete="tel"
+            />
+            <Phone className="absolute right-3 top-9 w-4 h-4 text-slate-400" />
+          </div>
           <div className="relative">
             <Input
               label={t('password')}

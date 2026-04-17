@@ -1,13 +1,14 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Search, ShoppingCart, Heart, User } from 'lucide-react';
+import { Search, ShoppingCart, Heart, User, LogOut, Package, Star, Settings } from 'lucide-react';
 import { useTranslations, useLocale } from 'next-intl';
 import { buildCountryPath } from '@/config/countries';
 import { useCartStore } from '@/stores/cartStore';
 import { useWishlistStore } from '@/stores/wishlistStore';
+import { useAuthStore } from '@/stores/authStore';
 import { AnnouncementBar } from './AnnouncementBar';
 import { MobileNav } from './MobileNav';
 import { CountrySelector } from './CountrySelector';
@@ -23,9 +24,15 @@ export function Header() {
   const [visible, setVisible] = useState(true);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement>(null);
   const hydrated = useHydrated();
   const cartCount = useCartStore((s) => s.items.reduce((sum, item) => sum + item.quantity, 0));
   const wishlistCount = useWishlistStore((s) => s.items.length);
+  const token = useAuthStore((s) => s.token);
+  const clearTokens = useAuthStore((s) => s.clearTokens);
+  const userDisplayName = useAuthStore((s) => s.displayName());
+  const isLoggedIn = hydrated && !!token;
 
   useEffect(() => {
     let lastScrollY = window.scrollY;
@@ -37,6 +44,16 @@ export function Header() {
     };
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
+        setUserMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
   const navBeforeCategories = [
@@ -152,13 +169,73 @@ export function Header() {
               </Link>
 
               {/* Account */}
-              <Link
-                href={buildCountryPath(locale, '/auth/login')}
-                className="p-2 hover:bg-slate-100 rounded-lg"
-                aria-label={t('account')}
-              >
-                <User className="w-5 h-5 text-slate-600" />
-              </Link>
+              <div className="relative" ref={userMenuRef}>
+                <button
+                  type="button"
+                  className="p-2 hover:bg-slate-100 rounded-lg"
+                  aria-label={t('account')}
+                  aria-haspopup="true"
+                  aria-expanded={userMenuOpen}
+                  onClick={() => setUserMenuOpen(!userMenuOpen)}
+                >
+                  <User className="w-5 h-5 text-slate-600" />
+                </button>
+                {userMenuOpen && (
+                  <div className="absolute right-0 top-full pt-1 z-50">
+                    <div className="w-48 bg-white rounded-xl border border-gray-100 shadow-lg py-2">
+                    {isLoggedIn ? (
+                      <>
+                        {userDisplayName && (
+                          <>
+                            <div className="px-4 py-2 text-sm font-medium text-slate-900 truncate">
+                              {userDisplayName}
+                            </div>
+                            <div className="border-t border-gray-100 my-1" />
+                          </>
+                        )}
+                        <Link
+                          href={buildCountryPath(locale, '/account/orders')}
+                          className="flex items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 hover:text-primary transition-colors"
+                          onClick={() => setUserMenuOpen(false)}
+                        >
+                          <Package className="w-4 h-4" /> {t('orders')}
+                        </Link>
+                        <Link
+                          href={buildCountryPath(locale, '/account#reviews')}
+                          className="flex items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 hover:text-primary transition-colors"
+                          onClick={() => setUserMenuOpen(false)}
+                        >
+                          <Star className="w-4 h-4" /> {t('reviews')}
+                        </Link>
+                        <Link
+                          href={buildCountryPath(locale, '/account/settings')}
+                          className="flex items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 hover:text-primary transition-colors"
+                          onClick={() => setUserMenuOpen(false)}
+                        >
+                          <Settings className="w-4 h-4" /> {t('accountSettings')}
+                        </Link>
+                        <div className="border-t border-gray-100 my-1" />
+                        <button
+                          type="button"
+                          onClick={() => { clearTokens(); setUserMenuOpen(false); }}
+                          className="flex items-center gap-2 w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                        >
+                          <LogOut className="w-4 h-4" /> {t('signOut')}
+                        </button>
+                      </>
+                    ) : (
+                      <Link
+                        href={buildCountryPath(locale, '/auth/login')}
+                        className="flex items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 hover:text-primary transition-colors"
+                        onClick={() => setUserMenuOpen(false)}
+                      >
+                        <User className="w-4 h-4" /> {t('signIn')}
+                      </Link>
+                    )}
+                  </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 

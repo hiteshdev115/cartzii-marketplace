@@ -36,6 +36,10 @@
     "wishlist": "Wishlist",
     "account": "Account",
     "signIn": "Sign In",
+    "signOut": "Sign Out",
+    "orders": "Orders",
+    "reviews": "Reviews",
+    "accountSettings": "Account Settings",
     "menu": "Menu"
   },
   "Announcement": {
@@ -252,6 +256,7 @@
     "password": "Password",
     "confirmPassword": "Confirm Password",
     "fullName": "Full Name",
+    "phone": "Mobile Phone Number",
     "rememberMe": "Remember me",
     "forgotPassword": "Forgot Password?",
     "login": "Sign In",
@@ -266,7 +271,19 @@
     "agreeTerms": "I agree to the <terms>Terms of Service</terms> and <privacy>Privacy Policy</privacy>",
     "termsOfService": "Terms of Service",
     "privacyPolicy": "Privacy Policy",
-    "passwordRequirements": "Password must be at least 8 characters with an uppercase letter, a number, and a special character."
+    "passwordRequirements": "Password must be at least 6 characters.",
+    "registrationSuccess": "Account created successfully! Please sign in.",
+    "registrationFailed": "Registration failed. Please try again.",
+    "invalidCredentials": "Invalid email or password. Please try again.",
+    "accountNotVerified": "Your account is not verified. Please verify your email before logging in.",
+    "loginFailed": "Login failed. Please try again.",
+    "forgotPasswordSubtitle": "Enter your email address and we'll send you a link to reset your password.",
+    "sendResetLink": "Send Reset Link",
+    "sending": "Sending...",
+    "forgotPasswordSuccess": "Reset link sent!",
+    "forgotPasswordCheckInbox": "Check your email inbox for a link to reset your password.",
+    "forgotPasswordFailed": "Failed to send reset link. Please try again.",
+    "backToLogin": "Back to Sign In"
   },
   "Account": {
     "dashboard": "My Account",

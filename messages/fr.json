@@ -36,6 +36,10 @@
     "wishlist": "Liste de souhaits",
     "account": "Compte",
     "signIn": "Se Connecter",
+    "signOut": "Se Déconnecter",
+    "orders": "Commandes",
+    "reviews": "Avis",
+    "accountSettings": "Paramètres du Compte",
     "menu": "Menu"
   },
   "Announcement": {
@@ -252,6 +256,7 @@
     "password": "Mot de Passe",
     "confirmPassword": "Confirmer le Mot de Passe",
     "fullName": "Nom Complet",
+    "phone": "Numéro de Téléphone Mobile",
     "rememberMe": "Se souvenir de moi",
     "forgotPassword": "Mot de passe oublié ?",
     "login": "Se Connecter",
@@ -266,7 +271,19 @@
     "agreeTerms": "J'accepte les <terms>Conditions d'utilisation</terms> et la <privacy>Politique de confidentialité</privacy>",
     "termsOfService": "Conditions d'Utilisation",
     "privacyPolicy": "Politique de Confidentialité",
-    "passwordRequirements": "Le mot de passe doit contenir au moins 8 caractères avec une majuscule, un chiffre et un caractère spécial."
+    "passwordRequirements": "Le mot de passe doit contenir au moins 6 caractères.",
+    "registrationSuccess": "Compte créé avec succès ! Veuillez vous connecter.",
+    "registrationFailed": "L'inscription a échoué. Veuillez réessayer.",
+    "invalidCredentials": "Email ou mot de passe incorrect. Veuillez réessayer.",
+    "accountNotVerified": "Votre compte n'est pas vérifié. Veuillez vérifier votre email avant de vous connecter.",
+    "loginFailed": "La connexion a échoué. Veuillez réessayer.",
+    "forgotPasswordSubtitle": "Entrez votre adresse e-mail et nous vous enverrons un lien pour réinitialiser votre mot de passe.",
+    "sendResetLink": "Envoyer le lien de réinitialisation",
+    "sending": "Envoi en cours...",
+    "forgotPasswordSuccess": "Lien de réinitialisation envoyé !",
+    "forgotPasswordCheckInbox": "Vérifiez votre boîte de réception pour un lien de réinitialisation de mot de passe.",
+    "forgotPasswordFailed": "Échec de l'envoi du lien. Veuillez réessayer.",
+    "backToLogin": "Retour à la connexion"
   },
   "Account": {
     "dashboard": "Mon Compte",

@@ -50,6 +50,18 @@ function buildUrl(
   return url.toString();
 }
 
+function getAuthToken(): string | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = localStorage.getItem('cartzii-auth');
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    return parsed?.state?.token ?? null;
+  } catch {
+    return null;
+  }
+}
+
 function buildHeaders(config?: RequestConfig): HeadersInit {
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
@@ -59,6 +71,12 @@ function buildHeaders(config?: RequestConfig): HeadersInit {
   // Attach guest token by default; skip for authenticated endpoints
   if (!config?.skipGuestToken && GUEST_TOKEN) {
     headers['x-guest-token'] = GUEST_TOKEN;
+  }
+
+  // Auto-attach auth token if available
+  const authToken = getAuthToken();
+  if (authToken) {
+    headers['Authorization'] = `Bearer ${authToken}`;
   }
 
   // Merge any caller-supplied headers (e.g. Authorization bearer)
