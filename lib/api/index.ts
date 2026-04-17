@@ -11,3 +11,13 @@ export {
 } from './categories';
 export type { APIBreadcrumbItem } from './categories';
 export { fetchAllProducts, fetchProductBySlug } from './products';
+export {
+  fetchUserAddresses,
+  fetchAddress,
+  createAddress,
+  updateAddress,
+  deleteAddress,
+} from './addresses';
+export { fetchAllCountries, fetchStatesByCountry } from './geo';
+export type { CountryOption, StateOption } from './geo';
+export { fetchUserProfile, updateUserProfile } from './users';

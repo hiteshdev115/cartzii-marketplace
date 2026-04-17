@@ -42,8 +42,20 @@ export const newsletterSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
 });
 
+export const addressSchema = z.object({
+  street: z.string().min(1, 'Street address is required').max(255),
+  city: z.string().min(1, 'City is required').max(100),
+  state: z.string().min(1, 'State/Province is required').max(100),
+  postal_code: z.string().min(1, 'Postal code is required').max(20),
+  country: z.string().min(1, 'Country is required').max(100),
+  is_primary: z.boolean().optional(),
+  is_shipping: z.boolean().optional(),
+  is_billing: z.boolean().optional(),
+});
+
 export type ShippingFormData = z.infer<typeof shippingSchema>;
 export type LoginFormData = z.infer<typeof loginSchema>;
 export type RegisterFormData = z.infer<typeof registerSchema>;
 export type ReviewFormData = z.infer<typeof reviewSchema>;
 export type NewsletterFormData = z.infer<typeof newsletterSchema>;
+export type AddressFormData = z.infer<typeof addressSchema>;
