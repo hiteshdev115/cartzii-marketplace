@@ -13,6 +13,7 @@ import { AnnouncementBar } from './AnnouncementBar';
 import { MobileNav } from './MobileNav';
 import { CountrySelector } from './CountrySelector';
 import { CategoryMenu } from './CategoryMenu';
+import { SearchDropdown } from './SearchDropdown';
 import { cn } from '@/lib/utils';
 import { useHydrated } from '@/hooks/useHydration';
 
@@ -22,10 +23,11 @@ export function Header() {
   const locale = useLocale();
   const [scrolled, setScrolled] = useState(false);
   const [visible, setVisible] = useState(true);
-  const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [searchFocused, setSearchFocused] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
+  const searchDesktopRef = useRef<HTMLDivElement>(null);
   const hydrated = useHydrated();
   const cartCount = useCartStore((s) => s.items.reduce((sum, item) => sum + item.quantity, 0));
   const wishlistCount = useWishlistStore((s) => s.items.length);
@@ -51,6 +53,9 @@ export function Header() {
       if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
         setUserMenuOpen(false);
       }
+      if (searchDesktopRef.current && !searchDesktopRef.current.contains(e.target as Node)) {
+        setSearchFocused(false);
+      }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
@@ -68,8 +73,14 @@ export function Header() {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
+      setSearchFocused(false);
       window.location.href = buildCountryPath(locale, `/search?q=${encodeURIComponent(searchQuery.trim())}`);
     }
+  };
+
+  const handleSearchSelect = () => {
+    setSearchFocused(false);
+    setSearchQuery('');
   };
 
   return (
@@ -77,28 +88,216 @@ export function Header() {
       <AnnouncementBar />
       <div
         className={cn(
-          'fixed top-0 left-0 right-0 z-40 bg-white/80 backdrop-blur-lg border-b border-gray-100 transition-all duration-300',
+          'fixed top-0 left-0 right-0 z-40 bg-white border-b border-gray-200 transition-all duration-300',
           scrolled ? 'shadow-sm' : '',
           visible ? 'translate-y-0' : '-translate-y-full'
         )}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
-          <div className="flex items-center justify-between h-16 gap-4">
-            {/* Left: Mobile menu + Logo */}
-            <div className="flex items-center gap-3">
+
+          {/* ===== MOBILE HEADER (< lg) ===== */}
+          <div className="lg:hidden">
+            {/* Mobile Row 1: Hamburger | Logo (centered) | Icons */}
+            <div className="flex items-center justify-between h-12">
               <MobileNav />
-              <Link href={buildCountryPath(locale, '/')} className="flex items-center gap-2">
-                <Image src="/assets/cartzii-logo-wt-bg.png" alt="Cartzii" width={150} height={40} className="object-contain" priority />
+              <Link href={buildCountryPath(locale, '/')} className="absolute left-1/2 -translate-x-1/2">
+                <Image src="/assets/cartzii-logo-wt-bg.png" alt="Cartzii" width={100} height={28} className="object-contain" priority />
               </Link>
+              <div className="flex items-center gap-0.5">
+                <Link
+                  href={buildCountryPath(locale, '/account/wishlist')}
+                  className="relative p-2 hover:bg-slate-100 rounded-lg hidden sm:flex"
+                  aria-label={`${t('wishlist')}${hydrated && wishlistCount > 0 ? ` (${wishlistCount})` : ''}`}
+                >
+                  <Heart className="w-5 h-5 text-slate-600" />
+                  {hydrated && wishlistCount > 0 && (
+                    <span className="absolute -top-0.5 -right-0.5 bg-primary text-white text-[10px] font-bold w-4.5 h-4.5 rounded-full flex items-center justify-center">
+                      {wishlistCount}
+                    </span>
+                  )}
+                </Link>
+                <Link
+                  href={buildCountryPath(locale, '/cart')}
+                  className="relative p-2 hover:bg-slate-100 rounded-lg"
+                  aria-label={`${t('cart')}${hydrated && cartCount > 0 ? ` (${cartCount})` : ''}`}
+                >
+                  <ShoppingCart className="w-5 h-5 text-slate-600" />
+                  {hydrated && cartCount > 0 && (
+                    <span className="absolute -top-0.5 -right-0.5 bg-primary text-white text-[10px] font-bold w-4.5 h-4.5 rounded-full flex items-center justify-center">
+                      {cartCount}
+                    </span>
+                  )}
+                </Link>
+              </div>
             </div>
 
-            {/* Center: Nav links (desktop) */}
-            <nav className="hidden lg:flex items-center gap-1" role="navigation" aria-label="Main navigation">
+            {/* Mobile Row 2: Full-width search bar */}
+            <div className="pb-2.5" ref={searchDesktopRef}>
+              <div className="relative">
+                <form onSubmit={handleSearch} className="relative flex items-center">
+                  <input
+                    type="search"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onFocus={() => setSearchFocused(true)}
+                    placeholder={t('searchPlaceholder')}
+                    className="w-full pl-10 pr-4 py-2.5 text-sm border border-gray-300 rounded-full bg-slate-50 focus:bg-white focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all outline-none placeholder:text-slate-400"
+                  />
+                  <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" aria-hidden="true" />
+                </form>
+                <SearchDropdown
+                  query={searchQuery}
+                  onSelect={handleSearchSelect}
+                  visible={searchFocused}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* ===== DESKTOP HEADER (>= lg) ===== */}
+          <div className="hidden lg:block">
+            {/* Desktop Row 1: Logo | Search | Icons */}
+            <div className="flex items-center h-16 gap-4">
+              <Link href={buildCountryPath(locale, '/')} className="flex items-center shrink-0">
+                <Image src="/assets/cartzii-logo-wt-bg.png" alt="Cartzii" width={120} height={34} className="object-contain" priority />
+              </Link>
+
+              {/* Search bar — grows to fill space */}
+              <div className="flex-1 min-w-0" ref={searchDesktopRef}>
+                <div className="relative">
+                  <form onSubmit={handleSearch} className="relative flex items-center">
+                    <input
+                      type="search"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      onFocus={() => setSearchFocused(true)}
+                      placeholder={t('searchPlaceholder')}
+                      className="w-full pl-4 pr-28 py-2.5 text-base border-2 border-gray-300 rounded-full bg-white focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all outline-none placeholder:text-slate-400"
+                    />
+                    <button
+                      type="submit"
+                      className="absolute right-1 top-1/2 -translate-y-1/2 flex items-center gap-1.5 px-5 py-2 bg-primary text-white text-sm font-semibold rounded-full hover:bg-primary/90 active:scale-95 transition-all"
+                      aria-label={t('search')}
+                    >
+                      <Search className="w-4 h-4" aria-hidden="true" />
+                      {t('search')}
+                    </button>
+                  </form>
+                  <SearchDropdown
+                    query={searchQuery}
+                    onSelect={handleSearchSelect}
+                    visible={searchFocused}
+                  />
+                </div>
+              </div>
+
+              {/* Icons */}
+              <div className="flex items-center gap-2 shrink-0">
+                <CountrySelector />
+
+                <Link
+                  href={buildCountryPath(locale, '/account/wishlist')}
+                  className="relative p-2 hover:bg-slate-100 rounded-lg"
+                  aria-label={`${t('wishlist')}${hydrated && wishlistCount > 0 ? ` (${wishlistCount})` : ''}`}
+                >
+                  <Heart className="w-5 h-5 text-slate-600" />
+                  {hydrated && wishlistCount > 0 && (
+                    <span className="absolute -top-0.5 -right-0.5 bg-primary text-white text-[10px] font-bold w-4.5 h-4.5 rounded-full flex items-center justify-center">
+                      {wishlistCount}
+                    </span>
+                  )}
+                </Link>
+
+                <Link
+                  href={buildCountryPath(locale, '/cart')}
+                  className="relative p-2 hover:bg-slate-100 rounded-lg"
+                  aria-label={`${t('cart')}${hydrated && cartCount > 0 ? ` (${cartCount})` : ''}`}
+                >
+                  <ShoppingCart className="w-5 h-5 text-slate-600" />
+                  {hydrated && cartCount > 0 && (
+                    <span className="absolute -top-0.5 -right-0.5 bg-primary text-white text-[10px] font-bold w-4.5 h-4.5 rounded-full flex items-center justify-center animate-bounce">
+                      {cartCount}
+                    </span>
+                  )}
+                </Link>
+
+                <div className="relative" ref={userMenuRef}>
+                  <button
+                    type="button"
+                    className="p-2 hover:bg-slate-100 rounded-lg"
+                    aria-label={t('account')}
+                    aria-haspopup="true"
+                    aria-expanded={userMenuOpen}
+                    onClick={() => setUserMenuOpen(!userMenuOpen)}
+                  >
+                    <User className="w-5 h-5 text-slate-600" />
+                  </button>
+                  {userMenuOpen && (
+                    <div className="absolute right-0 top-full pt-1 z-50">
+                      <div className="w-48 bg-white rounded-xl border border-gray-100 shadow-lg py-2">
+                        {isLoggedIn ? (
+                          <>
+                            {userDisplayName && (
+                              <>
+                                <div className="px-4 py-2 text-sm font-medium text-slate-900 truncate">
+                                  {userDisplayName}
+                                </div>
+                                <div className="border-t border-gray-100 my-1" />
+                              </>
+                            )}
+                            <Link
+                              href={buildCountryPath(locale, '/account/orders')}
+                              className="flex items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 hover:text-primary transition-colors"
+                              onClick={() => setUserMenuOpen(false)}
+                            >
+                              <Package className="w-4 h-4" /> {t('orders')}
+                            </Link>
+                            <Link
+                              href={buildCountryPath(locale, '/account#reviews')}
+                              className="flex items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 hover:text-primary transition-colors"
+                              onClick={() => setUserMenuOpen(false)}
+                            >
+                              <Star className="w-4 h-4" /> {t('reviews')}
+                            </Link>
+                            <Link
+                              href={buildCountryPath(locale, '/account/settings')}
+                              className="flex items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 hover:text-primary transition-colors"
+                              onClick={() => setUserMenuOpen(false)}
+                            >
+                              <Settings className="w-4 h-4" /> {t('accountSettings')}
+                            </Link>
+                            <div className="border-t border-gray-100 my-1" />
+                            <button
+                              type="button"
+                              onClick={() => { clearTokens(); setUserMenuOpen(false); }}
+                              className="flex items-center gap-2 w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                            >
+                              <LogOut className="w-4 h-4" /> {t('signOut')}
+                            </button>
+                          </>
+                        ) : (
+                          <Link
+                            href={buildCountryPath(locale, '/auth/login')}
+                            className="flex items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 hover:text-primary transition-colors"
+                            onClick={() => setUserMenuOpen(false)}
+                          >
+                            <User className="w-4 h-4" /> {t('signIn')}
+                          </Link>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Desktop Row 2: Nav links — aligned under search bar */}
+            <nav className="flex items-center gap-1 -mt-1 pb-1.5 ml-[136px]" role="navigation" aria-label="Main navigation">
               {navBeforeCategories.map((link) => (
                 <Link
                   key={link.label}
                   href={link.href}
-                  className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-primary rounded-lg hover:bg-slate-50 transition-colors"
+                  className="px-3 py-1 text-sm font-medium text-slate-600 hover:text-primary rounded-md hover:bg-slate-50 transition-colors"
                 >
                   {link.label}
                 </Link>
@@ -108,157 +307,18 @@ export function Header() {
                 <Link
                   key={link.label}
                   href={link.href}
-                  className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-primary rounded-lg hover:bg-slate-50 transition-colors"
+                  className="px-3 py-1 text-sm font-medium text-slate-600 hover:text-primary rounded-md hover:bg-slate-50 transition-colors"
                 >
                   {link.label}
                 </Link>
               ))}
             </nav>
-
-            {/* Right: Search, actions */}
-            <div className="flex items-center gap-2">
-              {/* Search bar (desktop) */}
-              <form onSubmit={handleSearch} className="hidden md:flex items-center relative">
-                <input
-                  type="search"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder={t('searchPlaceholder')}
-                  className="w-44 lg:w-64 xl:w-80 pl-10 pr-4 py-2 text-sm border border-gray-200 rounded-full bg-slate-50 focus:bg-white focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all outline-none"
-                />
-                <Search className="absolute left-3 w-4 h-4 text-slate-400" aria-hidden="true" />
-              </form>
-
-              {/* Mobile search toggle */}
-              <button
-                onClick={() => setSearchOpen(!searchOpen)}
-                className="md:hidden p-2 hover:bg-slate-100 rounded-lg"
-                aria-label="Search"
-              >
-                <Search className="w-5 h-5 text-slate-600" />
-              </button>
-
-              <CountrySelector />
-
-              {/* Wishlist */}
-              <Link
-                href={buildCountryPath(locale, '/account/wishlist')}
-                className="relative p-2 hover:bg-slate-100 rounded-lg hidden sm:flex"
-                aria-label={`${t('wishlist')}${hydrated && wishlistCount > 0 ? ` (${wishlistCount})` : ''}`}
-              >
-                <Heart className="w-5 h-5 text-slate-600" />
-                {hydrated && wishlistCount > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 bg-primary text-white text-[10px] font-bold w-4.5 h-4.5 rounded-full flex items-center justify-center">
-                    {wishlistCount}
-                  </span>
-                )}
-              </Link>
-
-              {/* Cart */}
-              <Link
-                href={buildCountryPath(locale, '/cart')}
-                className="relative p-2 hover:bg-slate-100 rounded-lg"
-                aria-label={`${t('cart')}${hydrated && cartCount > 0 ? ` (${cartCount})` : ''}`}
-              >
-                <ShoppingCart className="w-5 h-5 text-slate-600" />
-                {hydrated && cartCount > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 bg-primary text-white text-[10px] font-bold w-4.5 h-4.5 rounded-full flex items-center justify-center animate-bounce">
-                    {cartCount}
-                  </span>
-                )}
-              </Link>
-
-              {/* Account */}
-              <div className="relative" ref={userMenuRef}>
-                <button
-                  type="button"
-                  className="p-2 hover:bg-slate-100 rounded-lg"
-                  aria-label={t('account')}
-                  aria-haspopup="true"
-                  aria-expanded={userMenuOpen}
-                  onClick={() => setUserMenuOpen(!userMenuOpen)}
-                >
-                  <User className="w-5 h-5 text-slate-600" />
-                </button>
-                {userMenuOpen && (
-                  <div className="absolute right-0 top-full pt-1 z-50">
-                    <div className="w-48 bg-white rounded-xl border border-gray-100 shadow-lg py-2">
-                    {isLoggedIn ? (
-                      <>
-                        {userDisplayName && (
-                          <>
-                            <div className="px-4 py-2 text-sm font-medium text-slate-900 truncate">
-                              {userDisplayName}
-                            </div>
-                            <div className="border-t border-gray-100 my-1" />
-                          </>
-                        )}
-                        <Link
-                          href={buildCountryPath(locale, '/account/orders')}
-                          className="flex items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 hover:text-primary transition-colors"
-                          onClick={() => setUserMenuOpen(false)}
-                        >
-                          <Package className="w-4 h-4" /> {t('orders')}
-                        </Link>
-                        <Link
-                          href={buildCountryPath(locale, '/account#reviews')}
-                          className="flex items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 hover:text-primary transition-colors"
-                          onClick={() => setUserMenuOpen(false)}
-                        >
-                          <Star className="w-4 h-4" /> {t('reviews')}
-                        </Link>
-                        <Link
-                          href={buildCountryPath(locale, '/account/settings')}
-                          className="flex items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 hover:text-primary transition-colors"
-                          onClick={() => setUserMenuOpen(false)}
-                        >
-                          <Settings className="w-4 h-4" /> {t('accountSettings')}
-                        </Link>
-                        <div className="border-t border-gray-100 my-1" />
-                        <button
-                          type="button"
-                          onClick={() => { clearTokens(); setUserMenuOpen(false); }}
-                          className="flex items-center gap-2 w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
-                        >
-                          <LogOut className="w-4 h-4" /> {t('signOut')}
-                        </button>
-                      </>
-                    ) : (
-                      <Link
-                        href={buildCountryPath(locale, '/auth/login')}
-                        className="flex items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 hover:text-primary transition-colors"
-                        onClick={() => setUserMenuOpen(false)}
-                      >
-                        <User className="w-4 h-4" /> {t('signIn')}
-                      </Link>
-                    )}
-                  </div>
-                  </div>
-                )}
-              </div>
-            </div>
           </div>
 
-          {/* Mobile search expanded */}
-          {searchOpen && (
-            <div className="md:hidden pb-3">
-              <form onSubmit={handleSearch} className="relative">
-                <input
-                  type="search"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder={t('searchPlaceholder')}
-                  className="w-full pl-10 pr-4 py-2.5 text-sm border border-gray-200 rounded-full bg-slate-50 focus:bg-white focus:border-primary transition-all outline-none"
-                  autoFocus
-                />
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" aria-hidden="true" />
-              </form>
-            </div>
-          )}
         </div>
       </div>
-      {/* Spacer for fixed header */}
-      <div className="h-16" />
+      {/* Spacer — mobile: 2 rows (~6.5rem), desktop: logo row + nav row */}
+      <div className="h-[6.5rem] lg:h-[5.5rem]" />
     </header>
   );
 }

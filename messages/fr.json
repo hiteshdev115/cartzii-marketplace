@@ -31,6 +31,7 @@
     "learnMore": "En Savoir Plus"
   },
   "Header": {
+    "search": "Rechercher",
     "searchPlaceholder": "Rechercher produits, marques, catégories...",
     "cart": "Panier",
     "wishlist": "Liste de souhaits",
@@ -378,12 +379,15 @@
     "title": "Résultats de Recherche",
     "placeholder": "Rechercher des produits, marques, catégories...",
     "resultsFor": "Résultats pour « {query} »",
-    "noResults": "Aucun résultat pour « {query} »",
+    "noResults": "Aucun résultat trouvé",
     "noResultsSuggestion": "Essayez d'autres mots-clés ou parcourez nos catégories populaires.",
     "noResultsMessage": "Essayez d'autres mots-clés ou parcourez nos catégories populaires.",
     "popularSearches": "Recherches Populaires",
     "recentSearches": "Recherches Récentes",
-    "clearRecent": "Effacer"
+    "clearRecent": "Effacer",
+    "viewAllResults": "Voir les {count} résultats",
+    "minCharacters": "Tapez au moins 3 caractères pour rechercher",
+    "priceUnavailable": "Prix non disponible"
   },
   "Deals": {
     "title": "Offres et Promotions",

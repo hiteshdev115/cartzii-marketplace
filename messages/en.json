@@ -31,6 +31,7 @@
     "learnMore": "Learn More"
   },
   "Header": {
+    "search": "Search",
     "searchPlaceholder": "Search products, brands, categories...",
     "cart": "Cart",
     "wishlist": "Wishlist",
@@ -378,12 +379,15 @@
     "title": "Search Results",
     "placeholder": "Search products, brands, categories...",
     "resultsFor": "Results for \"{query}\"",
-    "noResults": "No results found for \"{query}\"",
+    "noResults": "No results found",
     "noResultsSuggestion": "Try different keywords or browse our popular categories.",
     "noResultsMessage": "Try different keywords or browse our popular categories.",
     "popularSearches": "Popular Searches",
     "recentSearches": "Recent Searches",
-    "clearRecent": "Clear"
+    "clearRecent": "Clear",
+    "viewAllResults": "View all {count} results",
+    "minCharacters": "Type at least 3 characters to search",
+    "priceUnavailable": "Price unavailable"
   },
   "Deals": {
     "title": "Deals & Offers",
