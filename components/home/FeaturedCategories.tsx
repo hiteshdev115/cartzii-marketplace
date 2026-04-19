@@ -24,7 +24,7 @@ export function FeaturedCategories() {
 
   return (
     <section className="py-16 bg-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6">
+      <div className="max-w-[var(--container-max)] mx-auto px-4 sm:px-6">
         <div className="text-center mb-10">
           <h2 className="text-3xl font-bold text-slate-900">{t('featuredCategories')}</h2>
           <p className="mt-2 text-slate-500">{t('featuredCategoriesSubtitle')}</p>

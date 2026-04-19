@@ -93,7 +93,7 @@ export function SearchContent() {
   const hasQuery = query.trim().length >= 3;
 
   return (
-    <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-2 pb-8">
+    <main className="max-w-[var(--container-max)] mx-auto px-4 sm:px-6 lg:px-8 pt-2 pb-8">
       <Breadcrumb items={[{ label: t('title') }]} />
 
       {/* Results */}
@@ -174,7 +174,7 @@ export function SearchContent() {
             </>
           ) : (
             <div className="text-center py-16">
-              <SearchIcon className="w-16 h-16 text-slate-300 mx-auto mb-4" />
+              <SearchIcon className="w-16 h-16 text-slate-400 mx-auto mb-4" />
               <h2 className="text-xl font-semibold text-slate-900 mb-2">{t('noResults')}</h2>
               <p className="text-slate-500">{t('noResultsMessage')}</p>
             </div>
@@ -182,7 +182,7 @@ export function SearchContent() {
         </>
       ) : (
         <div className="text-center py-8">
-          <SearchIcon className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+          <SearchIcon className="w-12 h-12 text-slate-400 mx-auto mb-3" />
           <p className="text-sm text-slate-500">{t('minCharacters')}</p>
         </div>
       )}

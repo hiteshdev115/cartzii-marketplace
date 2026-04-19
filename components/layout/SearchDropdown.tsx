@@ -135,7 +135,7 @@ export function SearchDropdown({ query, onSelect, visible }: SearchDropdownProps
         </>
       ) : (
         <div className="py-8 text-center">
-          <Search className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+          <Search className="w-8 h-8 text-slate-400 mx-auto mb-2" />
           <p className="text-sm text-slate-500">{t('noResults')}</p>
         </div>
       )}

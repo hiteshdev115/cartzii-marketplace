@@ -105,7 +105,7 @@ export function Header() {
           visible ? 'translate-y-0' : '-translate-y-full'
         )}
       >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6">
+        <div className="max-w-[var(--container-max)] mx-auto px-4 sm:px-6">
 
           {/* ===== MOBILE HEADER (< lg) ===== */}
           <div className="lg:hidden">

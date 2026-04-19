@@ -24,7 +24,7 @@ export function OrdersContent() {
 
       {mockOrders.length === 0 ? (
         <div className="text-center py-16">
-          <Package className="w-16 h-16 text-slate-300 mx-auto mb-4" />
+          <Package className="w-16 h-16 text-slate-400 mx-auto mb-4" />
           <p className="text-slate-500">{t('noOrders')}</p>
         </div>
       ) : (

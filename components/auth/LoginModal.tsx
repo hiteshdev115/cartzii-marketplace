@@ -39,21 +39,19 @@ export function LoginModal() {
     resolver: zodResolver(loginSchema),
   });
 
-  // Reset form state when modal opens/closes
-  useEffect(() => {
-    if (!isOpen) {
-      reset();
-      setApiError(null);
-      setShowPassword(false);
-    }
-  }, [isOpen, reset]);
+  const handleClose = useCallback(() => {
+    close();
+    reset();
+    setApiError(null);
+    setShowPassword(false);
+  }, [close, reset]);
 
   // Close on Escape key
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
-      if (e.key === 'Escape') close();
+      if (e.key === 'Escape') handleClose();
     },
-    [close],
+    [handleClose],
   );
 
   useEffect(() => {
@@ -78,7 +76,7 @@ export function LoginModal() {
       if (res.success && res.token && res.refreshToken) {
         setTokens(res.token, res.refreshToken);
         setUser({ email: data.email });
-        close();
+        handleClose();
       }
     } catch (error) {
       if (error instanceof ApiError) {
@@ -102,7 +100,7 @@ export function LoginModal() {
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div
         className="fixed inset-0 bg-black/50 backdrop-blur-sm"
-        onClick={close}
+        onClick={handleClose}
         aria-hidden="true"
       />
       <div
@@ -112,7 +110,7 @@ export function LoginModal() {
         aria-modal="true"
       >
         <button
-          onClick={close}
+          onClick={handleClose}
           className="absolute top-4 right-4 p-2 rounded-full hover:bg-slate-100 transition-colors"
           aria-label="Close"
         >

@@ -8,9 +8,9 @@ export function BrandShowcase() {
   const t = useTranslations('Home');
 
   return (
-    <section className="py-12 bg-surface-secondary border-y border-gray-100 overflow-hidden">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6">
-        <h2 className="text-center text-sm font-semibold text-slate-400 uppercase tracking-wider mb-8">
+    <section className="py-12 bg-white border-y border-gray-200 overflow-hidden">
+      <div className="max-w-[var(--container-max)] mx-auto px-4 sm:px-6">
+        <h2 className="text-center text-sm font-semibold text-slate-500 uppercase tracking-wider mb-8">
           {t('trustedBrands')}
         </h2>
         <div className="flex items-center justify-center gap-4 sm:gap-6 md:gap-8 lg:gap-12 flex-wrap opacity-60 grayscale hover:grayscale-0 hover:opacity-100 transition-all duration-500">

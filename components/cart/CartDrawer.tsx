@@ -50,7 +50,7 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
         <div className="flex-1 overflow-y-auto p-4">
           {items.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-center">
-              <ShoppingBag className="w-16 h-16 text-slate-300 mb-4" />
+              <ShoppingBag className="w-16 h-16 text-slate-400 mb-4" />
               <p className="text-slate-500 font-medium mb-2">{t('emptyTitle')}</p>
               <p className="text-sm text-slate-400 mb-4">{t('emptyMessage')}</p>
               <Link href={buildCountryPath(locale, '/products')} onClick={onClose} className="btn-primary text-sm">
