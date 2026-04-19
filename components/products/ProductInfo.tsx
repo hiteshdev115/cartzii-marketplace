@@ -18,9 +18,11 @@ import { useHydrated } from '@/hooks/useHydration';
 interface ProductInfoProps {
   product: Product;
   onVariantChange?: (images: string[], price: number, salePrice?: number, discount?: number) => void;
+  onShowReviews?: () => void;
+  onWriteReview?: () => void;
 }
 
-export function ProductInfo({ product, onVariantChange }: ProductInfoProps) {
+export function ProductInfo({ product, onVariantChange, onShowReviews, onWriteReview }: ProductInfoProps) {
   const t = useTranslations('ProductDetail');
   const locale = useLocale();
   const addToCart = useCartStore((s) => s.addItem);
@@ -81,9 +83,23 @@ export function ProductInfo({ product, onVariantChange }: ProductInfoProps) {
       <h1 className="text-2xl md:text-3xl font-bold text-slate-900">{product.name}</h1>
 
       {/* Rating */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 flex-wrap">
         <StarRating value={product.rating} size="md" showValue />
-        <span className="text-sm text-slate-500">({product.reviewCount} reviews)</span>
+        <button
+          type="button"
+          onClick={onShowReviews}
+          className="text-sm text-primary hover:underline"
+        >
+          ({product.reviewCount} reviews)
+        </button>
+        <span className="text-slate-300">|</span>
+        <button
+          type="button"
+          onClick={onWriteReview}
+          className="text-sm text-primary hover:underline font-medium"
+        >
+          Write a Review
+        </button>
       </div>
 
       {/* Price */}

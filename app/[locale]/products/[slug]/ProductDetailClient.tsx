@@ -4,13 +4,16 @@ import { useEffect, useState, useCallback, useRef } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { getCountryFromLocale, buildCountryPath, getCountryConfig } from '@/config/countries';
 import { fetchProductBySlug } from '@/lib/api/products';
+import { fetchProductReviews } from '@/lib/api/reviews';
 import { ProductGallery } from '@/components/products/ProductGallery';
 import { ProductInfo } from '@/components/products/ProductInfo';
 import { ProductTabs } from '@/components/products/ProductTabs';
 import { ReviewForm } from '@/components/products/ReviewForm';
 import { Breadcrumb } from '@/components/layout/Breadcrumb';
 import { Skeleton } from '@/components/ui/Skeleton';
-import type { Product, Review } from '@/types';
+import type { Product } from '@/types';
+import type { ReviewAPIItem, ReviewStats } from '@/lib/api/reviews';
+import { useAuthStore } from '@/stores/authStore';
 
 interface ProductDetailClientProps {
   slug: string;
@@ -20,25 +23,46 @@ export function ProductDetailClient({ slug }: ProductDetailClientProps) {
   const locale = useLocale();
   const t = useTranslations('Products');
   const [product, setProduct] = useState<Product | null>(null);
-  const [reviews, setReviews] = useState<Review[]>([]);
+  const [reviews, setReviews] = useState<ReviewAPIItem[]>([]);
+  const [reviewStats, setReviewStats] = useState<ReviewStats>({
+    averageRating: 0,
+    totalReviews: 0,
+    ratingDistribution: [],
+  });
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [activeImages, setActiveImages] = useState<string[]>([]);
+  const [activeTab, setActiveTab] = useState('description');
   const fetchIdRef = useRef(0);
+  const userId = useAuthStore((s) => s.userId);
 
   useEffect(() => {
     const country = getCountryFromLocale(locale);
     const id = ++fetchIdRef.current;
     let cancelled = false;
+
     fetchProductBySlug(slug, country)
-      .then((result) => {
+      .then(async (result) => {
         if (cancelled || id !== fetchIdRef.current) return;
         if (!result) {
           setNotFound(true);
-        } else {
-          setProduct(result.product);
-          setReviews(result.reviews);
-          setActiveImages(result.product.images);
+          return;
+        }
+        setProduct(result.product);
+        setActiveImages(result.product.images);
+
+        // Fetch reviews from the dedicated endpoint
+        try {
+          const productId = parseInt(result.product.id, 10);
+          if (!isNaN(productId)) {
+            const reviewData = await fetchProductReviews(productId);
+            if (!cancelled && id === fetchIdRef.current) {
+              setReviews(reviewData.reviews);
+              setReviewStats(reviewData.stats);
+            }
+          }
+        } catch {
+          // Reviews fetch failed — leave empty, non-blocking
         }
       })
       .finally(() => {
@@ -46,6 +70,31 @@ export function ProductDetailClient({ slug }: ProductDetailClientProps) {
       });
     return () => { cancelled = true; };
   }, [slug, locale]);
+
+  const handleReviewPosted = useCallback((newReview: ReviewAPIItem) => {
+    setReviews((prev) => [newReview, ...prev]);
+    setReviewStats((prev) => ({
+      ...prev,
+      totalReviews: prev.totalReviews + 1,
+    }));
+  }, []);
+
+  const scrollToReviews = useCallback(() => {
+    setActiveTab('reviews');
+    setTimeout(() => {
+      document.getElementById('reviews-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 50);
+  }, []);
+
+  const scrollToWriteReview = useCallback(() => {
+    // If user already reviewed, go to reviews list instead
+    const alreadyReviewed = reviews.some((r) => String(r.userid) === String(userId));
+    setActiveTab('reviews');
+    setTimeout(() => {
+      const target = alreadyReviewed ? 'reviews-section' : 'review-form';
+      document.getElementById(target)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 50);
+  }, [reviews, userId]);
 
   const handleVariantChange = useCallback((images: string[], price: number, salePrice?: number, discount?: number) => {
     if (images.length > 0) setActiveImages(images);
@@ -113,11 +162,11 @@ export function ProductDetailClient({ slug }: ProductDetailClientProps) {
       />
       <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 mt-6">
         <ProductGallery images={activeImages} productName={product.name} />
-        <ProductInfo product={product} onVariantChange={handleVariantChange} />
+        <ProductInfo product={product} onVariantChange={handleVariantChange} onShowReviews={scrollToReviews} onWriteReview={scrollToWriteReview} />
       </div>
       <div className="mt-12 bg-white rounded-2xl border border-gray-200 p-6 sm:p-8">
-        <ProductTabs product={product} reviews={reviews} />
-        <ReviewForm productId={product.id} />
+        <ProductTabs product={product} reviews={reviews} stats={reviewStats} activeTab={activeTab} onTabChange={setActiveTab} />
+        <ReviewForm productId={parseInt(product.id, 10)} reviews={reviews} onReviewPosted={handleReviewPosted} />
       </div>
     </>
   );

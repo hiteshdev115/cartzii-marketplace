@@ -2,27 +2,36 @@
 
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { Product, Review } from '@/types';
+import { Product } from '@/types';
 import { ReviewList } from './ReviewList';
 import { cn } from '@/lib/utils';
+import type { ReviewAPIItem, ReviewStats } from '@/lib/api/reviews';
 
 interface ProductTabsProps {
   product: Product;
-  reviews: Review[];
+  reviews: ReviewAPIItem[];
+  stats: ReviewStats;
+  activeTab?: string;
+  onTabChange?: (tab: string) => void;
 }
 
-export function ProductTabs({ product, reviews }: ProductTabsProps) {
+export function ProductTabs({ product, reviews, stats, activeTab: controlledTab, onTabChange }: ProductTabsProps) {
   const t = useTranslations('ProductDetail');
-  const [activeTab, setActiveTab] = useState('description');
+  const [internalTab, setInternalTab] = useState('description');
+  const activeTab = controlledTab ?? internalTab;
+  const setActiveTab = (tab: string) => {
+    setInternalTab(tab);
+    onTabChange?.(tab);
+  };
 
   const tabs = [
     { id: 'description', label: t('description') },
     { id: 'specifications', label: t('specifications') },
-    { id: 'reviews', label: `${t('reviews')} (${reviews.length})` },
+    { id: 'reviews', label: `${t('reviews')} (${stats.totalReviews})` },
   ];
 
   return (
-    <div>
+    <div id="reviews-section">
       {/* Tab headers */}
       <div className="flex overflow-x-auto border-b border-gray-200" role="tablist">
         {tabs.map((tab) => (
@@ -75,7 +84,7 @@ export function ProductTabs({ product, reviews }: ProductTabsProps) {
 
         {activeTab === 'reviews' && (
           <div id="panel-reviews" role="tabpanel">
-            <ReviewList reviews={reviews} />
+            <ReviewList reviews={reviews} stats={stats} />
           </div>
         )}
       </div>

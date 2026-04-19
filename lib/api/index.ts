@@ -30,3 +30,12 @@ export {
   buildWishlistImageUrl,
 } from './wishlist';
 export type { WishlistAPIItem, WishlistAPIProduct } from './wishlist';
+export { fetchProductReviews, fetchUserReviews, postReview } from './reviews';
+export type {
+  ReviewAPIItem,
+  ReviewMedia,
+  ReviewUser,
+  ReviewStats,
+  RatingDistribution,
+  ProductReviewsResponse,
+} from './reviews';
