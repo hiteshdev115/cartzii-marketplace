@@ -59,7 +59,6 @@ export function ReviewsContent() {
 
   useEffect(() => {
     if (!userId) return;
-    setLoading(true);
     fetchUserReviews(userId)
       .then(setReviews)
       .catch(() => setReviews([]))
