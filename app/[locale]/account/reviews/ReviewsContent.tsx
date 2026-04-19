@@ -55,13 +55,11 @@ export function ReviewsContent() {
   const locale = useLocale();
   const userId = useAuthStore((s) => s.userId);
   const [reviews, setReviews] = useState<ReviewAPIItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!!userId);
 
   useEffect(() => {
-    if (!userId) {
-      setLoading(false);
-      return;
-    }
+    if (!userId) return;
+    setLoading(true);
     fetchUserReviews(userId)
       .then(setReviews)
       .catch(() => setReviews([]))
