@@ -10,6 +10,8 @@ import { Badge } from '@/components/ui/Badge';
 import { QuantitySelector } from '@/components/ui/QuantitySelector';
 import { useCartStore } from '@/stores/cartStore';
 import { useWishlistStore } from '@/stores/wishlistStore';
+import { useAuthStore } from '@/stores/authStore';
+import { useLoginModalStore } from '@/stores/loginModalStore';
 import { cn } from '@/lib/utils';
 import { useHydrated } from '@/hooks/useHydration';
 
@@ -23,9 +25,20 @@ export function ProductInfo({ product, onVariantChange }: ProductInfoProps) {
   const locale = useLocale();
   const addToCart = useCartStore((s) => s.addItem);
   const toggleWishlist = useWishlistStore((s) => s.toggleItem);
-  const isInWishlist = useWishlistStore((s) => s.isInWishlist(product.id));
+  const isInWishlist = useWishlistStore((s) => s.isInWishlist(Number(product.id)));
+  const userId = useAuthStore((s) => s.userId);
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated());
+  const openLoginModal = useLoginModalStore((s) => s.open);
   const hydrated = useHydrated();
   const wishlisted = hydrated && isInWishlist;
+
+  const handleWishlistToggle = () => {
+    if (!isAuthenticated || !userId) {
+      openLoginModal();
+      return;
+    }
+    toggleWishlist(userId, Number(product.id));
+  };
 
   const [selectedColor, setSelectedColor] = useState(product.colors?.[0]?.value);
   const [selectedSize, setSelectedSize] = useState(product.sizes?.[0]);
@@ -143,7 +156,7 @@ export function ProductInfo({ product, onVariantChange }: ProductInfoProps) {
           {t('addToCart')}
         </button>
         <button
-          onClick={() => toggleWishlist(product)}
+          onClick={handleWishlistToggle}
           className={cn('p-3 rounded-xl border transition-colors', wishlisted ? 'border-red-200 bg-red-50' : 'border-gray-200 hover:border-red-200')}
           aria-label={wishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
         >

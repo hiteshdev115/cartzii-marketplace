@@ -5,13 +5,17 @@ import { useTranslations, useLocale } from 'next-intl';
 import { useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Search as SearchIcon, Loader2 } from 'lucide-react';
+import { Search as SearchIcon, Loader2, Heart } from 'lucide-react';
 import { searchProductsAPI } from '@/lib/api';
 import type { SearchProductResult, SearchPagination } from '@/lib/api';
 import { Breadcrumb } from '@/components/layout/Breadcrumb';
 import { Pagination } from '@/components/ui/Pagination';
 import { buildCountryPath, getCountryFromLocale } from '@/config/countries';
 import { formatPrice } from '@/lib/utils';
+import { useWishlistStore } from '@/stores/wishlistStore';
+import { useAuthStore } from '@/stores/authStore';
+import { useLoginModalStore } from '@/stores/loginModalStore';
+import { useHydrated } from '@/hooks/useHydration';
 
 const IMAGE_CDN_URL =
   process.env.NEXT_PUBLIC_IMAGE_CDN_URL ||
@@ -35,6 +39,20 @@ export function SearchContent() {
   const [page, setPage] = useState(1);
   const requestRef = useRef(0);
   const prevQueryRef = useRef(query);
+  const toggleWishlist = useWishlistStore((s) => s.toggleItem);
+  const wishlistItems = useWishlistStore((s) => s.items);
+  const userId = useAuthStore((s) => s.userId);
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated());
+  const openLoginModal = useLoginModalStore((s) => s.open);
+  const hydrated = useHydrated();
+
+  const handleWishlistToggle = (productId: number) => {
+    if (!isAuthenticated || !userId) {
+      openLoginModal();
+      return;
+    }
+    toggleWishlist(userId, productId);
+  };
 
   // Reset page when query changes from URL
   useEffect(() => {
@@ -91,46 +109,58 @@ export function SearchContent() {
                 {pagination?.total ?? results.length} {t('resultsFor', { query })}
               </p>
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-6">
-                {results.map((item) => (
-                  <Link
-                    key={item.productid}
-                    href={buildCountryPath(locale, `/products/${item.slug}`)}
-                    className="group bg-white rounded-2xl border border-gray-100 overflow-hidden hover:shadow-lg transition-shadow"
-                  >
-                    <div className="aspect-square bg-slate-50 overflow-hidden">
-                      <Image
-                        src={buildImageUrl(item.primaryImage?.imageurl)}
-                        alt={item.primaryImage?.imagealttext || item.productname}
-                        width={300}
-                        height={300}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      />
-                    </div>
-                    <div className="p-3">
-                      <p className="text-xs text-slate-500 mb-1">{item.categoryname}</p>
-                      <h3 className="text-sm font-medium text-slate-900 line-clamp-2 mb-2">
-                        {item.productname}
-                      </h3>
-                      {item.pricing ? (
-                        <div className="flex items-baseline gap-2">
-                          <span className="text-sm font-bold text-primary">
-                            {formatPrice(
-                              parseFloat(item.pricing.discountprice || item.pricing.price),
-                              locale,
-                            )}
-                          </span>
-                          {item.pricing.discountprice && (
-                            <span className="text-xs text-slate-400 line-through">
-                              {formatPrice(parseFloat(item.pricing.price), locale)}
-                            </span>
+                {results.map((item) => {
+                  const isWishlisted = hydrated && wishlistItems.some((w) => w.product.productid === item.productid);
+
+                  return (
+                    <div
+                      key={item.productid}
+                      className="group relative bg-white rounded-2xl border border-gray-100 overflow-hidden hover:shadow-lg transition-shadow"
+                    >
+                      <button
+                        onClick={() => handleWishlistToggle(item.productid)}
+                        className="absolute top-3 right-3 z-10 p-2 bg-white/80 backdrop-blur-sm rounded-full hover:bg-white shadow-sm"
+                        aria-label={`${isWishlisted ? 'Remove from' : 'Add to'} wishlist: ${item.productname}`}
+                      >
+                        <Heart className={`w-4 h-4 ${isWishlisted ? 'fill-red-500 text-red-500' : 'text-slate-600'}`} />
+                      </button>
+                      <Link href={buildCountryPath(locale, `/products/${item.slug}`)}>
+                        <div className="aspect-square bg-slate-50 overflow-hidden">
+                          <Image
+                            src={buildImageUrl(item.primaryImage?.imageurl)}
+                            alt={item.primaryImage?.imagealttext || item.productname}
+                            width={300}
+                            height={300}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          />
+                        </div>
+                        <div className="p-3">
+                          <p className="text-xs text-slate-500 mb-1">{item.categoryname}</p>
+                          <h3 className="text-sm font-medium text-slate-900 line-clamp-2 mb-2">
+                            {item.productname}
+                          </h3>
+                          {item.pricing ? (
+                            <div className="flex items-baseline gap-2">
+                              <span className="text-sm font-bold text-primary">
+                                {formatPrice(
+                                  parseFloat(item.pricing.discountprice || item.pricing.price),
+                                  locale,
+                                )}
+                              </span>
+                              {item.pricing.discountprice && (
+                                <span className="text-xs text-slate-400 line-through">
+                                  {formatPrice(parseFloat(item.pricing.price), locale)}
+                                </span>
+                              )}
+                            </div>
+                          ) : (
+                            <span className="text-xs text-slate-400">{t('priceUnavailable')}</span>
                           )}
                         </div>
-                      ) : (
-                        <span className="text-xs text-slate-400">{t('priceUnavailable')}</span>
-                      )}
+                      </Link>
                     </div>
-                  </Link>
-                ))}
+                  );
+                })}
               </div>
               {pagination && pagination.totalPages > 1 && (
                 <div className="mt-8">

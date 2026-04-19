@@ -23,3 +23,10 @@ export type { CountryOption, StateOption } from './geo';
 export { fetchUserProfile, updateUserProfile } from './users';
 export { searchProductsAPI } from './search';
 export type { SearchProductResult, SearchPagination, SearchParams } from './search';
+export {
+  fetchWishlistItems,
+  addToWishlistAPI,
+  removeFromWishlistAPI,
+  buildWishlistImageUrl,
+} from './wishlist';
+export type { WishlistAPIItem, WishlistAPIProduct } from './wishlist';

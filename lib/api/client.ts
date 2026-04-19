@@ -62,11 +62,15 @@ function getAuthToken(): string | null {
   }
 }
 
-function buildHeaders(config?: RequestConfig): HeadersInit {
+function buildHeaders(config?: RequestConfig, hasBody?: boolean): HeadersInit {
   const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
     Accept: 'application/json',
   };
+
+  // Only set Content-Type for requests with a body
+  if (hasBody !== false) {
+    headers['Content-Type'] = 'application/json';
+  }
 
   // Attach guest token by default; skip for authenticated endpoints
   if (!config?.skipGuestToken && GUEST_TOKEN) {
@@ -105,7 +109,7 @@ async function request<T>(
 
   const res = await fetch(url, {
     ...rest,
-    headers: buildHeaders(config),
+    headers: buildHeaders(config, !!body),
     body: body ? JSON.stringify(body) : undefined,
   });
 

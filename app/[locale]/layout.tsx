@@ -9,6 +9,7 @@ import {
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { SkipLink } from "@/components/accessibility/SkipLink";
+import { LoginModal } from "@/components/auth/LoginModal";
 
 type Props = {
   children: React.ReactNode;
@@ -64,6 +65,7 @@ export default async function LocaleLayout({ children, params }: Props) {
       <NextIntlClientProvider messages={messages}>
         <SkipLink />
         <Header />
+        <LoginModal />
         <main id="main-content" role="main" className="flex-1">
           {children}
         </main>

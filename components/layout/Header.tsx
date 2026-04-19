@@ -31,10 +31,22 @@ export function Header() {
   const hydrated = useHydrated();
   const cartCount = useCartStore((s) => s.items.reduce((sum, item) => sum + item.quantity, 0));
   const wishlistCount = useWishlistStore((s) => s.items.length);
+  const fetchWishlistItems = useWishlistStore((s) => s.fetchItems);
+  const clearWishlist = useWishlistStore((s) => s.clear);
   const token = useAuthStore((s) => s.token);
+  const userId = useAuthStore((s) => s.userId);
   const clearTokens = useAuthStore((s) => s.clearTokens);
   const userDisplayName = useAuthStore((s) => s.displayName());
   const isLoggedIn = hydrated && !!token;
+
+  // Fetch wishlist from API when user is authenticated
+  useEffect(() => {
+    if (hydrated && token && userId) {
+      fetchWishlistItems(userId);
+    } else if (hydrated && !token) {
+      clearWishlist();
+    }
+  }, [hydrated, token, userId, fetchWishlistItems, clearWishlist]);
 
   useEffect(() => {
     let lastScrollY = window.scrollY;
