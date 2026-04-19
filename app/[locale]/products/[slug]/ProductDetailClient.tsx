@@ -115,7 +115,7 @@ export function ProductDetailClient({ slug }: ProductDetailClientProps) {
         <ProductGallery images={activeImages} productName={product.name} />
         <ProductInfo product={product} onVariantChange={handleVariantChange} />
       </div>
-      <div className="mt-12">
+      <div className="mt-12 bg-white rounded-2xl border border-gray-200 p-6 sm:p-8">
         <ProductTabs product={product} reviews={reviews} />
         <ReviewForm productId={product.id} />
       </div>

@@ -20,7 +20,7 @@ export function Breadcrumb({ items }: BreadcrumbProps) {
 
   return (
     <nav aria-label={t('breadcrumbNav')} className="py-3">
-      <ol className="flex items-center gap-1.5 text-sm text-slate-500 flex-wrap">
+      <ol className="flex items-center gap-1.5 text-sm text-slate-600 flex-wrap">
         <li>
           <Link
             href={buildCountryPath(locale, '/')}

@@ -249,7 +249,7 @@ export function SettingsContent() {
             </div>
             <div>
               <p className="text-sm font-medium text-slate-900">{t('profilePhoto')}</p>
-              <p className="text-xs text-slate-500">{t('photoHint')}</p>
+              <p className="text-xs text-slate-600">{t('photoHint')}</p>
             </div>
           </div>
 
@@ -377,13 +377,13 @@ export function SettingsContent() {
                 </div>
               ))}
               {addresses.length > 2 && (
-                <p className="text-sm text-slate-500 text-center">
+                <p className="text-sm text-slate-600 text-center">
                   +{addresses.length - 2} more
                 </p>
               )}
             </div>
           ) : (
-            <p className="text-sm text-slate-500">{t('noAddresses')}</p>
+            <p className="text-sm text-slate-600">{t('noAddresses')}</p>
           )}
         </section>
       </div>

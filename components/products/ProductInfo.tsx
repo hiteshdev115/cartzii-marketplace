@@ -190,7 +190,7 @@ export function ProductInfo({ product, onVariantChange }: ProductInfoProps) {
       </div>
 
       {/* SKU */}
-      <p className="text-xs text-slate-400">{t('sku')}: {product.sku}</p>
+      <p className="text-xs text-slate-500">{t('sku')}: {product.sku}</p>
     </div>
   );
 }

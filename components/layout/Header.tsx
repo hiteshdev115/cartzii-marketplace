@@ -153,7 +153,7 @@ export function Header() {
                     onChange={(e) => setSearchQuery(e.target.value)}
                     onFocus={() => setSearchFocused(true)}
                     placeholder={t('searchPlaceholder')}
-                    className="w-full pl-10 pr-4 py-2.5 text-sm border border-gray-300 rounded-full bg-slate-50 focus:bg-white focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all outline-none placeholder:text-slate-400"
+                    className="w-full pl-10 pr-4 py-2.5 text-sm border border-gray-300 rounded-full bg-slate-50 focus:bg-white focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all outline-none placeholder:text-slate-500"
                   />
                   <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" aria-hidden="true" />
                 </form>
@@ -184,7 +184,7 @@ export function Header() {
                       onChange={(e) => setSearchQuery(e.target.value)}
                       onFocus={() => setSearchFocused(true)}
                       placeholder={t('searchPlaceholder')}
-                      className="w-full pl-4 pr-28 py-2.5 text-base border-2 border-gray-300 rounded-full bg-white focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all outline-none placeholder:text-slate-400"
+                      className="w-full pl-4 pr-28 py-2.5 text-base border-2 border-gray-300 rounded-full bg-white focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all outline-none placeholder:text-slate-500"
                     />
                     <button
                       type="submit"

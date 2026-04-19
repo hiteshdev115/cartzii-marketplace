@@ -29,7 +29,7 @@ export function AccountDashboard() {
         </div>
         <div>
           <h1 className="text-2xl font-bold text-slate-900">{t('hello', { name: user.name })}</h1>
-          <p className="text-sm text-slate-500">{user.email}</p>
+          <p className="text-sm text-slate-600">{user.email}</p>
         </div>
       </div>
 
@@ -59,7 +59,7 @@ export function AccountDashboard() {
           </Link>
         </div>
         {mockOrders.length === 0 ? (
-          <p className="text-slate-500 text-center py-8">{t('noOrders')}</p>
+          <p className="text-slate-600 text-center py-8">{t('noOrders')}</p>
         ) : (
           <div className="space-y-4">
             {mockOrders.map((order) => (

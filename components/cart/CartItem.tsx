@@ -27,7 +27,7 @@ export function CartItem({ item }: CartItemProps) {
         <h3 className="font-semibold text-slate-900">{item.product.name}</h3>
         <p className="text-sm text-slate-500">{item.product.brand}</p>
         {(item.selectedColor || item.selectedSize) && (
-          <p className="text-xs text-slate-400 mt-1">
+          <p className="text-xs text-slate-500 mt-1">
             {item.selectedColor && `Color: ${item.selectedColor}`}
             {item.selectedColor && item.selectedSize && ' · '}
             {item.selectedSize && `Size: ${item.selectedSize}`}
@@ -38,7 +38,7 @@ export function CartItem({ item }: CartItemProps) {
           <div className="text-right">
             <p className="text-lg font-bold text-primary">{formatPrice(unitPrice * item.quantity, locale)}</p>
             {item.quantity > 1 && (
-              <p className="text-xs text-slate-400">{formatPrice(unitPrice, locale)} each</p>
+              <p className="text-xs text-slate-500">{formatPrice(unitPrice, locale)} each</p>
             )}
           </div>
         </div>

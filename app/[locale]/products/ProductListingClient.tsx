@@ -31,7 +31,7 @@ export function ProductListingClient() {
         <ProductFilters />
         <div className="flex items-center gap-3">
           {!loading && (
-            <p className="text-sm text-slate-500">
+            <p className="text-sm text-slate-600">
               {t('productsFound', { count: products.length })}
             </p>
           )}

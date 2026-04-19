@@ -55,7 +55,7 @@ export function CheckoutPageContent() {
           <CheckCircle className="w-20 h-20 text-green-500 mx-auto mb-6" />
           <h2 className="text-2xl font-bold text-slate-900 mb-2">{t('orderConfirmed')}</h2>
           <p className="text-slate-600 mb-1">{t('orderNumber')}: <span className="font-mono font-bold">{orderNumber}</span></p>
-          <p className="text-sm text-slate-500 mb-8">{t('confirmationEmail')}</p>
+          <p className="text-sm text-slate-600 mb-8">{t('confirmationEmail')}</p>
           <div className="flex items-center justify-center gap-4">
             <Link href={buildCountryPath(locale, '/products')} className="btn-primary flex items-center gap-2">
               <Package className="w-4 h-4" /> {t('continueShopping')}

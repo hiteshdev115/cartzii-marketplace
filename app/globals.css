@@ -2,7 +2,7 @@
 
 @theme {
   --container-max: 1480px;
-  --color-bg-site: #E3E6E6;
+  --color-bg-site: #F0F2F2;
 
   --color-primary: #c2410c;
   --color-primary-light: #ea580c;
@@ -77,7 +77,7 @@
 
 /* Form inputs */
 .input {
-  @apply w-full px-4 py-3 border border-gray-300 rounded-xl text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all text-sm;
+  @apply w-full px-4 py-3 border border-gray-300 rounded-xl text-slate-900 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all text-sm;
 }
 .label {
   @apply block text-sm font-semibold text-slate-800 mb-1.5;

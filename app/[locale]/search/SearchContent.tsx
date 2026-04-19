@@ -5,8 +5,10 @@ import { useTranslations, useLocale } from 'next-intl';
 import { useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Search as SearchIcon, Loader2, Heart } from 'lucide-react';
+import { Search as SearchIcon, Loader2, Heart, ShoppingCart } from 'lucide-react';
 import { searchProductsAPI } from '@/lib/api';
+import { useCartStore } from '@/stores/cartStore';
+import type { Product } from '@/types';
 import type { SearchProductResult, SearchPagination } from '@/lib/api';
 import { Breadcrumb } from '@/components/layout/Breadcrumb';
 import { Pagination } from '@/components/ui/Pagination';
@@ -45,6 +47,38 @@ export function SearchContent() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated());
   const openLoginModal = useLoginModalStore((s) => s.open);
   const hydrated = useHydrated();
+  const addToCart = useCartStore((s) => s.addItem);
+
+  const handleAddToCart = (item: SearchProductResult) => {
+    const product: Product = {
+      id: String(item.productid),
+      name: item.productname,
+      slug: item.slug,
+      description: item.shortdescription || '',
+      shortDescription: item.shortdescription || '',
+      price: item.pricing ? parseFloat(item.pricing.price) : 0,
+      salePrice: item.pricing?.discountprice ? parseFloat(item.pricing.discountprice) : undefined,
+      discount: item.pricing?.discount ? parseFloat(item.pricing.discount) : undefined,
+      currency: item.pricing?.currencycode || 'USD',
+      images: [buildImageUrl(item.primaryImage?.imageurl)],
+      category: item.categoryname || '',
+      categorySlug: '',
+      brand: '',
+      rating: 0,
+      reviewCount: 0,
+      sku: '',
+      inStock: true,
+      stockCount: 1,
+      tags: item.tags ? item.tags.split(',') : [],
+      isNew: false,
+      onSale: !!item.pricing?.discountprice,
+      isFeatured: false,
+      isBestSeller: false,
+      specifications: {},
+      createdAt: '',
+    };
+    addToCart(product);
+  };
 
   const handleWishlistToggle = (productId: number) => {
     if (!isAuthenticated || !userId) {
@@ -93,7 +127,7 @@ export function SearchContent() {
   const hasQuery = query.trim().length >= 3;
 
   return (
-    <main className="max-w-[var(--container-max)] mx-auto px-4 sm:px-6 lg:px-8 pt-2 pb-8">
+    <main className="w-full px-4 sm:px-6 lg:px-8 pt-2 pb-8">
       <Breadcrumb items={[{ label: t('title') }]} />
 
       {/* Results */}
@@ -158,6 +192,15 @@ export function SearchContent() {
                           )}
                         </div>
                       </Link>
+                      <div className="px-3 pb-3">
+                        <button
+                          onClick={() => handleAddToCart(item)}
+                          className="w-full btn-primary text-xs py-2 flex items-center justify-center gap-1.5"
+                        >
+                          <ShoppingCart className="w-3.5 h-3.5" />
+                          Add to Cart
+                        </button>
+                      </div>
                     </div>
                   );
                 })}
@@ -176,14 +219,14 @@ export function SearchContent() {
             <div className="text-center py-16">
               <SearchIcon className="w-16 h-16 text-slate-400 mx-auto mb-4" />
               <h2 className="text-xl font-semibold text-slate-900 mb-2">{t('noResults')}</h2>
-              <p className="text-slate-500">{t('noResultsMessage')}</p>
+              <p className="text-slate-600">{t('noResultsMessage')}</p>
             </div>
           )}
         </>
       ) : (
         <div className="text-center py-8">
           <SearchIcon className="w-12 h-12 text-slate-400 mx-auto mb-3" />
-          <p className="text-sm text-slate-500">{t('minCharacters')}</p>
+          <p className="text-sm text-slate-600">{t('minCharacters')}</p>
         </div>
       )}
     </main>

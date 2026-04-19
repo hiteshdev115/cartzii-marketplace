@@ -86,7 +86,7 @@ export function ProductCard({ product }: ProductCardProps) {
         </div>
         <button
           onClick={() => addToCart(product)}
-          className="mt-3 w-full btn-primary text-xs py-2 opacity-0 group-hover:opacity-100 transition-opacity"
+          className="mt-3 w-full btn-primary text-xs py-2"
         >
           Add to Cart
         </button>

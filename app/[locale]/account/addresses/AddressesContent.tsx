@@ -130,7 +130,7 @@ export function AddressesContent() {
         <div className="text-center py-16">
           <MapPin className="w-12 h-12 text-slate-400 mx-auto mb-4" />
           <p className="text-lg font-medium text-slate-600">{t('noAddresses')}</p>
-          <p className="text-sm text-slate-500 mt-1">{t('noAddressesMessage')}</p>
+          <p className="text-sm text-slate-600 mt-1">{t('noAddressesMessage')}</p>
           {!isFormVisible && (
             <Button onClick={() => setShowForm(true)} className="mt-6 gap-2">
               <Plus className="w-4 h-4" /> {t('addAddress')}

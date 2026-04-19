@@ -84,7 +84,7 @@ export function ProductFilters() {
                 className="rounded border-gray-300 text-primary focus:ring-primary"
               />
               {cat.name}
-              <span className="text-slate-400 ml-auto">({cat.productCount})</span>
+              <span className="text-slate-500 ml-auto">({cat.productCount})</span>
             </label>
           ))}
         </div>
@@ -193,7 +193,7 @@ export function ProductFilters() {
                   className="rounded border-gray-300 text-primary focus:ring-primary"
                 />
                 {cat.name}
-                <span className="text-slate-400 ml-auto">({cat.productCount})</span>
+                <span className="text-slate-500 ml-auto">({cat.productCount})</span>
               </label>
             ))}
           </div>

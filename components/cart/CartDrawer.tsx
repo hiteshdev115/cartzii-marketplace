@@ -52,7 +52,7 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
             <div className="flex flex-col items-center justify-center h-full text-center">
               <ShoppingBag className="w-16 h-16 text-slate-400 mb-4" />
               <p className="text-slate-500 font-medium mb-2">{t('emptyTitle')}</p>
-              <p className="text-sm text-slate-400 mb-4">{t('emptyMessage')}</p>
+              <p className="text-sm text-slate-500 mb-4">{t('emptyMessage')}</p>
               <Link href={buildCountryPath(locale, '/products')} onClick={onClose} className="btn-primary text-sm">
                 {t('continueShopping')}
               </Link>
@@ -104,7 +104,7 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
               <span className="text-slate-600">{t('subtotal')}</span>
               <span className="font-bold text-lg">{formatPrice(subtotal, locale)}</span>
             </div>
-            <p className="text-xs text-slate-400">{t('shippingNote')}</p>
+            <p className="text-xs text-slate-500">{t('shippingNote')}</p>
             <Link
               href={buildCountryPath(locale, '/cart')}
               className="btn-secondary w-full flex items-center justify-center"

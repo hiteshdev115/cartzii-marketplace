@@ -64,7 +64,7 @@ export function CountrySelector() {
 
       {open && (
         <div className="absolute right-0 top-full mt-1 min-w-[180px] bg-white rounded-xl shadow-lg border border-gray-100 py-1 z-50">
-          <p className="px-3 py-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">
+          <p className="px-3 py-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">
             Language
           </p>
           {countries[currentCountry].locales.map((loc) => (

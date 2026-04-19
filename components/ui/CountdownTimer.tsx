@@ -32,7 +32,7 @@ export function CountdownTimer({ endDate, compact }: CountdownTimerProps) {
         {[t('days'), t('hours'), t('minutes'), t('seconds')].map((label) => (
           <div key={label} className="flex flex-col items-center bg-slate-900 text-white rounded-lg px-3 py-2 min-w-[3.5rem]">
             <span className="text-xl font-bold font-mono">--</span>
-            <span className="text-[10px] uppercase tracking-wider text-slate-400">{label}</span>
+            <span className="text-[10px] uppercase tracking-wider text-slate-500">{label}</span>
           </div>
         ))}
       </div>

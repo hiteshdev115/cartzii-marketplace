@@ -27,7 +27,7 @@ export function ActiveFilterChips() {
 
   return (
     <div className="flex items-center gap-2 flex-wrap py-3">
-      <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider mr-1">
+      <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider mr-1">
         Active filters:
       </span>
 

@@ -67,7 +67,7 @@ export default async function CategoryPage({ params }: { params: Promise<{ local
       <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
         <ProductFilters />
         <div className="flex items-center gap-3">
-          <p className="text-sm text-slate-500">{t('productsFound', { count: products.length })}</p>
+          <p className="text-sm text-slate-600">{t('productsFound', { count: products.length })}</p>
           <select className="input w-auto text-sm py-2" aria-label={t('sortBy')}>
             <option value="featured">{t('sortFeatured')}</option>
             <option value="newest">{t('sortNewest')}</option>

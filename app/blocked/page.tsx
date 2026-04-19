@@ -28,12 +28,12 @@ export default function BlockedPage() {
             <span className="font-semibold">United States</span> and{' '}
             <span className="font-semibold">Canada</span>.
           </p>
-          <p className="text-sm text-slate-500">
+          <p className="text-sm text-slate-600">
             We&apos;re working on expanding to more regions. Stay tuned!
           </p>
         </div>
 
-        <p className="text-xs text-slate-400">
+        <p className="text-xs text-slate-500">
           &copy; {new Date().getFullYear()} Cartzii. All rights reserved.
         </p>
       </div>

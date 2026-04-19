@@ -130,7 +130,7 @@ export function CategoryMenu() {
               <Loader2 className="w-5 h-5 animate-spin text-primary" />
             </div>
           ) : categories.length === 0 ? (
-            <p className="px-4 py-6 text-sm text-slate-400">No categories found</p>
+            <p className="px-4 py-6 text-sm text-slate-500">No categories found</p>
           ) : (
             <SubcategoryPanel
               categories={categories}

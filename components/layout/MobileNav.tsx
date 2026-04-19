@@ -103,7 +103,7 @@ function MobileRegionSwitcher({ locale }: { locale: string }) {
     <div className="px-4 py-2 mb-2 space-y-3">
       {countryConfig.locales.length > 1 && (
         <div>
-          <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-2">
+          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2 flex items-center gap-2">
             <Globe className="w-3.5 h-3.5" /> Language
           </p>
           <div className="flex gap-2">
@@ -227,7 +227,7 @@ export function MobileNav() {
                           <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
                         </div>
                       ) : categories.length === 0 ? (
-                        <p className="px-4 py-3 text-sm text-slate-400">No categories found</p>
+                        <p className="px-4 py-3 text-sm text-slate-500">No categories found</p>
                       ) : (
                         <MobileCategoryTree
                           categories={categories}

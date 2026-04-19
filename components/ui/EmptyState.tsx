@@ -17,7 +17,7 @@ export function EmptyState({ icon, title, message, actionLabel, actionHref, onAc
         {icon || <ShoppingBag className="w-10 h-10 text-slate-400" />}
       </div>
       <h3 className="text-xl font-semibold text-slate-900 mb-2">{title}</h3>
-      <p className="text-slate-500 mb-6 max-w-md">{message}</p>
+      <p className="text-slate-600 mb-6 max-w-md">{message}</p>
       {actionLabel && (
         actionHref ? (
           <a href={actionHref} className="btn-primary inline-block">{actionLabel}</a>

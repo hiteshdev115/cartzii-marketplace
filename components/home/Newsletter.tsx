@@ -34,7 +34,7 @@ export function Newsletter() {
               onChange={(e) => setEmail(e.target.value)}
               placeholder={t('emailPlaceholder')}
               required
-              className="flex-1 px-5 py-3.5 rounded-xl text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-white/50"
+              className="flex-1 px-5 py-3.5 rounded-xl text-slate-900 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-white/50"
             />
             <button type="submit" className="bg-white text-primary font-semibold px-6 py-3.5 rounded-xl hover:bg-slate-100 transition-colors flex items-center justify-center gap-2 cursor-pointer">
               <Send className="w-4 h-4" />

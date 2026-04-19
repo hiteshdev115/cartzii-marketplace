@@ -20,7 +20,7 @@ export function ReviewList({ reviews }: ReviewListProps) {
         <article key={review.id} className="border-b border-gray-100 pb-6 last:border-none">
           <div className="flex items-start gap-3">
             <Image
-              src={review.avatar}
+              src={review.avatar || '/assets/placeholder-avatar.png'}
               alt={review.author}
               width={40}
               height={40}
@@ -40,7 +40,7 @@ export function ReviewList({ reviews }: ReviewListProps) {
               <h4 className="font-semibold text-sm text-slate-900 mt-2">{review.title}</h4>
               <p className="text-sm text-slate-600 mt-1">{review.comment}</p>
               <div className="flex items-center gap-4 mt-3">
-                <span className="text-xs text-slate-400">{review.date}</span>
+                <span className="text-xs text-slate-500">{review.date}</span>
                 <button className="flex items-center gap-1 text-xs text-slate-500 hover:text-primary">
                   <ThumbsUp className="w-3.5 h-3.5" />
                   Helpful ({review.helpful})

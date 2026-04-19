@@ -53,7 +53,7 @@ export function ProductTabs({ product, reviews }: ProductTabsProps) {
           <div
             id="panel-description"
             role="tabpanel"
-            className="prose prose-slate max-w-none prose-li:text-slate-600 prose-p:text-slate-600 prose-ul:space-y-1"
+            className="prose prose-slate max-w-none overflow-hidden break-words prose-li:text-slate-600 prose-p:text-slate-600 prose-ul:space-y-1"
             dangerouslySetInnerHTML={{ __html: product.description }}
           />
         )}
