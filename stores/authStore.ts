@@ -7,6 +7,7 @@ interface AuthStore {
   userId: string | null;
   firstName: string | null;
   email: string | null;
+  tokenExpiry: number | null;
   setTokens: (token: string, refreshToken: string) => void;
   setUser: (info: { firstName?: string; email?: string }) => void;
   clearTokens: () => void;
@@ -33,14 +34,17 @@ export const useAuthStore = create<AuthStore>()(
       userId: null,
       firstName: null,
       email: null,
+      tokenExpiry: null,
       setTokens: (token, refreshToken) => {
         const claims = decodeJwtPayload(token);
+        const exp = typeof claims?.exp === 'number' ? claims.exp : (claims?.exp ? Number(claims.exp) : null);
         set({
           token,
           refreshToken,
           userId: (claims?.userId as string) ?? (claims?.id as string) ?? (claims?.sub as string) ?? get().userId,
           email: (claims?.email as string) ?? get().email,
           firstName: (claims?.firstName as string) ?? get().firstName,
+          tokenExpiry: exp ?? null,
         });
       },
       setUser: (info) =>
@@ -49,8 +53,13 @@ export const useAuthStore = create<AuthStore>()(
           email: info.email ?? get().email,
         }),
       clearTokens: () =>
-        set({ token: null, refreshToken: null, userId: null, firstName: null, email: null }),
-      isAuthenticated: () => !!get().token,
+        set({ token: null, refreshToken: null, userId: null, firstName: null, email: null, tokenExpiry: null }),
+      isAuthenticated: () => {
+        const state = get();
+        if (!state.token) return false;
+        if (!state.tokenExpiry) return true;
+        return state.tokenExpiry > Math.floor(Date.now() / 1000);
+      },
       displayName: () => get().firstName || get().email || null,
     }),
     { name: 'cartzii-auth' },

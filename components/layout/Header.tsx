@@ -34,6 +34,7 @@ export function Header() {
   const fetchWishlistItems = useWishlistStore((s) => s.fetchItems);
   const clearWishlist = useWishlistStore((s) => s.clear);
   const token = useAuthStore((s) => s.token);
+  const tokenExpiry = useAuthStore((s) => s.tokenExpiry);
   const userId = useAuthStore((s) => s.userId);
   const clearTokens = useAuthStore((s) => s.clearTokens);
   const userDisplayName = useAuthStore((s) => s.displayName());
@@ -47,6 +48,20 @@ export function Header() {
       clearWishlist();
     }
   }, [hydrated, token, userId, fetchWishlistItems, clearWishlist]);
+
+  // Silently clear auth state when token expires, without forcing navigation.
+  useEffect(() => {
+    if (!hydrated || !token || !tokenExpiry) return;
+    const now = Math.floor(Date.now() / 1000);
+    if (tokenExpiry <= now) {
+      clearTokens();
+      return;
+    }
+    const timeout = setTimeout(() => {
+      clearTokens();
+    }, (tokenExpiry - now) * 1000);
+    return () => clearTimeout(timeout);
+  }, [hydrated, token, tokenExpiry, clearTokens]);
 
   useEffect(() => {
     let lastScrollY = window.scrollY;

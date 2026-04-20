@@ -13,6 +13,7 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
   const hydrated = useHydrated();
   const token = useAuthStore((s) => s.token);
 
+  // Redirect to login if not authenticated
   useEffect(() => {
     if (hydrated && !token) {
       router.replace(buildCountryPath(locale, '/auth/login'));
