@@ -75,7 +75,7 @@ export function QuickView({ product, onClose }: QuickViewProps) {
             </div>
             <p className="text-sm text-slate-600">{product.shortDescription}</p>
             <div className="flex gap-3 pt-4">
-              <button onClick={() => { addToCart(product); onClose(); }} className="btn-primary flex-1 flex items-center justify-center gap-2">
+              <button onClick={() => { addToCart(product, 1, undefined, undefined, locale); onClose(); }} className="btn-primary flex-1 flex items-center justify-center gap-2">
                 <ShoppingCart className="w-4 h-4" /> {t('addToCart')}
               </button>
               <button

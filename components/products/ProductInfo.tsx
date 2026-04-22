@@ -68,7 +68,7 @@ export function ProductInfo({ product, onVariantChange, onShowReviews, onWriteRe
   }, [selectedColor, selectedSize, findMatchingVariant, onVariantChange]);
 
   const handleAddToCart = () => {
-    addToCart(product, quantity, selectedColor, selectedSize);
+    addToCart(product, quantity, selectedColor, selectedSize, locale);
   };
 
   return (

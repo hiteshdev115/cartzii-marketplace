@@ -30,6 +30,8 @@ export function Header() {
   const searchDesktopRef = useRef<HTMLDivElement>(null);
   const hydrated = useHydrated();
   const cartCount = useCartStore((s) => s.items.reduce((sum, item) => sum + item.quantity, 0));
+  const loadCart = useCartStore((s) => s.loadCart);
+  const clearCart = useCartStore((s) => s.clearCart);
   const wishlistCount = useWishlistStore((s) => s.items.length);
   const fetchWishlistItems = useWishlistStore((s) => s.fetchItems);
   const clearWishlist = useWishlistStore((s) => s.clear);
@@ -40,14 +42,16 @@ export function Header() {
   const userDisplayName = useAuthStore((s) => s.displayName());
   const isLoggedIn = hydrated && !!token;
 
-  // Fetch wishlist from API when user is authenticated
+  // Fetch wishlist and cart from API when user is authenticated
   useEffect(() => {
     if (hydrated && token && userId) {
       fetchWishlistItems(userId);
+      loadCart(userId);
     } else if (hydrated && !token) {
       clearWishlist();
+      clearCart();
     }
-  }, [hydrated, token, userId, fetchWishlistItems, clearWishlist]);
+  }, [hydrated, token, userId, fetchWishlistItems, clearWishlist, loadCart, clearCart]);
 
   // Silently clear auth state when token expires, without forcing navigation.
   useEffect(() => {

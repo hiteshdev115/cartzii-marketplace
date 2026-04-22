@@ -26,14 +26,14 @@ export function CartSummary() {
 
       {/* Promo code */}
       <div className="flex gap-2 mb-6">
-        <div className="flex-1 relative">
-          <Tag className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+        <div className="flex-1 flex items-center border border-gray-300 rounded-xl focus-within:ring-2 focus-within:ring-primary/30 focus-within:border-primary transition-all bg-white overflow-hidden">
+          <Tag className="shrink-0 ml-3 w-4 h-4 text-slate-400" />
           <input
             type="text"
             placeholder={t('promoPlaceholder')}
             value={promoCode}
             onChange={(e) => setPromoCode(e.target.value)}
-            className="input pl-10 text-sm py-2"
+            className="flex-1 px-2 py-2 text-sm text-slate-900 placeholder:text-slate-500 focus:outline-none bg-transparent"
           />
         </div>
         <button className="btn-secondary text-sm px-4">{t('apply')}</button>

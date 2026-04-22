@@ -39,3 +39,20 @@ export type {
   RatingDistribution,
   ProductReviewsResponse,
 } from './reviews';
+export {
+  addCartItemAPI,
+  fetchCartItemsAPI,
+  updateCartItemAPI,
+  removeCartItemAPI,
+  clearCartAPI,
+  getCartCountAPI,
+  buildCartImageUrl,
+} from './cart';
+export type {
+  CartAPIItem,
+  CartAPIProduct,
+  CartAPIVariant,
+  CartAPISummary,
+  AddCartItemParams,
+  UpdateCartItemParams,
+} from './cart';

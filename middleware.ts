@@ -1,7 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { countries } from '@/config/countries';
+import { countries, allLocales } from '@/config/countries';
 
 const ALLOWED_COUNTRIES = new Set(['US', 'CA']);
+
+// Map internal locale back to external country path prefix
+const localeToCountryPath: Record<string, string> = {
+  'en-US': '/us',
+  'en-CA': '/ca',
+  'fr-CA': '/ca/fr',
+};
 
 function getGeoCountry(request: NextRequest): string | null {
   // Nginx GeoIP sets this header
@@ -39,6 +46,20 @@ export default function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL(`/${countryPath}`, request.url));
   }
 
+  // Redirect internal locale-prefixed paths → external country paths
+  // e.g. /en-CA/products → /ca/products  |  /fr-CA/deals → /ca/fr/deals
+  for (const locale of allLocales) {
+    const localePrefix = `/${locale}`;
+    if (pathname === localePrefix || pathname.startsWith(`${localePrefix}/`)) {
+      const countryBase = localeToCountryPath[locale] ?? '/us';
+      const rest = pathname.slice(localePrefix.length); // '' or '/products/...'
+      return NextResponse.redirect(
+        new URL(`${countryBase}${rest}`, request.url),
+        { status: 301 },
+      );
+    }
+  }
+
   const segments = pathname.split('/').filter(Boolean);
   const country = segments[0]?.toLowerCase();
 
@@ -69,5 +90,16 @@ export default function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/', '/blocked', '/(us|ca)/:path*'],
+  matcher: [
+    '/',
+    '/blocked',
+    '/(us|ca)/:path*',
+    // Also intercept bare locale-prefixed paths so they get redirected to /country/*
+    '/en-US',
+    '/en-CA',
+    '/fr-CA',
+    '/en-US/:path*',
+    '/en-CA/:path*',
+    '/fr-CA/:path*',
+  ],
 };

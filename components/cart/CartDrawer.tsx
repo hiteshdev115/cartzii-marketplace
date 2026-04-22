@@ -60,30 +60,34 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
           ) : (
             <ul className="space-y-4">
               {items.map((item) => (
-                <li key={`${item.product.id}-${item.selectedColor}-${item.selectedSize}`} className="flex gap-3 p-3 bg-slate-50 rounded-xl">
+                <li key={item.cartId ?? `${item.product.id}-${item.selectedColor}-${item.selectedSize}`} className="flex gap-3 p-3 bg-slate-50 rounded-xl">
                   <div className="relative w-20 h-20 rounded-lg overflow-hidden shrink-0">
                     <Image src={item.product.images[0]} alt={item.product.name} fill className="object-cover" sizes="80px" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <h3 className="text-sm font-semibold text-slate-900 truncate">{item.product.name}</h3>
-                    {(item.selectedColor || item.selectedSize) && (
+                    {item.variantAttributes && item.variantAttributes.length > 0 ? (
+                      <p className="text-xs text-slate-500 mt-0.5">
+                        {item.variantAttributes.map((a) => `${a.name}: ${a.value}`).join(' · ')}
+                      </p>
+                    ) : (item.selectedColor || item.selectedSize) ? (
                       <p className="text-xs text-slate-500 mt-0.5">
                         {item.selectedColor && `Color: ${item.selectedColor}`}
                         {item.selectedColor && item.selectedSize && ' · '}
                         {item.selectedSize && `Size: ${item.selectedSize}`}
                       </p>
-                    )}
+                    ) : null}
                     <p className="text-sm font-bold text-primary mt-1">
                       {formatPrice((item.product.salePrice || item.product.price) * item.quantity, locale)}
                     </p>
                     <div className="flex items-center justify-between mt-2">
                       <QuantitySelector
                         value={item.quantity}
-                        onChange={(q) => updateQuantity(item.product.id, q)}
+                        onChange={(q) => updateQuantity(item.product.id, q, item.selectedColor, item.selectedSize)}
                         max={99}
                       />
                       <button
-                        onClick={() => removeItem(item.product.id)}
+                        onClick={() => removeItem(item.product.id, item.selectedColor, item.selectedSize)}
                         className="p-1.5 text-slate-400 hover:text-red-500 transition-colors"
                         aria-label={`Remove ${item.product.name}`}
                       >

@@ -69,6 +69,16 @@ export interface CartItem {
   quantity: number;
   selectedColor?: string;
   selectedSize?: string;
+  /** All variant attributes from server (e.g. Color, Size, Material) */
+  variantAttributes?: Array<{ name: string; value: string }>;
+  /** Server-side cart ID (present when user is authenticated) */
+  cartId?: number;
+  /** Server-side variant ID */
+  variantId?: number;
+  /** Price string as stored on the server */
+  price?: string;
+  countryCode?: string;
+  currencyCode?: string;
 }
 
 export interface WishlistItem {

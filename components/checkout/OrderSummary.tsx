@@ -22,7 +22,7 @@ export function OrderSummary() {
 
       <ul className="space-y-3 mb-4">
         {items.map((item) => (
-          <li key={`${item.product.id}-${item.selectedColor}-${item.selectedSize}`} className="flex gap-3">
+          <li key={item.cartId ?? `${item.product.id}-${item.selectedColor}-${item.selectedSize}`} className="flex gap-3">
             <div className="relative w-14 h-14 rounded-lg overflow-hidden shrink-0">
               <Image src={item.product.images[0]} alt={item.product.name} fill className="object-cover" sizes="56px" />
             </div>

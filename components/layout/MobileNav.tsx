@@ -4,7 +4,7 @@ import { useState, useSyncExternalStore, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { Menu, X, Home, Tag, Sparkles, User, Heart, ChevronDown, ChevronRight, Globe, ShoppingBag } from 'lucide-react';
 import { useTranslations, useLocale } from 'next-intl';
-import { buildCountryPath, getCountryFromLocale, countries } from '@/config/countries';
+import { buildCountryPath, getCountryFromLocale, countries, extractPagePath } from '@/config/countries';
 import { fetchCategories } from '@/lib/api';
 import { Category } from '@/types';
 import Link from 'next/link';
@@ -87,16 +87,9 @@ function MobileRegionSwitcher({ locale }: { locale: string }) {
   // US only has English — no need to show region/language switcher
   if (country === 'us') return null;
 
-  const getPagePath = () => {
-    const localePrefix = `/${locale}`;
-    return pathname.startsWith(localePrefix)
-      ? pathname.slice(localePrefix.length) || '/'
-      : '/';
-  };
-
   const switchTo = (targetLocale: string) => {
     if (targetLocale === locale) return;
-    window.location.assign(buildCountryPath(targetLocale, getPagePath()));
+    window.location.assign(buildCountryPath(targetLocale, extractPagePath(pathname, locale)));
   };
 
   return (

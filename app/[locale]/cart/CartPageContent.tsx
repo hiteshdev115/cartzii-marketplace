@@ -31,13 +31,13 @@ export function CartPageContent() {
           <div className="lg:col-span-2">
             <div className="flex items-center justify-between mb-4">
               <p className="text-sm text-slate-600">{items.length} {items.length === 1 ? 'item' : 'items'}</p>
-              <button onClick={clearCart} className="text-sm text-red-500 hover:underline">
+              <button onClick={() => clearCart()} className="text-sm text-red-500 hover:underline">
                 {t('clearCart')}
               </button>
             </div>
             <div className="bg-white rounded-2xl border">
               {items.map((item) => (
-                <CartItem key={`${item.product.id}-${item.selectedColor}-${item.selectedSize}`} item={item} />
+                <CartItem key={item.cartId ?? `${item.product.id}-${item.selectedColor}-${item.selectedSize}`} item={item} />
               ))}
             </div>
           </div>

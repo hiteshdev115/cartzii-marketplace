@@ -58,3 +58,33 @@ export function buildCountryPath(locale: string, pagePath: string): string {
   }
   return `/${country}/${lang}${normalizedPath}`;
 }
+
+/**
+ * Extract the page-level path from either:
+ *  - An internal/rewritten locale path  e.g. /en-CA/products  → /products
+ *  - An external country path           e.g. /ca/products     → /products
+ *                                            /ca/fr/products   → /products
+ */
+export function extractPagePath(pathname: string, locale: string): string {
+  // 1. Internal format after middleware rewrite: /en-CA/products → /products
+  const localePrefix = `/${locale}`;
+  if (pathname === localePrefix) return '/';
+  if (pathname.startsWith(`${localePrefix}/`)) {
+    return pathname.slice(localePrefix.length);
+  }
+
+  // 2. External country format using only the current locale's prefix
+  //    en-CA → /ca   |   fr-CA → /ca/fr   |   en-US → /us
+  const country = getCountryFromLocale(locale);
+  const countryConfig = countries[country];
+  const isDefaultLang = locale === countryConfig.defaultLocale;
+  const lang = locale.split('-')[0];
+  const externalPrefix = isDefaultLang ? `/${country}` : `/${country}/${lang}`;
+
+  if (pathname === externalPrefix) return '/';
+  if (pathname.startsWith(`${externalPrefix}/`)) {
+    return pathname.slice(externalPrefix.length);
+  }
+
+  return '/';
+}

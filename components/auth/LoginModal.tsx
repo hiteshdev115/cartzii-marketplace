@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { api, ApiError } from '@/lib/api/client';
 import { useAuthStore } from '@/stores/authStore';
+import { useCartStore } from '@/stores/cartStore';
 import { useLoginModalStore } from '@/stores/loginModalStore';
 import { Eye, EyeOff, LogIn, X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
@@ -26,6 +27,7 @@ export function LoginModal() {
   const close = useLoginModalStore((s) => s.close);
   const setTokens = useAuthStore((s) => s.setTokens);
   const setUser = useAuthStore((s) => s.setUser);
+  const syncGuestCart = useCartStore((s) => s.syncGuestCart);
 
   const [showPassword, setShowPassword] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
@@ -76,6 +78,21 @@ export function LoginModal() {
       if (res.success && res.token && res.refreshToken) {
         setTokens(res.token, res.refreshToken);
         setUser({ email: data.email });
+        // Extract userId from the newly set token payload
+        const parts = res.token.split('.');
+        let userId: string | null = null;
+        if (parts.length === 3) {
+          try {
+            const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
+            userId = String(payload?.userId ?? payload?.id ?? payload?.sub ?? '');
+          } catch {
+            // ignore decode errors
+          }
+        }
+        if (userId) {
+          // Merge guest cart with server cart asynchronously
+          syncGuestCart(userId).catch(() => {});
+        }
         handleClose();
       }
     } catch (error) {

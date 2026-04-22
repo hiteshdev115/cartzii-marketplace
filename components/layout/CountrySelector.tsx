@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useLocale } from 'next-intl';
 import { usePathname } from 'next/navigation';
-import { countries, getCountryFromLocale, buildCountryPath } from '@/config/countries';
+import { countries, getCountryFromLocale, buildCountryPath, extractPagePath } from '@/config/countries';
 import { ChevronDown, Check, Globe } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -31,19 +31,12 @@ export function CountrySelector() {
   // US only has English — no need to show country/language selector
   if (currentCountry === 'us') return null;
 
-  const getPagePath = () => {
-    const localePrefix = `/${locale}`;
-    return pathname.startsWith(localePrefix)
-      ? pathname.slice(localePrefix.length) || '/'
-      : '/';
-  };
-
   const switchTo = (targetLocale: string) => {
     if (targetLocale === locale) {
       setOpen(false);
       return;
     }
-    window.location.assign(buildCountryPath(targetLocale, getPagePath()));
+    window.location.assign(buildCountryPath(targetLocale, extractPagePath(pathname, locale)));
   };
 
   const currentLangLabel = localeLabels[locale] ?? 'English';

@@ -85,7 +85,7 @@ export function ProductCard({ product }: ProductCardProps) {
           )}
         </div>
         <button
-          onClick={() => addToCart(product)}
+          onClick={() => addToCart(product, 1, undefined, undefined, locale)}
           className="mt-3 w-full btn-primary text-xs py-2"
         >
           Add to Cart

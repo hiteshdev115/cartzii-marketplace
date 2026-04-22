@@ -77,7 +77,7 @@ export function SearchContent() {
       specifications: {},
       createdAt: '',
     };
-    addToCart(product);
+    addToCart(product, 1, undefined, undefined, locale);
   };
 
   const handleWishlistToggle = (productId: number) => {
