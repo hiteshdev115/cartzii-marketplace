@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 import { useCartStore } from '@/stores/cartStore';
 import { CartItem } from '@/components/cart/CartItem';
@@ -18,10 +18,10 @@ function getCookie(name: string): string | null {
 export function CartPageContent() {
   const t = useTranslations('Cart');
   const items = useCartStore((s) => s.items);
+  const isLoading = useCartStore((s) => s.isLoading);
   const clearCart = useCartStore((s) => s.clearCart);
 
   const hasSynced = useRef(false);
-  const [isSyncing, setIsSyncing] = useState(false);
 
   useEffect(() => {
     if (hasSynced.current) return;
@@ -45,12 +45,9 @@ export function CartPageContent() {
 
     if (!token || !userId) return;
 
-    setIsSyncing(true);
-    useCartStore.getState().loadCart(userId)
-      .catch(() => {
-        // silently fall back to existing local cart
-      })
-      .finally(() => setIsSyncing(false));
+    useCartStore.getState().loadCart(userId).catch(() => {
+      // silently fall back to existing local cart
+    });
   }, []);
 
   return (
@@ -58,7 +55,7 @@ export function CartPageContent() {
       <Breadcrumb items={[{ label: t('title') }]} />
       <h1 className="text-3xl font-bold text-slate-900 mb-8">{t('title')}</h1>
 
-      {isSyncing ? (
+      {isLoading ? (
         <div className="flex items-center justify-center py-16 text-slate-400">
           <Loader2 className="w-8 h-8 animate-spin" />
         </div>

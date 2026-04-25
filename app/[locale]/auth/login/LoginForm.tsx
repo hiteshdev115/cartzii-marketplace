@@ -12,7 +12,6 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { buildCountryPath } from '@/config/countries';
 import { api, ApiError } from '@/lib/api/client';
 import { useAuthStore } from '@/stores/authStore';
-import { useCartStore } from '@/stores/cartStore';
 import { mergeCartOnLogin } from '@/lib/mergeCart';
 import { Eye, EyeOff, LogIn, CheckCircle, ShoppingCart } from 'lucide-react';
 import { useState } from 'react';
