@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { CartItem, Product } from '@/types';
 import { getCountryConfig } from '@/config/countries';
+import { addToGuestCart } from '@/lib/guestCart';
 import {
   addCartItemAPI,
   fetchCartItemsAPI,
@@ -72,6 +73,101 @@ function mapAPIItemToCartItem(item: CartAPIItem): CartItem {
   };
 }
 
+// ---- BackendCartItem: raw shape returned by GET /api/v1/cart/:userid ------
+// (A lighter alternative to CartAPIItem — no pre-resolved variant attributes)
+
+export interface BackendCartItem {
+  cartid: number;
+  productid: number;
+  variantid: number | null;
+  quantity: number;
+  price: string;
+  countrycode?: string | null;
+  currencycode?: string | null;
+  product: {
+    productid: number;
+    productname: string;
+    slug?: string;
+    sku?: string;
+    shortdescription?: string;
+    stockquantity?: number;
+    productimages?: Array<{ imageurl: string; isprimary: boolean }>;
+  };
+  /**
+   * Variant attribute values as stored by the guest cart / merge endpoint.
+   * e.g. { color: "grey", size: "M" }.
+   * These are the user's actual selections and must be used for display — never
+   * fall back to a product default.
+   */
+  selectedAttributes?: Record<string, string>;
+}
+
+// Map BackendCartItem → local CartItem
+function mapBackendItemToCartItem(item: BackendCartItem): CartItem {
+  const price = parseFloat(item.price) || 0;
+
+  // Prefer the primary image; fall back to first image; then placeholder
+  const primaryImage =
+    item.product.productimages?.find((img) => img.isprimary)?.imageurl ??
+    item.product.productimages?.[0]?.imageurl ??
+    null;
+  const imageUrl = buildCartImageUrl(primaryImage);
+
+  // Derive variant display fields from selectedAttributes — these are the
+  // user's actual selections stored by the guest cart / merge endpoint.
+  // Never fall back to a product-level default.
+  const attrs = item.selectedAttributes ?? {};
+  const selectedColor = attrs['color'] ?? attrs['Color'] ?? undefined;
+  const selectedSize = attrs['size'] ?? attrs['Size'] ?? undefined;
+
+  // Build the full variantAttributes array for the cart UI to render
+  const variantAttributes = Object.entries(attrs).map(([name, value]) => ({
+    name: name.charAt(0).toUpperCase() + name.slice(1),
+    value,
+  }));
+
+  const product: Product = {
+    id: String(item.productid),
+    name: item.product.productname,
+    slug: item.product.slug ?? '',
+    description: item.product.shortdescription ?? '',
+    shortDescription: item.product.shortdescription ?? '',
+    price,
+    currency: item.currencycode ?? 'USD',
+    // Use the resolved image directly — do NOT re-fetch or fall back to a
+    // product-level default image.
+    images: [imageUrl],
+    category: '',
+    categorySlug: '',
+    brand: '',
+    rating: 0,
+    reviewCount: 0,
+    sku: item.product.sku ?? '',
+    inStock: (item.product.stockquantity ?? 1) > 0,
+    stockCount: item.product.stockquantity ?? 0,
+    tags: [],
+    isNew: false,
+    onSale: false,
+    isFeatured: false,
+    isBestSeller: false,
+    specifications: {},
+    createdAt: new Date().toISOString(),
+  };
+
+  return {
+    product,
+    quantity: item.quantity,
+    selectedColor,
+    selectedSize,
+    variantAttributes: variantAttributes.length > 0 ? variantAttributes : undefined,
+    cartId: item.cartid,
+    variantId: item.variantid ?? undefined,
+    price: item.price,
+    countryCode: item.countrycode ?? undefined,
+    currencyCode: item.currencycode ?? undefined,
+  };
+}
+
 // ---- Read current auth userId from localStorage ---------------------------
 
 function getAuthUserId(): string | null {
@@ -114,6 +210,19 @@ interface CartStore {
   loadCart: (userId: string) => Promise<void>;
   /** After login: push guest cart items to server, then load merged cart. */
   syncGuestCart: (userId: string, locale?: string) => Promise<void>;
+  /**
+   * Merge raw server items into local cart without making any API calls.
+   * Merge strategy: for items that exist locally (matched by productid + variantid),
+   * keep whichever quantity is higher — so the user never sees their cart shrink.
+   * New server items are appended. Duplicates are deduplicated by productid:variantid key.
+   */
+  hydrateFromServer: (serverItems: BackendCartItem[]) => void;
+  /**
+   * Replace the entire cart with the server response as the single source of truth.
+   * Use this after a merge/sync operation where the server has already reconciled
+   * all conflicts — no local patching or quantity comparison is performed.
+   */
+  replaceCart: (serverItems: BackendCartItem[]) => void;
   getItemCount: () => number;
   getSubtotal: () => number;
 }
@@ -130,7 +239,7 @@ export const useCartStore = create<CartStore>()(
         const userId = getAuthUserId();
 
         if (!userId) {
-          // Guest: local state only
+          // Guest: update Zustand local state
           set((state) => {
             const existing = state.items.find(
               (item) =>
@@ -155,6 +264,23 @@ export const useCartStore = create<CartStore>()(
                 { product, quantity, selectedColor: color, selectedSize: size },
               ],
             };
+          });
+
+          // Also persist to guest_cart so mergeCartOnLogin can pick up variantId
+          const guestVariant = product.detailVariants?.find(
+            (v) => (!color || v.color === color) && (!size || v.size === size),
+          ) ?? (color ? product.detailVariants?.find((v) => v.color === color) : undefined);
+          addToGuestCart({
+            productId: product.id,
+            variantId: guestVariant?.variantId ?? '',
+            name: product.name,
+            image: product.images?.[0] ?? '',
+            price: product.salePrice ?? product.price,
+            quantity,
+            selectedAttributes: {
+              ...(color ? { color } : {}),
+              ...(size ? { size } : {}),
+            },
           });
           return;
         }
@@ -187,18 +313,16 @@ export const useCartStore = create<CartStore>()(
         });
 
         try {
-          // Resolve variant ID from detailVariants when color/size is selected
+          // Resolve variant from detailVariants using the user's current selection
           const matchedVariant = product.detailVariants?.find(
             (v) => (!color || v.color === color) && (!size || v.size === size),
-          ) ?? product.detailVariants?.find(
-            (v) => !color || v.color === color,
-          );
+          ) ?? (color ? product.detailVariants?.find((v) => v.color === color) : undefined);
           const variantId = matchedVariant?.variantId
             ? parseInt(matchedVariant.variantId, 10)
             : undefined;
 
           const countryConfig = locale ? getCountryConfig(locale) : null;
-          const priceNum = product.salePrice ?? product.price;
+          const priceNum = matchedVariant?.salePrice ?? matchedVariant?.price ?? product.salePrice ?? product.price;
 
           await addCartItemAPI({
             userid: parseInt(userId, 10),
@@ -208,6 +332,12 @@ export const useCartStore = create<CartStore>()(
             price: String(priceNum),
             countrycode: countryConfig?.code.toUpperCase(),
             currencycode: countryConfig?.currency,
+            selectedAttributes: {
+              ...(color ? { color } : {}),
+              ...(size ? { size } : {}),
+            },
+            name: product.name,
+            image: matchedVariant?.images?.[0] ?? product.images?.[0],
           });
 
           // Refresh from server to get accurate cartId and merged quantities
@@ -348,6 +478,84 @@ export const useCartStore = create<CartStore>()(
 
         // Replace local items with merged server cart
         await get().loadCart(userId);
+      },
+
+      replaceCart: (serverItems) => {
+        set({ items: serverItems.map(mapBackendItemToCartItem) });
+      },
+
+      hydrateFromServer: (serverItems) => {
+        const local = get().items;
+
+        // ---- DEBUG: log inputs and match results ---------------------------
+        console.log('=== CART MERGE DEBUG (hydrateFromServer) ===')
+        console.log('User (local) cart items:', JSON.stringify(
+          local.map((i) => ({
+            productId: i.product.id,
+            variantId: i.variantId,
+            color: i.selectedColor,
+            size: i.selectedSize,
+            quantity: i.quantity,
+          })),
+          null, 2,
+        ))
+        console.log('Server cart items:', JSON.stringify(
+          serverItems.map((i) => ({
+            productId: i.productid,
+            variantId: i.variantid,
+            color: i.selectedAttributes?.color,
+            size: i.selectedAttributes?.size,
+            quantity: i.quantity,
+          })),
+          null, 2,
+        ))
+        serverItems.forEach((serverItem) => {
+          const match = local.find(
+            (item) =>
+              item.product.id === String(serverItem.productid) &&
+              (item.variantId ?? null) === (serverItem.variantid ?? null),
+          )
+          console.log(
+            `Server item [productId: ${serverItem.productid} | variantId: ${serverItem.variantid}] → Local match found: ${!!match}`,
+            match ? `(local qty: ${match.quantity}, server qty: ${serverItem.quantity})` : '',
+          )
+        })
+        // ---- END DEBUG -----------------------------------------------------
+
+        // Index local items by "productid:variantid" for O(1) lookup
+        const localIndex = new Map(
+          local.map((item) => [
+            `${item.product.id}:${item.variantId ?? 'null'}`,
+            item,
+          ]),
+        );
+
+        // Build merged list starting from server items (authoritative source)
+        const merged: CartItem[] = serverItems.map((serverItem) => {
+          const key = `${serverItem.productid}:${serverItem.variantid ?? 'null'}`;
+          const localItem = localIndex.get(key);
+
+          const mapped = mapBackendItemToCartItem(serverItem);
+
+          if (localItem) {
+            // Keep the higher quantity so the user's intent is never silently reduced
+            return { ...mapped, quantity: Math.max(localItem.quantity, mapped.quantity) };
+          }
+          return mapped;
+        });
+
+        // Append any local-only items (guest items not yet synced to server)
+        const serverKeys = new Set(
+          serverItems.map((i) => `${i.productid}:${i.variantid ?? 'null'}`),
+        );
+        for (const localItem of local) {
+          const key = `${localItem.product.id}:${localItem.variantId ?? 'null'}`;
+          if (!serverKeys.has(key)) {
+            merged.push(localItem);
+          }
+        }
+
+        set({ items: merged });
       },
 
       getItemCount: () =>

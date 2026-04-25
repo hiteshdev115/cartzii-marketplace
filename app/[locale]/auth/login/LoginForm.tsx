@@ -12,14 +12,18 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { buildCountryPath } from '@/config/countries';
 import { api, ApiError } from '@/lib/api/client';
 import { useAuthStore } from '@/stores/authStore';
-import { Eye, EyeOff, LogIn, CheckCircle } from 'lucide-react';
+import { useCartStore } from '@/stores/cartStore';
+import { mergeCartOnLogin } from '@/lib/mergeCart';
+import { Eye, EyeOff, LogIn, CheckCircle, ShoppingCart } from 'lucide-react';
 import { useState } from 'react';
 
 interface LoginResponse {
   success: boolean;
   message: string;
   token?: string;
+  accessToken?: string;
   refreshToken?: string;
+  userid?: number;
   errorCode?: number;
 }
 
@@ -29,8 +33,10 @@ export function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const justRegistered = searchParams.get('registered') === 'true';
+  const redirectTo = searchParams.get('redirect');
   const [showPassword, setShowPassword] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
+  const [isRestoringCart, setIsRestoringCart] = useState(false);
   const setTokens = useAuthStore((s) => s.setTokens);
   const setUser = useAuthStore((s) => s.setUser);
 
@@ -50,10 +56,33 @@ export function LoginForm() {
         password: data.password,
       });
 
-      if (res.success && res.token && res.refreshToken) {
-        setTokens(res.token, res.refreshToken);
+      const accessToken = res.token ?? res.accessToken;
+      if (res.success && accessToken && res.refreshToken) {
+        setTokens(accessToken, res.refreshToken);
         setUser({ email: data.email });
-        router.push(buildCountryPath(locale, '/'));
+
+        // Resolve userId: prefer response body, fall back to JWT decode in store
+        const userId =
+          res.userid != null
+            ? String(res.userid)
+            : useAuthStore.getState().userId;
+
+        // Merge guest cart → server cart (errors must not block redirect)
+        if (userId) {
+          setIsRestoringCart(true);
+          try {
+            // Merge guest_cart items via /cart/merge, then reload from server.
+            // loadCart is called inside mergeCartOnLogin so no further sync needed.
+            await mergeCartOnLogin(accessToken, userId);
+          } catch {
+            // Cart restore failed — redirect anyway, cart will reload on next visit
+          } finally {
+            setIsRestoringCart(false);
+          }
+        }
+
+        const destination = redirectTo ?? buildCountryPath(locale, '/');
+        router.push(destination);
       }
     } catch (error) {
       if (error instanceof ApiError) {
@@ -117,8 +146,17 @@ export function LoginForm() {
             </label>
             <Link href={buildCountryPath(locale, '/auth/forgot-password')} className="text-sm text-primary hover:underline">{t('forgotPassword')}</Link>
           </div>
-          <Button type="submit" className="w-full flex items-center justify-center gap-2" disabled={isSubmitting}>
-            <LogIn className="w-4 h-4" /> {isSubmitting ? t('loggingIn') : t('login')}
+          <Button type="submit" className="w-full flex items-center justify-center gap-2" disabled={isSubmitting || isRestoringCart}>
+            {isRestoringCart ? (
+              <>
+                <ShoppingCart className="w-4 h-4 animate-pulse" />
+                {t('restoringCart')}
+              </>
+            ) : (
+              <>
+                <LogIn className="w-4 h-4" /> {isSubmitting ? t('loggingIn') : t('login')}
+              </>
+            )}
           </Button>
         </form>
 

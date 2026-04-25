@@ -3,6 +3,9 @@ import { countries, allLocales } from '@/config/countries';
 
 const ALLOWED_COUNTRIES = new Set(['US', 'CA']);
 
+// Paths that require a logged-in user (matched against the first segment after the country prefix).
+const PROTECTED_PATH_SEGMENTS = new Set(['checkout', 'account']);
+
 // Map internal locale back to external country path prefix
 const localeToCountryPath: Record<string, string> = {
   'en-US': '/us',
@@ -78,6 +81,18 @@ export default function middleware(request: NextRequest) {
     restSegments = segments.slice(2);
   }
 
+  // --- Auth guard for protected paths ---
+  // Check BEFORE rewriting so we can construct the redirect using the external URL.
+  const firstSegment = restSegments[0]?.toLowerCase();
+  if (firstSegment && PROTECTED_PATH_SEGMENTS.has(firstSegment)) {
+    const token = request.cookies.get('cartzii_access_token')?.value;
+    if (!token) {
+      const loginUrl = new URL(`/${country}/auth/login`, request.url);
+      loginUrl.searchParams.set('redirect', pathname);
+      return NextResponse.redirect(loginUrl);
+    }
+  }
+
   // Rewrite external URL to internal [locale] route
   const internalPath = `/${internalLocale}${restSegments.length ? '/' + restSegments.join('/') : ''}`;
   const url = request.nextUrl.clone();
@@ -94,6 +109,8 @@ export const config = {
     '/',
     '/blocked',
     '/(us|ca)/:path*',
+    '/(us|ca)/checkout/:path*',
+    '/(us|ca)/account/:path*',
     // Also intercept bare locale-prefixed paths so they get redirected to /country/*
     '/en-US',
     '/en-CA',

@@ -110,6 +110,9 @@ export interface AddCartItemParams {
   price: string;
   countrycode?: string;
   currencycode?: string;
+  selectedAttributes?: Record<string, string>;
+  name?: string;
+  image?: string;
 }
 
 const CART_CONFIG = { skipGuestToken: true };

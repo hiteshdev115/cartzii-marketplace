@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useRouter, usePathname } from 'next/navigation';
 import { Search, ShoppingCart, Heart, User, LogOut, Package, Star, Settings } from 'lucide-react';
 import { useTranslations, useLocale } from 'next-intl';
 import { buildCountryPath } from '@/config/countries';
@@ -41,6 +42,19 @@ export function Header() {
   const clearTokens = useAuthStore((s) => s.clearTokens);
   const userDisplayName = useAuthStore((s) => s.displayName());
   const isLoggedIn = hydrated && !!token;
+  const router = useRouter();
+  const pathname = usePathname();
+
+  const handleSignOut = () => {
+    clearTokens();
+    setUserMenuOpen(false);
+    // If the user is on a protected page, redirect to home so they aren't
+    // stuck on a page they can no longer access.
+    const PROTECTED_SEGMENTS = ['checkout', 'account'];
+    if (PROTECTED_SEGMENTS.some((seg) => pathname.includes(`/${seg}`))) {
+      router.push(buildCountryPath(locale, '/'));
+    }
+  };
 
   // Fetch wishlist and cart from API when user is authenticated
   useEffect(() => {
@@ -300,7 +314,7 @@ export function Header() {
                             <div className="border-t border-gray-100 my-1" />
                             <button
                               type="button"
-                              onClick={() => { clearTokens(); setUserMenuOpen(false); }}
+                              onClick={handleSignOut}
                               className="flex items-center gap-2 w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
                             >
                               <LogOut className="w-4 h-4" /> {t('signOut')}

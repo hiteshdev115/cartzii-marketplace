@@ -46,14 +46,25 @@ export const useAuthStore = create<AuthStore>()(
           firstName: (claims?.firstName as string) ?? get().firstName,
           tokenExpiry: exp ?? null,
         });
+        // Mirror token into a cookie so the Edge middleware can detect auth state.
+        if (typeof document !== 'undefined') {
+          const expiresStr = exp ? `; expires=${new Date(exp * 1000).toUTCString()}` : '';
+          const secure = location.protocol === 'https:' ? '; Secure' : '';
+          document.cookie = `cartzii_access_token=${encodeURIComponent(token)}; path=/${expiresStr}; SameSite=Lax${secure}`;
+        }
       },
       setUser: (info) =>
         set({
           firstName: info.firstName ?? get().firstName,
           email: info.email ?? get().email,
         }),
-      clearTokens: () =>
-        set({ token: null, refreshToken: null, userId: null, firstName: null, email: null, tokenExpiry: null }),
+      clearTokens: () => {
+        set({ token: null, refreshToken: null, userId: null, firstName: null, email: null, tokenExpiry: null });
+        // Clear the middleware-readable auth cookie.
+        if (typeof document !== 'undefined') {
+          document.cookie = 'cartzii_access_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax';
+        }
+      },
       isAuthenticated: () => {
         const state = get();
         if (!state.token) return false;
