@@ -5,9 +5,13 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useLocale, useTranslations } from 'next-intl';
 import { useCartStore } from '@/stores/cartStore';
+import { useAuthStore } from '@/stores/authStore';
 import { buildCountryPath } from '@/config/countries';
 import { formatPrice } from '@/lib/utils';
 import { QuantitySelector } from '@/components/ui/QuantitySelector';
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { GuestCheckoutModal } from '@/components/checkout/GuestCheckoutModal';
 
 interface CartDrawerProps {
   isOpen: boolean;
@@ -23,6 +27,9 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
   const subtotal = useCartStore((s) =>
     s.items.reduce((sum, item) => sum + (item.product.salePrice || item.product.price) * item.quantity, 0)
   );
+  const token = useAuthStore((s) => s.token);
+  const router = useRouter();
+  const [showCheckoutModal, setShowCheckoutModal] = useState(false);
 
   if (!isOpen) return null;
 
@@ -116,13 +123,23 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
             >
               {t('viewCart')}
             </Link>
-            <Link
-              href={buildCountryPath(locale, '/checkout')}
+            <button
+              onClick={() => {
+                if (token) {
+                  onClose();
+                  router.push(buildCountryPath(locale, '/checkout'));
+                } else {
+                  setShowCheckoutModal(true);
+                }
+              }}
               className="btn-primary w-full flex items-center justify-center gap-2"
-              onClick={onClose}
             >
               {t('checkout')} <ArrowRight className="w-4 h-4" />
-            </Link>
+            </button>
+            <GuestCheckoutModal
+              isOpen={showCheckoutModal}
+              onClose={() => setShowCheckoutModal(false)}
+            />
           </div>
         )}
       </div>

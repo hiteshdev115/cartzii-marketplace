@@ -2,7 +2,7 @@
 
 import { useState, useSyncExternalStore, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { Menu, X, Home, Tag, Sparkles, User, Heart, ChevronDown, ChevronRight, Globe, ShoppingBag } from 'lucide-react';
+import { Menu, X, Home, Tag, Sparkles, ChevronDown, ChevronRight, Globe, ShoppingBag } from 'lucide-react';
 import { useTranslations, useLocale } from 'next-intl';
 import { buildCountryPath, getCountryFromLocale, countries, extractPagePath } from '@/config/countries';
 import { fetchCategories } from '@/lib/api';
@@ -247,24 +247,8 @@ export function MobileNav() {
                 ))}
               </ul>
             </nav>
-            <div className="border-t p-4 space-y-2">
+            <div className="border-t p-4">
               <MobileRegionSwitcher locale={locale} />
-              <Link
-                href={buildCountryPath(locale, '/account/wishlist')}
-                onClick={() => setOpen(false)}
-                className="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-700 hover:bg-slate-100"
-              >
-                <Heart className="w-5 h-5 text-slate-400" />
-                Wishlist
-              </Link>
-              <Link
-                href={buildCountryPath(locale, '/account')}
-                onClick={() => setOpen(false)}
-                className="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-700 hover:bg-slate-100"
-              >
-                <User className="w-5 h-5 text-slate-400" />
-                Account
-              </Link>
             </div>
           </div>
         </div>,

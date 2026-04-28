@@ -4,7 +4,7 @@ import { countries, allLocales } from '@/config/countries';
 const ALLOWED_COUNTRIES = new Set(['US', 'CA']);
 
 // Paths that require a logged-in user (matched against the first segment after the country prefix).
-const PROTECTED_PATH_SEGMENTS = new Set(['checkout', 'account']);
+const PROTECTED_PATH_SEGMENTS = new Set(['account']);
 
 // Map internal locale back to external country path prefix
 const localeToCountryPath: Record<string, string> = {

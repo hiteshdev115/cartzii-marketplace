@@ -4,9 +4,12 @@ import { useLocale, useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { ArrowRight, Tag } from 'lucide-react';
 import { useCartStore } from '@/stores/cartStore';
+import { useAuthStore } from '@/stores/authStore';
 import { buildCountryPath } from '@/config/countries';
 import { formatPrice } from '@/lib/utils';
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { GuestCheckoutModal } from '@/components/checkout/GuestCheckoutModal';
 
 export function CartSummary() {
   const t = useTranslations('Cart');
@@ -14,6 +17,9 @@ export function CartSummary() {
   const subtotal = useCartStore((s) =>
     s.items.reduce((sum, item) => sum + (item.product.salePrice || item.product.price) * item.quantity, 0)
   );
+  const router = useRouter();
+  const token = useAuthStore((s) => s.token);
+  const [showCheckoutModal, setShowCheckoutModal] = useState(false);
   const [promoCode, setPromoCode] = useState('');
 
   const shipping = subtotal >= 50 ? 0 : 9.99;
@@ -63,12 +69,20 @@ export function CartSummary() {
         </div>
       </div>
 
-      <Link
-        href={buildCountryPath(locale, '/checkout')}
+      <button
+        onClick={() => {
+          if (token) {
+            router.push(buildCountryPath(locale, '/checkout'));
+          } else {
+            setShowCheckoutModal(true);
+          }
+        }}
         className="mt-6 btn-primary w-full flex items-center justify-center gap-2"
       >
         {t('proceedToCheckout')} <ArrowRight className="w-4 h-4" />
-      </Link>
+      </button>
+
+      <GuestCheckoutModal isOpen={showCheckoutModal} onClose={() => setShowCheckoutModal(false)} />
 
       <Link
         href={buildCountryPath(locale, '/products')}

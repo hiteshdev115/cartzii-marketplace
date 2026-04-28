@@ -151,7 +151,7 @@ export function Header() {
               <div className="flex items-center gap-0.5">
                 <Link
                   href={buildCountryPath(locale, '/account/wishlist')}
-                  className="relative p-2 hover:bg-slate-100 rounded-lg hidden sm:flex"
+                  className="relative p-2 hover:bg-slate-100 rounded-lg"
                   aria-label={`${t('wishlist')}${hydrated && wishlistCount > 0 ? ` (${wishlistCount})` : ''}`}
                 >
                   <Heart className="w-5 h-5 text-slate-600" />
@@ -160,6 +160,13 @@ export function Header() {
                       {wishlistCount}
                     </span>
                   )}
+                </Link>
+                <Link
+                  href={buildCountryPath(locale, '/account')}
+                  className="relative p-2 hover:bg-slate-100 rounded-lg"
+                  aria-label={t('account')}
+                >
+                  <User className="w-5 h-5 text-slate-600" />
                 </Link>
                 <Link
                   href={buildCountryPath(locale, '/cart')}

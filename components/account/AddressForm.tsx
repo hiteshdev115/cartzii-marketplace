@@ -6,8 +6,7 @@ import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { Button } from '@/components/ui/Button';
 import { addressSchema, type AddressFormData } from '@/lib/validators';
-import { fetchAllCountries, fetchStatesByCountry } from '@/lib/api';
-import { getCountryFromLocale } from '@/config/countries';
+import { fetchStatesByCountry } from '@/lib/api';
 import type { ApiAddress } from '@/types';
 import { X } from 'lucide-react';
 
@@ -25,7 +24,7 @@ export function AddressForm({ address, onSubmit, onCancel, loading }: AddressFor
   const t = useTranslations('Account');
   const locale = useLocale();
   const portalCountry = getCountryFromLocale(locale); // "ca" | "us"
-  const defaultIso = PORTAL_TO_ISO[portalCountry] ?? '';
+  const defaultIso = PORTAL_TO_ISO[portalCountry] ?? 'CA';
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [countryOptions, setCountryOptions] = useState<{ value: string; label: string }[]>([]);
@@ -45,26 +44,14 @@ export function AddressForm({ address, onSubmit, onCancel, loading }: AddressFor
 
   // ---- Fetch countries on mount ----
   useEffect(() => {
-    let cancelled = false;
-    async function load() {
-      const all = await fetchAllCountries();
-      if (cancelled) return;
-
-      // If portal is /ca/, only show Canada; otherwise show all
-      const filtered =
-        portalCountry === 'ca'
-          ? all.filter((c) => c.isoCode === 'CA')
-          : all;
-
-      const opts = [
-        { value: '', label: t('selectCountry') },
-        ...filtered.map((c) => ({ value: c.isoCode, label: c.name })),
-      ];
-      setCountryOptions(opts);
-    }
-    load();
-    return () => { cancelled = true; };
-  }, [portalCountry, t]);
+    // Show only Canada and United States regardless of portal
+    const opts = [
+      { value: '', label: t('selectCountry') },
+      { value: 'CA', label: 'Canada' },
+      { value: 'US', label: 'United States' },
+    ];
+    setCountryOptions(opts);
+  }, [t]);
 
   // ---- Fetch states when country changes ----
   useEffect(() => {
