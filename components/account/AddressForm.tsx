@@ -26,8 +26,13 @@ export function AddressForm({ address, onSubmit, onCancel, loading }: AddressFor
   const portalCountry = getCountryFromLocale(locale); // "ca" | "us"
   const defaultIso = PORTAL_TO_ISO[portalCountry] ?? 'CA';
 
+  const countryOptions = [
+    { value: '', label: t('selectCountry') },
+    { value: 'CA', label: 'Canada' },
+    { value: 'US', label: 'United States' },
+  ];
+
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [countryOptions, setCountryOptions] = useState<{ value: string; label: string }[]>([]);
   const [stateOptions, setStateOptions] = useState<{ value: string; label: string }[]>([]);
   const [loadingStates, setLoadingStates] = useState(false);
 
@@ -41,17 +46,6 @@ export function AddressForm({ address, onSubmit, onCancel, loading }: AddressFor
     is_shipping: address?.is_shipping ?? false,
     is_billing: address?.is_billing ?? false,
   });
-
-  // ---- Fetch countries on mount ----
-  useEffect(() => {
-    // Show only Canada and United States regardless of portal
-    const opts = [
-      { value: '', label: t('selectCountry') },
-      { value: 'CA', label: 'Canada' },
-      { value: 'US', label: 'United States' },
-    ];
-    setCountryOptions(opts);
-  }, [t]);
 
   // ---- Fetch states when country changes ----
   useEffect(() => {

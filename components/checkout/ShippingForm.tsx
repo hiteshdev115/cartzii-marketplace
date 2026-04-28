@@ -34,7 +34,6 @@ export function ShippingForm({ onSubmit, defaultValues }: ShippingFormProps) {
   const hydrated = useHydrated();
 
   // Real auth state from Zustand persist store (key: 'cartzii-auth')
-  const authToken = useAuthStore((s) => s.token);
   const authUserId = useAuthStore((s) => s.userId);
   const authFirstName = useAuthStore((s) => s.firstName);
   const authEmail = useAuthStore((s) => s.email);
