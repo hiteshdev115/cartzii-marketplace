@@ -7,6 +7,7 @@ import { Select } from '@/components/ui/Select';
 import { Button } from '@/components/ui/Button';
 import { addressSchema, type AddressFormData } from '@/lib/validators';
 import { fetchStatesByCountry } from '@/lib/api';
+import { getCountryFromLocale } from '@/config/countries';
 import type { ApiAddress } from '@/types';
 import { X } from 'lucide-react';
 
