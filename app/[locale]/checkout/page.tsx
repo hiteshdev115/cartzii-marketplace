@@ -1,4 +1,5 @@
 import { getTranslations } from 'next-intl/server';
+import { AuthGuard } from '@/components/auth/AuthGuard';
 import { CheckoutPageContent } from './CheckoutPageContent';
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
@@ -8,5 +9,9 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
 }
 
 export default function CheckoutPage() {
-  return <CheckoutPageContent />;
+  return (
+    <AuthGuard>
+      <CheckoutPageContent />
+    </AuthGuard>
+  );
 }

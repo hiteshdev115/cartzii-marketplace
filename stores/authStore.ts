@@ -8,9 +8,11 @@ interface AuthStore {
   firstName: string | null;
   email: string | null;
   tokenExpiry: number | null;
+  isGuestCheckout: boolean;
   setTokens: (token: string, refreshToken: string) => void;
   setUser: (info: { firstName?: string; email?: string }) => void;
   clearTokens: () => void;
+  setGuestCheckout: (value: boolean) => void;
   isAuthenticated: () => boolean;
   displayName: () => string | null;
 }
@@ -35,6 +37,7 @@ export const useAuthStore = create<AuthStore>()(
       firstName: null,
       email: null,
       tokenExpiry: null,
+      isGuestCheckout: false,
       setTokens: (token, refreshToken) => {
         const claims = decodeJwtPayload(token);
         const exp = typeof claims?.exp === 'number' ? claims.exp : (claims?.exp ? Number(claims.exp) : null);
@@ -58,8 +61,9 @@ export const useAuthStore = create<AuthStore>()(
           firstName: info.firstName ?? get().firstName,
           email: info.email ?? get().email,
         }),
+      setGuestCheckout: (value) => set({ isGuestCheckout: value }),
       clearTokens: () => {
-        set({ token: null, refreshToken: null, userId: null, firstName: null, email: null, tokenExpiry: null });
+        set({ token: null, refreshToken: null, userId: null, firstName: null, email: null, tokenExpiry: null, isGuestCheckout: false });
         // Clear the middleware-readable auth cookie.
         if (typeof document !== 'undefined') {
           document.cookie = 'cartzii_access_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax';

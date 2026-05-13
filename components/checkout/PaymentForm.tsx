@@ -1,87 +1,157 @@
 'use client';
 
-import { useTranslations } from 'next-intl';
-import { CreditCard, Lock } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import {
+  Elements,
+  PaymentElement,
+  useElements,
+  useStripe,
+} from '@stripe/react-stripe-js';
+import type { Stripe, StripeElementsOptions } from '@stripe/stripe-js';
+import { Shield } from 'lucide-react';
+import { getStripe } from '@/lib/stripe';
+import { usePaymentStore } from '@/stores/paymentStore';
 import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
-import { useState } from 'react';
+
+// ---- Props ----------------------------------------------------------------
 
 interface PaymentFormProps {
-  onSubmit: () => void;
-  onBack: () => void;
+  amount: number;
+  currency?: string;
+  onSuccess: (paymentIntentId: string) => void;
+  onError: (error: string) => void;
 }
 
-export function PaymentForm({ onSubmit, onBack }: PaymentFormProps) {
-  const t = useTranslations('Checkout');
-  const [cardNumber, setCardNumber] = useState('');
-  const [expiry, setExpiry] = useState('');
-  const [cvc, setCvc] = useState('');
-  const [cardName, setCardName] = useState('');
+// ---- Inner form (must live inside <Elements>) -----------------------------
 
-  const handleSubmit = (e: React.FormEvent) => {
+function CheckoutForm({
+  onSuccess,
+  onError,
+}: Pick<PaymentFormProps, 'onSuccess' | 'onError'>) {
+  const stripe = useStripe();
+  const elements = useElements();
+  const { paymentIntentId, paymentStatus, setPaymentStatus } = usePaymentStore();
+
+  const isProcessing = paymentStatus === 'processing';
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    onSubmit();
-  };
+    if (!stripe || !elements) return;
 
-  const formatCardNumber = (val: string) => {
-    const digits = val.replace(/\D/g, '').slice(0, 16);
-    return digits.replace(/(\d{4})/g, '$1 ').trim();
-  };
+    setPaymentStatus('processing');
 
-  const formatExpiry = (val: string) => {
-    const digits = val.replace(/\D/g, '').slice(0, 4);
-    if (digits.length > 2) return `${digits.slice(0, 2)}/${digits.slice(2)}`;
-    return digits;
+    const { error } = await stripe.confirmPayment({
+      elements,
+      confirmParams: {
+        return_url: `${window.location.origin}/checkout/success`,
+      },
+      redirect: 'if_required',
+    });
+
+    if (error) {
+      setPaymentStatus('failed');
+      onError(error.message ?? 'Payment failed');
+    } else {
+      setPaymentStatus('succeeded');
+      onSuccess(paymentIntentId ?? '');
+    }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-        <CreditCard className="w-5 h-5" /> {t('paymentDetails')}
-      </h2>
+    <form onSubmit={handleSubmit} className="space-y-5">
+      <PaymentElement />
 
-      <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 flex items-center gap-2 text-sm text-blue-700">
-        <Lock className="w-4 h-4" />
-        {t('securePayment')}
-      </div>
-
-      <Input
-        label={t('cardholderName')}
-        value={cardName}
-        onChange={(e) => setCardName(e.target.value)}
-        required
-      />
-      <Input
-        label={t('cardNumber')}
-        value={cardNumber}
-        onChange={(e) => setCardNumber(formatCardNumber(e.target.value))}
-        placeholder="1234 5678 9012 3456"
-        inputMode="numeric"
-        required
-      />
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <Input
-          label={t('expiryDate')}
-          value={expiry}
-          onChange={(e) => setExpiry(formatExpiry(e.target.value))}
-          placeholder="MM/YY"
-          inputMode="numeric"
-          required
-        />
-        <Input
-          label={t('cvc')}
-          value={cvc}
-          onChange={(e) => setCvc(e.target.value.replace(/\D/g, '').slice(0, 4))}
-          placeholder="123"
-          inputMode="numeric"
-          required
-        />
-      </div>
-
-      <div className="flex gap-4 mt-6">
-        <button type="button" onClick={onBack} className="btn-ghost flex-1">{t('back')}</button>
-        <Button type="submit" className="flex-1">{t('placeOrder')}</Button>
-      </div>
+      <Button
+        type="submit"
+        className="w-full"
+        disabled={!stripe || !elements || isProcessing}
+        isLoading={isProcessing}
+      >
+        {isProcessing ? 'Processing...' : 'Pay Now'}
+      </Button>
     </form>
   );
 }
+
+// ---- Outer wrapper (initialises payment intent + Stripe) -----------------
+
+export function PaymentForm({
+  amount,
+  currency = 'usd',
+  onSuccess,
+  onError,
+}: PaymentFormProps) {
+  const { clientSecret, publishableKey, isLoading, error, initializePayment } =
+    usePaymentStore();
+
+  // Initialise Stripe immediately with the env-var key; update if the API
+  // returns a different publishable key (e.g. connected-account key).
+  const [stripePromise, setStripePromise] = useState<Promise<Stripe | null> | null>(
+    () => getStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY),
+  );
+
+  // Step 1: create payment intent on mount
+  useEffect(() => {
+    initializePayment({ amount, currency });
+  }, [amount, currency]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Step 2: if the API returns a different publishableKey, re-initialise Stripe
+  useEffect(() => {
+    if (publishableKey && publishableKey !== process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY) {
+      setStripePromise(getStripe(publishableKey));
+    }
+  }, [publishableKey]);
+
+  const elementsOptions: StripeElementsOptions = {
+    clientSecret: clientSecret ?? undefined,
+    appearance: { theme: 'stripe' },
+  };
+
+  return (
+    <div className="bg-white rounded-xl shadow-md p-6 space-y-6">
+      <h2 className="text-xl font-semibold text-gray-900">Payment details</h2>
+
+      {/* Loading skeleton */}
+      {isLoading && (
+        <div className="flex items-center justify-center py-10">
+          <div className="w-8 h-8 rounded-full border-4 border-gray-200 border-t-blue-600 animate-spin" />
+        </div>
+      )}
+
+      {/* API / store error */}
+      {error && !isLoading && (
+        <div className="space-y-3">
+          <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-3">
+            {error}
+          </p>
+          <button
+            type="button"
+            onClick={() => initializePayment({ amount, currency })}
+            className="text-sm text-blue-600 hover:underline"
+          >
+            Retry
+          </button>
+        </div>
+      )}
+
+      {/* Not loading, no error, but no clientSecret yet — unexpected state */}
+      {!isLoading && !error && !clientSecret && (
+        <p className="text-sm text-slate-400 text-center py-4">Initialising payment…</p>
+      )}
+
+      {/* Stripe Elements */}
+      {!isLoading && clientSecret && stripePromise && (
+        <Elements stripe={stripePromise} options={elementsOptions}>
+          <CheckoutForm onSuccess={onSuccess} onError={onError} />
+        </Elements>
+      )}
+
+      {/* Footer */}
+      <div className="flex items-center justify-center gap-1.5 text-xs text-gray-400 pt-2 border-t border-gray-100">
+        <Shield className="w-3.5 h-3.5" />
+        <span>Secured by Stripe</span>
+      </div>
+    </div>
+  );
+}
+

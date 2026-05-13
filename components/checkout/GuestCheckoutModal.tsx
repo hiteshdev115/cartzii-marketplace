@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import { X, User, LogIn } from 'lucide-react';
 import { buildCountryPath } from '@/config/countries';
+import { useAuthStore } from '@/stores/authStore';
 
 interface GuestCheckoutModalProps {
   isOpen: boolean;
@@ -14,10 +15,12 @@ export function GuestCheckoutModal({ isOpen, onClose }: GuestCheckoutModalProps)
   const t = useTranslations('Cart');
   const locale = useLocale();
   const router = useRouter();
+  const setGuestCheckout = useAuthStore((s) => s.setGuestCheckout);
 
   if (!isOpen) return null;
 
   const handleGuestCheckout = () => {
+    setGuestCheckout(true);
     onClose();
     router.push(buildCountryPath(locale, '/checkout'));
   };

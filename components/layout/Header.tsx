@@ -57,14 +57,18 @@ export function Header() {
   };
 
   // Fetch wishlist and cart from API when user is authenticated
+  const prevTokenRef = useRef<string | null | undefined>(undefined);
   useEffect(() => {
     if (hydrated && token && userId) {
       fetchWishlistItems(userId);
       loadCart(userId);
-    } else if (hydrated && !token) {
+    } else if (hydrated && !token && prevTokenRef.current) {
+      // Only clear when transitioning from logged-in → logged-out (i.e. on logout),
+      // not on every page load for guests — that would wipe the guest cart.
       clearWishlist();
       clearCart();
     }
+    if (hydrated) prevTokenRef.current = token;
   }, [hydrated, token, userId, fetchWishlistItems, clearWishlist, loadCart, clearCart]);
 
   // Silently clear auth state when token expires, without forcing navigation.
