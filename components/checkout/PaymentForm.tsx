@@ -143,7 +143,7 @@ export function PaymentForm({
       {/* Footer */}
       <div className="flex items-center justify-center gap-1.5 text-xs text-gray-400 pt-2 border-t border-gray-100">
         <Shield className="w-3.5 h-3.5" />
-        <span>Secured by Stripe</span>
+        <span>Secured by Cartzii pay</span>
       </div>
     </div>
   );
