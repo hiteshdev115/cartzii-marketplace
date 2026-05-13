@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo } from 'react';
 import {
   Elements,
   PaymentElement,
@@ -84,23 +84,17 @@ export function PaymentForm({
   const { clientSecret, publishableKey, isLoading, error, initializePayment } =
     usePaymentStore();
 
-  // Initialise Stripe immediately with the env-var key; update if the API
-  // returns a different publishable key (e.g. connected-account key).
-  const [stripePromise, setStripePromise] = useState<Promise<Stripe | null> | null>(
-    () => getStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY),
+  // Derive stripePromise from publishableKey without any setState-in-effect.
+  // Uses the API key when available, falls back to the env-var.
+  const stripePromise = useMemo(
+    () => getStripe(publishableKey ?? process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY),
+    [publishableKey],
   );
 
   // Step 1: create payment intent on mount
   useEffect(() => {
     initializePayment({ amount, currency });
   }, [amount, currency]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Step 2: if the API returns a different publishableKey, re-initialise Stripe
-  useEffect(() => {
-    if (publishableKey && publishableKey !== process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY) {
-      setStripePromise(getStripe(publishableKey));
-    }
-  }, [publishableKey]);
 
   const elementsOptions: StripeElementsOptions = {
     clientSecret: clientSecret ?? undefined,

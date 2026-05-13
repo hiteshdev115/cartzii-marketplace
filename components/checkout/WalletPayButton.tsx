@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   Elements,
   PaymentRequestButtonElement,
@@ -122,16 +122,11 @@ function WalletButtonInner({
 export function WalletPayButton(props: WalletPayButtonProps) {
   const { clientSecret, publishableKey } = usePaymentStore();
 
-  // Initialise Stripe immediately with the env-var key (same pattern as PaymentForm)
-  const [stripePromise, setStripePromise] = useState<Promise<Stripe | null> | null>(
-    () => getStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY),
+  // Derive stripePromise from publishableKey without any setState-in-effect.
+  const stripePromise = useMemo(
+    () => getStripe(publishableKey ?? process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY),
+    [publishableKey],
   );
-
-  useEffect(() => {
-    if (publishableKey && publishableKey !== process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY) {
-      setStripePromise(getStripe(publishableKey));
-    }
-  }, [publishableKey]);
 
   if (!clientSecret || !stripePromise) return null;
 
