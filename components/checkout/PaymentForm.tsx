@@ -58,8 +58,8 @@ function CheckoutForm({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-5">
-      <PaymentElement />
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <PaymentElement options={{ layout: 'tabs' }} />
 
       <Button
         type="submit"
@@ -102,8 +102,8 @@ export function PaymentForm({
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-md p-6 space-y-6">
-      <h2 className="text-xl font-semibold text-gray-900">Payment details</h2>
+    <div className="bg-white rounded-xl shadow-md p-4 sm:p-5 space-y-4 sm:space-y-5">
+      <h2 className="text-base sm:text-lg font-semibold text-gray-900">Payment details</h2>
 
       {/* Loading skeleton */}
       {isLoading && (

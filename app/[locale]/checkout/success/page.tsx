@@ -36,8 +36,8 @@ export default function CheckoutSuccessPage() {
     redirectStatus === 'succeeded' || (!!paymentIntent && redirectStatus !== 'failed');
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-      <div className="bg-white rounded-2xl shadow-md p-10 max-w-md w-full text-center space-y-6">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4 py-8">
+      <div className="bg-white rounded-2xl shadow-md p-6 sm:p-10 max-w-md w-full text-center space-y-5 sm:space-y-6">
         {succeeded ? (
           <>
             {/* Success icon */}
