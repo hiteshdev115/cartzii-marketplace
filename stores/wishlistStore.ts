@@ -34,8 +34,10 @@ export const useWishlistStore = create<WishlistStore>()((set, get) => ({
     try {
       const items = await fetchWishlistItems(userId);
       set({ items });
-    } catch {
-      // keep existing items on network error
+    } catch (err) {
+      // Re-throw auth errors so callers (e.g. Header) can clear the session
+      if (err instanceof Error && err.message === 'Invalid auth token') throw err;
+      // keep existing items on other network errors
     } finally {
       set({ loading: false });
     }

@@ -60,7 +60,12 @@ export function Header() {
   const prevTokenRef = useRef<string | null | undefined>(undefined);
   useEffect(() => {
     if (hydrated && token && userId) {
-      fetchWishlistItems(userId);
+      fetchWishlistItems(userId).catch((err) => {
+        // Token rejected by server → clear stale auth state
+        if (err instanceof Error && err.message === 'Invalid auth token') {
+          clearTokens();
+        }
+      });
       loadCart(userId);
     } else if (hydrated && !token && prevTokenRef.current) {
       // Only clear when transitioning from logged-in → logged-out (i.e. on logout),
@@ -69,7 +74,7 @@ export function Header() {
       clearCart();
     }
     if (hydrated) prevTokenRef.current = token;
-  }, [hydrated, token, userId, fetchWishlistItems, clearWishlist, loadCart, clearCart]);
+  }, [hydrated, token, userId, fetchWishlistItems, clearWishlist, loadCart, clearCart, clearTokens]);
 
   // Silently clear auth state when token expires, without forcing navigation.
   useEffect(() => {

@@ -51,8 +51,10 @@ interface WishlistSuccessResponse {
 }
 
 interface WishlistErrorResponse {
-  error: number;
+  errorCode: number;
   message: string;
+  // Legacy format used by some endpoints
+  error?: number;
 }
 
 // ---- API functions --------------------------------------------------------
@@ -74,8 +76,13 @@ export async function fetchWishlistItems(
     `/api/v1/getWisheListItems/${userId}`,
   );
   if (Array.isArray(res)) return res;
-  // error 1003 = Data not found (empty wishlist)
-  if (res && typeof res === 'object' && 'error' in res) return [];
+  if (res && typeof res === 'object') {
+    const errCode = ('errorCode' in res ? res.errorCode : 0) || ('error' in res ? res.error : 0);
+    // 1009 = invalid token → surface as error so callers know to re-login
+    if (errCode === 1009) throw new Error('Invalid auth token');
+    // other errors (1003 = empty wishlist) → treat as empty
+    return [];
+  }
   return [];
 }
 
@@ -88,7 +95,8 @@ export async function addToWishlistAPI(
     { userid: Number(userId), productid: productId },
   );
   if ('success' in res) return { success: true };
-  if ('error' in res && res.error === 1023) return { success: true, alreadyExists: true };
+  if ('error' in res && (res.error === 1023) ||
+      'errorCode' in res && (res.errorCode === 1023)) return { success: true, alreadyExists: true };
   return { success: false };
 }
 
