@@ -56,7 +56,6 @@ function formatDateOnly(value: string, locale: string): string {
 export function OrderConfirmationContent({ orderNumber }: OrderConfirmationContentProps) {
   const t = useTranslations('Checkout');
   const tCart = useTranslations('Cart');
-  const tCommon = useTranslations('Common');
   const locale = useLocale();
   const router = useRouter();
 
@@ -171,24 +170,26 @@ export function OrderConfirmationContent({ orderNumber }: OrderConfirmationConte
           </div>
         </section>
 
-        <section className="order-invoice relative overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-md">
-          <div className="flex flex-col gap-3 border-b border-slate-200 p-5 sm:flex-row sm:items-start sm:justify-between sm:p-6">
-            <div>
-              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">{t('invoice')}</p>
-              <h2 className="mt-1 text-xl font-bold text-slate-900">{t('orderConfirmed')}</h2>
+        <section className="order-invoice overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-md">
+          <div className="flex flex-col gap-2 border-b border-slate-200 p-5 sm:p-6">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">{t('invoice')}</p>
+                <h2 className="mt-1 text-xl font-bold text-slate-900">{t('orderConfirmed')}</h2>
+              </div>
+              <button
+                type="button"
+                onClick={handlePrint}
+                className="shrink-0 inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm transition-colors hover:bg-slate-100"
+              >
+                <Printer className="h-4 w-4" />
+                {t('printOrder')}
+              </button>
             </div>
-            <div className="space-y-1 text-right text-sm text-slate-600">
+            <div className="space-y-1 text-sm text-slate-600">
               <p className="font-mono text-base font-semibold text-slate-900">{order.orderNumber}</p>
               <p>{formatDateTime(order.orderDate, locale)}</p>
             </div>
-            <button
-              type="button"
-              onClick={handlePrint}
-              className="absolute right-4 top-4 inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm transition-colors hover:bg-slate-100 sm:right-6 sm:top-6"
-            >
-              <Printer className="h-4 w-4" />
-              {t('printOrder')}
-            </button>
           </div>
 
           <div className="grid gap-6 p-5 sm:p-6">
@@ -282,9 +283,9 @@ export function OrderConfirmationContent({ orderNumber }: OrderConfirmationConte
           <button
             type="button"
             onClick={handleContinueShopping}
-            className="btn-secondary inline-flex items-center justify-center"
+            className="btn-primary inline-flex items-center justify-center"
           >
-            {tCommon('continueShopping')}
+            {tCart('continueShopping')}
           </button>
         </div>
       </div>
