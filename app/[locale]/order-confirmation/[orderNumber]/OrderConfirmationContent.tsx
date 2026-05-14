@@ -13,6 +13,22 @@ interface OrderConfirmationContentProps {
   orderNumber: string;
 }
 
+const PRODUCT_IMAGE_BASE =
+  process.env.NEXT_PUBLIC_API_URL
+    ? `${process.env.NEXT_PUBLIC_API_URL}/assets/upload/productImages`
+    : 'https://staging-api.cartzii.com/assets/upload/productImages';
+
+function resolveImageUrl(filename: string): string {
+  if (!filename) return 'https://placehold.co/56x56';
+  if (filename.startsWith('http://') || filename.startsWith('https://')) return filename;
+  return `${PRODUCT_IMAGE_BASE}/${filename}`;
+}
+
+/** Items from the order API have prices in cents (e.g. 699 = $6.99). */
+function centsToAmount(cents: number): number {
+  return cents / 100;
+}
+
 function formatCurrency(amount: number, currency: string, locale: string): string {
   return new Intl.NumberFormat(locale, {
     style: 'currency',
@@ -182,7 +198,11 @@ export function OrderConfirmationContent({ orderNumber }: OrderConfirmationConte
                 <div className="mt-3 space-y-1 text-sm text-slate-700">
                   <p className="font-semibold text-slate-900">{order.customerName}</p>
                   <p>{order.email}</p>
-                  <p className="whitespace-pre-line">{order.shippingAddress}</p>
+                  {order.shippingAddress.phone && <p>{order.shippingAddress.phone}</p>}
+                  <p>{order.shippingAddress.street}</p>
+                  {order.shippingAddress.addressLine2 && <p>{order.shippingAddress.addressLine2}</p>}
+                  <p>{order.shippingAddress.city}, {order.shippingAddress.state} {order.shippingAddress.postalCode}</p>
+                  <p>{order.shippingAddress.country}</p>
                 </div>
               </div>
 
@@ -218,7 +238,7 @@ export function OrderConfirmationContent({ orderNumber }: OrderConfirmationConte
                         <td className="px-4 py-4">
                           <div className="flex items-center gap-3">
                             <div className="relative h-14 w-14 overflow-hidden rounded-lg border border-slate-200 bg-slate-50">
-                              <Image src={item.imageUrl} alt={item.productName} fill className="object-cover" sizes="56px" />
+                              <Image src={resolveImageUrl(item.imageUrl)} alt={item.productName} fill className="object-cover" sizes="56px" />
                             </div>
                             <div className="min-w-0">
                               <p className="font-medium text-slate-900">{item.productName}</p>
@@ -228,8 +248,8 @@ export function OrderConfirmationContent({ orderNumber }: OrderConfirmationConte
                           </div>
                         </td>
                         <td className="px-4 py-4 text-sm text-slate-700">{item.quantity}</td>
-                        <td className="px-4 py-4 text-sm text-slate-700">{formatCurrency(item.unitPrice, item.currencyCode, locale)}</td>
-                        <td className="px-4 py-4 text-sm font-semibold text-slate-900">{formatCurrency(item.totalPrice, item.currencyCode, locale)}</td>
+                        <td className="px-4 py-4 text-sm text-slate-700">{formatCurrency(centsToAmount(item.unitPrice), item.currencyCode, locale)}</td>
+                        <td className="px-4 py-4 text-sm font-semibold text-slate-900">{formatCurrency(centsToAmount(item.totalPrice), item.currencyCode, locale)}</td>
                       </tr>
                     ))}
                   </tbody>

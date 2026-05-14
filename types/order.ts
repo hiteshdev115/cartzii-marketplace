@@ -9,25 +9,8 @@ export interface OrderItem {
   currencyCode: string;
 }
 
-export interface OrderConfirmation {
-  orderId: number;
-  orderNumber: string;
-  orderDate: string;
-  customerName: string;
-  email: string;
-  shippingAddress: string;
-  items: OrderItem[];
-  subtotal: number;
-  shippingCost: number;
-  discount: number;
-  totalAmount: number;
-  currency: string;
-  paymentMethod: string;
-  stripePaymentId: string;
-  estimatedDelivery?: string;
-}
-
-export interface PlaceOrderShippingAddress {
+// Shared address shape — used by both OrderConfirmation and PlaceOrderPayload
+export interface OrderShippingAddress {
   firstName: string;
   lastName: string;
   phone: string;
@@ -39,6 +22,27 @@ export interface PlaceOrderShippingAddress {
   country: string;
   countryCode: string;
 }
+
+export interface OrderConfirmation {
+  orderId: number;
+  orderNumber: string;
+  orderDate: string;
+  customerName: string;
+  email: string;
+  shippingAddress: OrderShippingAddress;
+  items: OrderItem[];
+  subtotal: number;
+  shippingCost: number;
+  discount: number;
+  totalAmount: number;
+  currency: string;
+  paymentMethod: string;
+  stripePaymentId: string;
+  estimatedDelivery?: string;
+}
+
+// Alias kept so existing imports of PlaceOrderShippingAddress still work
+export type PlaceOrderShippingAddress = OrderShippingAddress;
 
 export interface PlaceOrderItem {
   productId: number;
