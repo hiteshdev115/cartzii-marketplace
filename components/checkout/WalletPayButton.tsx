@@ -15,6 +15,7 @@ import type {
 } from '@stripe/stripe-js';
 import { getStripe } from '@/lib/stripe';
 import { usePaymentStore } from '@/stores/paymentStore';
+import { useTranslations } from 'next-intl';
 
 // ---- Props ----------------------------------------------------------------
 
@@ -34,6 +35,7 @@ function WalletButtonInner({
   onSuccess,
 }: WalletPayButtonProps) {
   const stripe = useStripe();
+  const t = useTranslations('Checkout');
   const { clientSecret, paymentIntentId, setPaymentStatus } = usePaymentStore();
 
   const [paymentRequest, setPaymentRequest] = useState<PaymentRequest | null>(null);
@@ -104,7 +106,7 @@ function WalletButtonInner({
       {/* Divider */}
       <div className="flex items-center gap-3 my-4">
         <span className="flex-1 border-t border-gray-200" />
-        <span className="text-xs text-gray-400 whitespace-nowrap">or pay with</span>
+        <span className="text-xs text-gray-400 whitespace-nowrap">{t('orPayWith')}</span>
         <span className="flex-1 border-t border-gray-200" />
       </div>
 

@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react';
 import { CreditCard, Trash2 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { cn } from '@/lib/utils';
 import { usePaymentStore } from '@/stores/paymentStore';
 
@@ -30,6 +31,7 @@ function SkeletonRow() {
 // ---- Component ------------------------------------------------------------
 
 export function SavedPaymentMethods({ onSelect, selectedId }: SavedPaymentMethodsProps) {
+  const t = useTranslations('Checkout');
   const { savedMethods, isLoading, fetchSavedMethods, removeSavedMethod } =
     usePaymentStore();
 
@@ -50,7 +52,7 @@ export function SavedPaymentMethods({ onSelect, selectedId }: SavedPaymentMethod
   if (savedMethods.length === 0) {
     return (
       <p className="text-sm text-gray-500 py-4 text-center">
-        No saved payment methods
+        {t('noSavedPaymentMethods')}
       </p>
     );
   }
@@ -90,7 +92,7 @@ export function SavedPaymentMethods({ onSelect, selectedId }: SavedPaymentMethod
               </p>
               {method.card && (
                 <p className="text-xs text-gray-500">
-                  Expires {method.card.exp_month}/{method.card.exp_year}
+                  {t('expires', { month: method.card.exp_month, year: method.card.exp_year })}
                 </p>
               )}
             </div>
@@ -98,7 +100,10 @@ export function SavedPaymentMethods({ onSelect, selectedId }: SavedPaymentMethod
             {/* Delete button */}
             <button
               type="button"
-              aria-label={`Remove ${brand} ending ${method.card?.last4}`}
+              aria-label={t('removeSavedPaymentMethod', {
+                brand,
+                last4: method.card?.last4 ?? '••••',
+              })}
               onClick={(e) => {
                 e.stopPropagation();
                 removeSavedMethod(method.id);

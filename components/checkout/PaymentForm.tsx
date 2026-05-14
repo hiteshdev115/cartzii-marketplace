@@ -1,65 +1,139 @@
 'use client';
 
-import { useEffect, useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import {
   Elements,
-  PaymentElement,
+  CardElement,
   useElements,
   useStripe,
 } from '@stripe/react-stripe-js';
-import type { Stripe, StripeElementsOptions } from '@stripe/stripe-js';
-import { Shield } from 'lucide-react';
+import type { StripeElementsOptions } from '@stripe/stripe-js';
+import { AlertCircle, Shield } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { getStripe } from '@/lib/stripe';
-import { usePaymentStore } from '@/stores/paymentStore';
+import { createPaymentIntent } from '@/lib/api/payment';
+import { ApiError } from '@/lib/api/client';
 import { Button } from '@/components/ui/Button';
 
 // ---- Props ----------------------------------------------------------------
 
+export interface PaymentSubmitResult {
+  paymentIntentId: string;
+  amount: number;
+  currency: string;
+}
+
 interface PaymentFormProps {
   amount: number;
   currency: string;
-  onSuccess: (paymentIntentId: string) => void;
-  onError: (error: string) => void;
+  country: string;
+  onSubmit: (paymentResult: PaymentSubmitResult) => Promise<void> | void;
 }
 
 // ---- Inner form (must live inside <Elements>) -----------------------------
 
 function CheckoutForm({
-  onSuccess,
-  onError,
-}: Pick<PaymentFormProps, 'onSuccess' | 'onError'>) {
+  amount,
+  currency,
+  country,
+  onSubmit,
+}: PaymentFormProps) {
   const stripe = useStripe();
   const elements = useElements();
-  const { paymentIntentId, paymentStatus, setPaymentStatus } = usePaymentStore();
+  const t = useTranslations('Checkout');
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const isProcessing = paymentStatus === 'processing';
+  const cardOptions = {
+    hidePostalCode: true,
+    style: {
+      base: {
+        color: '#0f172a',
+        fontFamily: 'Inter, ui-sans-serif, system-ui, sans-serif',
+        fontSmoothing: 'antialiased',
+        fontSize: '16px',
+        '::placeholder': {
+          color: '#94a3b8',
+        },
+      },
+      invalid: {
+        color: '#dc2626',
+        iconColor: '#dc2626',
+      },
+    },
+  };
+
+  const getFriendlyError = (cause: unknown): string => {
+    if (cause instanceof ApiError) {
+      const body = cause.body as { message?: string; error?: string } | null;
+      return body?.message || body?.error || t('paymentInitializationFailed');
+    }
+    if (cause instanceof Error && cause.message) {
+      return cause.message;
+    }
+    return t('paymentFailed');
+  };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!stripe || !elements) return;
+    if (!stripe || !elements || isProcessing) return;
 
-    setPaymentStatus('processing');
+    setIsProcessing(true);
+    setError(null);
 
-    const { error } = await stripe.confirmPayment({
-      elements,
-      confirmParams: {
-        return_url: `${window.location.origin}/checkout/success`,
-      },
-      redirect: 'if_required',
-    });
+    try {
+      const { clientSecret } = await createPaymentIntent({
+        amount,
+        currency,
+        country,
+      });
 
-    if (error) {
-      setPaymentStatus('failed');
-      onError(error.message ?? 'Payment failed');
-    } else {
-      setPaymentStatus('succeeded');
-      onSuccess(paymentIntentId ?? '');
+      const cardElement = elements.getElement(CardElement);
+      if (!cardElement) {
+        throw new Error(t('cardElementUnavailable'));
+      }
+
+      const { error: confirmError, paymentIntent } = await stripe.confirmCardPayment(
+        clientSecret,
+        {
+          payment_method: {
+            card: cardElement,
+          },
+        },
+      );
+
+      if (confirmError) {
+        throw new Error(confirmError.message || t('paymentFailed'));
+      }
+
+      if (!paymentIntent || paymentIntent.status !== 'succeeded') {
+        throw new Error(t('paymentFailed'));
+      }
+
+      await onSubmit({
+        paymentIntentId: paymentIntent.id,
+        amount: paymentIntent.amount ?? amount,
+        currency: paymentIntent.currency ?? currency,
+      });
+    } catch (cause) {
+      setError(getFriendlyError(cause));
+    } finally {
+      setIsProcessing(false);
     }
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <PaymentElement options={{ layout: 'tabs' }} />
+      <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+        <CardElement options={cardOptions} />
+      </div>
+
+      {error && (
+        <p className="flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700" role="alert">
+          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+          <span>{error}</span>
+        </p>
+      )}
 
       <Button
         type="submit"
@@ -67,7 +141,7 @@ function CheckoutForm({
         disabled={!stripe || !elements || isProcessing}
         isLoading={isProcessing}
       >
-        {isProcessing ? 'Processing...' : 'Pay Now'}
+        {isProcessing ? t('processingPayment') : t('payNow')}
       </Button>
     </form>
   );
@@ -78,72 +152,37 @@ function CheckoutForm({
 export function PaymentForm({
   amount,
   currency,
-  onSuccess,
-  onError,
+  country,
+  onSubmit,
 }: PaymentFormProps) {
-  const { clientSecret, publishableKey, isLoading, error, initializePayment } =
-    usePaymentStore();
+  const t = useTranslations('Checkout');
 
   // Derive stripePromise from publishableKey without any setState-in-effect.
   // Uses the API key when available, falls back to the env-var.
   const stripePromise = useMemo(
-    () => getStripe(publishableKey ?? process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY),
-    [publishableKey],
+    () => getStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY),
+    [],
   );
 
-  // Step 1: create payment intent on mount
-  useEffect(() => {
-    initializePayment({ amount, currency });
-  }, [amount, currency]); // eslint-disable-line react-hooks/exhaustive-deps
-
   const elementsOptions: StripeElementsOptions = {
-    clientSecret: clientSecret ?? undefined,
     appearance: { theme: 'stripe' },
   };
 
   return (
     <div className="bg-white rounded-xl shadow-md p-4 sm:p-5 space-y-4 sm:space-y-5">
-      <h2 className="text-base sm:text-lg font-semibold text-gray-900">Payment details</h2>
+      <div>
+        <h2 className="text-base sm:text-lg font-semibold text-gray-900">{t('paymentDetails')}</h2>
+        <p className="mt-1 text-sm text-slate-500">{t('securePayment')}</p>
+      </div>
 
-      {/* Loading skeleton */}
-      {isLoading && (
-        <div className="flex items-center justify-center py-10">
-          <div className="w-8 h-8 rounded-full border-4 border-gray-200 border-t-blue-600 animate-spin" />
-        </div>
-      )}
-
-      {/* API / store error */}
-      {error && !isLoading && (
-        <div className="space-y-3">
-          <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-3">
-            {error}
-          </p>
-          <button
-            type="button"
-            onClick={() => initializePayment({ amount, currency })}
-            className="text-sm text-blue-600 hover:underline"
-          >
-            Retry
-          </button>
-        </div>
-      )}
-
-      {/* Not loading, no error, but no clientSecret yet — unexpected state */}
-      {!isLoading && !error && !clientSecret && (
-        <p className="text-sm text-slate-400 text-center py-4">Initialising payment…</p>
-      )}
-
-      {/* Stripe Elements */}
-      {!isLoading && clientSecret && stripePromise && (
-        <Elements stripe={stripePromise} options={elementsOptions}>
-          <CheckoutForm onSuccess={onSuccess} onError={onError} />
-        </Elements>
-      )}
+      <Elements stripe={stripePromise} options={elementsOptions}>
+        <CheckoutForm amount={amount} currency={currency} country={country} onSubmit={onSubmit} />
+      </Elements>
 
       {/* Footer */}
       <div className="flex items-center justify-center gap-1.5 text-xs text-gray-400 pt-2 border-t border-gray-100">
         <Shield className="w-3.5 h-3.5" />
-        <span>Secured by Cartzii pay</span>
+        <span>{t('securePayment')}</span>
       </div>
     </div>
   );

@@ -12,6 +12,7 @@ export async function createPaymentIntent(
   const normalised: CreatePaymentIntentPayload = {
     ...payload,
     currency: payload.currency?.toLowerCase(),
+    country: payload.country?.toUpperCase(),
   };
   const res = await api.post<{ success: boolean; data: PaymentIntentResponse }>(
     '/api/v1/payments/create-intent',

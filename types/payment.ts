@@ -22,6 +22,7 @@ export interface PaymentMethod {
 export interface CreatePaymentIntentPayload {
   amount: number;
   currency?: string;
+  country?: string;
   saveCard?: boolean;
 }
 

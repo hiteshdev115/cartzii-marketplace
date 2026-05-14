@@ -105,3 +105,25 @@
 html {
   scroll-behavior: smooth;
 }
+
+@media print {
+  body.order-confirmation-print header,
+  body.order-confirmation-print footer,
+  body.order-confirmation-print button,
+  body.order-confirmation-print .skip-link {
+    display: none !important;
+  }
+
+  body.order-confirmation-print #main-content {
+    background: #ffffff !important;
+  }
+
+  body.order-confirmation-print .order-confirmation-shell > :not(.order-invoice) {
+    display: none !important;
+  }
+
+  body.order-confirmation-print .order-invoice {
+    box-shadow: none !important;
+    border-color: #cbd5e1 !important;
+  }
+}

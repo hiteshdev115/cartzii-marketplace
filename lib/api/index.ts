@@ -11,6 +11,7 @@ export {
 } from './categories';
 export type { APIBreadcrumbItem } from './categories';
 export { fetchAllProducts, fetchProductBySlug } from './products';
+export { placeOrder, getOrderByNumber } from './orders';
 export {
   fetchUserAddresses,
   fetchAddress,
