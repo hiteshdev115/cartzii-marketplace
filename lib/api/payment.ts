@@ -9,9 +9,13 @@ import type {
 export async function createPaymentIntent(
   payload: CreatePaymentIntentPayload,
 ): Promise<PaymentIntentResponse> {
+  const normalised: CreatePaymentIntentPayload = {
+    ...payload,
+    currency: payload.currency?.toLowerCase(),
+  };
   const res = await api.post<{ success: boolean; data: PaymentIntentResponse }>(
     '/api/v1/payments/create-intent',
-    payload,
+    normalised,
   );
   return res.data;
 }

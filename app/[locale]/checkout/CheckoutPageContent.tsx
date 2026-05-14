@@ -3,19 +3,28 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useLocale } from 'next-intl';
-import { buildCountryPath } from '@/config/countries';
+import { buildCountryPath, getCountryConfig } from '@/config/countries';
+import { useCartStore } from '@/stores/cartStore';
 import { PaymentForm } from '@/components/checkout/PaymentForm';
 import { WalletPayButton } from '@/components/checkout/WalletPayButton';
 import { SavedPaymentMethods } from '@/components/checkout/SavedPaymentMethods';
 import { OrderSummary } from '@/components/checkout/OrderSummary';
 import { Toast, type ToastType } from '@/components/ui/Toast';
 
-// TODO: replace with real cart total in cents once cart API is wired up ($49.99)
-const ORDER_AMOUNT = 4999;
-
 export function CheckoutPageContent() {
   const router = useRouter();
   const locale = useLocale();
+  const { currency } = getCountryConfig(locale); // 'CAD' for /ca, 'USD' for /us
+
+  // Derive total from live cart — same formula as OrderSummary
+  const subtotal = useCartStore((s) =>
+    s.items.reduce((sum, item) => sum + (item.product.salePrice || item.product.price) * item.quantity, 0)
+  );
+  const shipping = subtotal >= 50 ? 0 : 9.99;
+  const tax = subtotal * 0.08;
+  const total = subtotal + shipping + tax;
+  // Stripe expects amount in the smallest currency unit (cents)
+  const orderAmountCents = Math.round(total * 100);
 
   const [selectedMethodId, setSelectedMethodId] = useState<string | null>(null);
   const [toast, setToast] = useState<{ message: string; type: ToastType } | null>(null);
@@ -54,13 +63,15 @@ export function CheckoutPageContent() {
 
             {/* Wallet: Google Pay / Apple Pay — only renders if available */}
             <WalletPayButton
-              amount={ORDER_AMOUNT}
+              amount={orderAmountCents}
+              currency={currency}
               onSuccess={handleSuccess}
             />
 
             {/* Stripe card form */}
             <PaymentForm
-              amount={ORDER_AMOUNT}
+              amount={orderAmountCents}
+              currency={currency}
               onSuccess={handleSuccess}
               onError={handleError}
             />

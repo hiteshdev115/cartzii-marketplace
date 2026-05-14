@@ -17,7 +17,7 @@ import { Button } from '@/components/ui/Button';
 
 interface PaymentFormProps {
   amount: number;
-  currency?: string;
+  currency: string;
   onSuccess: (paymentIntentId: string) => void;
   onError: (error: string) => void;
 }
@@ -77,7 +77,7 @@ function CheckoutForm({
 
 export function PaymentForm({
   amount,
-  currency = 'usd',
+  currency,
   onSuccess,
   onError,
 }: PaymentFormProps) {

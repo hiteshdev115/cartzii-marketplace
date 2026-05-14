@@ -20,7 +20,7 @@ import { usePaymentStore } from '@/stores/paymentStore';
 
 interface WalletPayButtonProps {
   amount: number;
-  currency?: string;
+  currency: string;
   label?: string;
   onSuccess: (paymentIntentId: string) => void;
 }
@@ -29,7 +29,7 @@ interface WalletPayButtonProps {
 
 function WalletButtonInner({
   amount,
-  currency = 'usd',
+  currency,
   label = 'Total',
   onSuccess,
 }: WalletPayButtonProps) {
