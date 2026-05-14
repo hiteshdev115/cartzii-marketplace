@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import Image from 'next/image';
-import { useLocale, useRouter, useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
+import { useRouter } from 'next/navigation';
 import { CheckCircle2, Printer, RefreshCw } from 'lucide-react';
 import { buildCountryPath } from '@/config/countries';
 import { getOrderByNumber } from '@/lib/api/orders';
