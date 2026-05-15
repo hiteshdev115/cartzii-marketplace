@@ -187,6 +187,8 @@
     "freeShipping": "FREE",
     "tax": "Tax",
     "discount": "Discount",
+    "viewCart": "View Cart",
+    "shippingNote": "Shipping calculated at checkout",
     "checkout": "Proceed to Checkout",
     "proceedToCheckout": "Proceed to Checkout",
     "clearCart": "Clear Cart",

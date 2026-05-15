@@ -29,10 +29,12 @@ export function Header() {
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
   const searchDesktopRef = useRef<HTMLDivElement>(null);
+  const searchMobileRef = useRef<HTMLDivElement>(null);
   const hydrated = useHydrated();
   const cartCount = useCartStore((s) => s.items.reduce((sum, item) => sum + item.quantity, 0));
   const loadCart = useCartStore((s) => s.loadCart);
   const clearCart = useCartStore((s) => s.clearCart);
+  const openCartDrawer = useCartStore((s) => s.openDrawer);
   const wishlistCount = useWishlistStore((s) => s.items.length);
   const fetchWishlistItems = useWishlistStore((s) => s.fetchItems);
   const clearWishlist = useWishlistStore((s) => s.clear);
@@ -44,6 +46,15 @@ export function Header() {
   const isLoggedIn = hydrated && !!token;
   const router = useRouter();
   const pathname = usePathname();
+
+  const handleCartIconClick = () => {
+    if (pathname.includes('/checkout')) {
+      router.push(buildCountryPath(locale, '/cart'));
+      return;
+    }
+    if (pathname.includes('/cart')) return;
+    openCartDrawer();
+  };
 
   const handleSignOut = () => {
     clearTokens();
@@ -107,7 +118,10 @@ export function Header() {
       if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
         setUserMenuOpen(false);
       }
-      if (searchDesktopRef.current && !searchDesktopRef.current.contains(e.target as Node)) {
+      const insideSearch =
+        (searchDesktopRef.current?.contains(e.target as Node)) ||
+        (searchMobileRef.current?.contains(e.target as Node));
+      if (!insideSearch) {
         setSearchFocused(false);
       }
     };
@@ -177,8 +191,9 @@ export function Header() {
                 >
                   <User className="w-5 h-5 text-slate-600" />
                 </Link>
-                <Link
-                  href={buildCountryPath(locale, '/cart')}
+                <button
+                  type="button"
+                  onClick={handleCartIconClick}
                   className="relative p-2 hover:bg-slate-100 rounded-lg"
                   aria-label={`${t('cart')}${hydrated && cartCount > 0 ? ` (${cartCount})` : ''}`}
                 >
@@ -188,12 +203,12 @@ export function Header() {
                       {cartCount}
                     </span>
                   )}
-                </Link>
+                </button>
               </div>
             </div>
 
             {/* Mobile Row 2: Full-width search bar */}
-            <div className="pb-2.5" ref={searchDesktopRef}>
+            <div className="pb-2.5" ref={searchMobileRef}>
               <div className="relative">
                 <form onSubmit={handleSearch} className="relative flex items-center">
                   <input
@@ -269,8 +284,9 @@ export function Header() {
                   )}
                 </Link>
 
-                <Link
-                  href={buildCountryPath(locale, '/cart')}
+                <button
+                  type="button"
+                  onClick={handleCartIconClick}
                   className="relative p-2 hover:bg-slate-100 rounded-lg"
                   aria-label={`${t('cart')}${hydrated && cartCount > 0 ? ` (${cartCount})` : ''}`}
                 >
@@ -280,7 +296,7 @@ export function Header() {
                       {cartCount}
                     </span>
                   )}
-                </Link>
+                </button>
 
                 <div className="relative" ref={userMenuRef}>
                   <button

@@ -187,6 +187,8 @@
     "freeShipping": "GRATUIT",
     "tax": "Taxes",
     "discount": "Remise",
+    "viewCart": "Voir le Panier",
+    "shippingNote": "Livraison calculée à la caisse",
     "checkout": "Passer à la Caisse",
     "proceedToCheckout": "Passer à la Caisse",
     "clearCart": "Vider le Panier",

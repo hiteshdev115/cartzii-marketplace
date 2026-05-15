@@ -225,6 +225,9 @@ interface CartStore {
   replaceCart: (serverItems: BackendCartItem[]) => void;
   getItemCount: () => number;
   getSubtotal: () => number;
+  isDrawerOpen: boolean;
+  openDrawer: () => void;
+  closeDrawer: () => void;
 }
 
 // ---- Store ----------------------------------------------------------------
@@ -234,8 +237,15 @@ export const useCartStore = create<CartStore>()(
     (set, get) => ({
       items: [],
       isLoading: false,
+      isDrawerOpen: false,
+      openDrawer: () => set({ isDrawerOpen: true }),
+      closeDrawer: () => set({ isDrawerOpen: false }),
 
       addItem: async (product, quantity = 1, color, size, locale) => {
+        const onCartPage =
+          typeof window !== 'undefined' &&
+          (window.location.pathname.includes('/cart') || window.location.pathname.includes('/checkout'));
+        if (!onCartPage) set({ isDrawerOpen: true });
         const userId = getAuthUserId();
 
         if (!userId) {
