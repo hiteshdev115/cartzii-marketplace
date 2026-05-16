@@ -8,8 +8,9 @@ export {
   fetchSubcategories,
   fetchCategoryById,
   fetchCategoryBreadcrumb,
+  fetchCategoryProductsBySlug,
 } from './categories';
-export type { APIBreadcrumbItem } from './categories';
+export type { APIBreadcrumbItem, CategoryProduct, CategoryProductCountry, CategoryVariantPricing, CategoryProductVariant, CategoryProductsResult } from './categories';
 export { fetchAllProducts, fetchProductBySlug } from './products';
 export { placeOrder, getOrderByNumber } from './orders';
 export {

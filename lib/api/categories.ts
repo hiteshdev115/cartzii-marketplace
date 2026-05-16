@@ -160,3 +160,110 @@ export async function fetchCategoryBreadcrumb(
 // Backward-compatible alias — same as fetchCategoryTree
 export const fetchCategories = fetchCategoryTree;
 
+// ---- Category Products API -----------------------------------------------
+
+export interface CategoryProductImage {
+  imageid: number;
+  productid?: number;
+  imageurl: string;
+  imagetype?: string;
+  imagealttext: string;
+  isprimary: boolean;
+  isactive?: boolean;
+  sortorder?: number;
+}
+
+export interface CategoryProductCountry {
+  id: number;
+  countrycode: string;
+  currencycode: string;
+  price: string;
+  discountprice: string | null;
+  discount: string | null;
+  isactive: boolean;
+  metatitle?: string | null;
+  metadescription?: string | null;
+  metakeywords?: string | null;
+}
+
+export interface CategoryVariantPricing {
+  pricingid?: number;
+  countrycode: string;
+  currencycode: string;
+  price: string;
+  discountprice: string | null;
+  discount: string | null;
+  isactive: boolean;
+}
+
+export interface CategoryProductVariant {
+  variantid: number;
+  sku?: string;
+  stockquantity: number;
+  isactive: boolean;
+  pricing: CategoryVariantPricing[];
+}
+
+/** Product item returned by /categories/slug/{slug}/products */
+export interface CategoryProduct {
+  productid: number;
+  productname: string;
+  slug: string;
+  shortdescription?: string;
+  stockquantity?: number;
+  sku?: string;
+  tags?: string;
+  status?: string;
+  categoryName?: string;
+  productimages: CategoryProductImage[];
+  productcountries: CategoryProductCountry[];
+  productvariants?: CategoryProductVariant[];
+  averageRating?: number | string | null;
+  reviewCount?: number;
+  variantCount?: number;
+}
+
+export interface CategoryProductsResult {
+  category: {
+    categoryId: number;
+    categoryName: string;
+    categorySlug: string;
+    categoryDescription?: string | null;
+    categoryImage?: string | null;
+  };
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+    hasNext: boolean;
+    hasPrev: boolean;
+  };
+  products: CategoryProduct[];
+}
+
+/**
+ * Fetch products for a category identified by its slug.
+ * Endpoint: GET /api/v1/categories/slug/{slug}/products
+ */
+export async function fetchCategoryProductsBySlug(
+  slug: string,
+  params: {
+    countryCode?: string;
+    page?: number;
+    limit?: number;
+    sortby?: string;
+  } = {},
+): Promise<CategoryProductsResult> {
+  const res = await api.get<unknown>(`/api/v1/categories/slug/${slug}/products`, {
+    params: {
+      ...(params.countryCode ? { countryCode: params.countryCode } : {}),
+      ...(params.page !== undefined ? { page: params.page } : {}),
+      ...(params.limit !== undefined ? { limit: params.limit } : {}),
+      ...(params.sortby ? { sortby: params.sortby } : {}),
+    },
+  });
+  const data = unwrap<CategoryProductsResult>(res);
+  return data;
+}
+
