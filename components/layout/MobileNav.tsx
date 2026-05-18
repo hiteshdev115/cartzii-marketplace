@@ -157,6 +157,8 @@ export function MobileNav() {
 
   const navLinksAfter = [
     { label: t('deals'), href: buildCountryPath(locale, '/deals'), icon: Sparkles },
+    { label: t('handicraft'), href: buildCountryPath(locale, '/handicraft'), icon: Sparkles },
+    { label: t('dollarStreet'), href: buildCountryPath(locale, '/dollar-street'), icon: Tag },
   ];
 
   return (

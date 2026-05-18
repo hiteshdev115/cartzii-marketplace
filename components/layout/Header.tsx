@@ -136,6 +136,8 @@ export function Header() {
 
   const navAfterCategories = [
     { label: tNav('deals'), href: buildCountryPath(locale, '/deals') },
+    { label: tNav('handicraft'), href: buildCountryPath(locale, '/handicraft') },
+    { label: tNav('dollarStreet'), href: buildCountryPath(locale, '/dollar-street') },
   ];
 
   const handleSearch = (e: React.FormEvent) => {
