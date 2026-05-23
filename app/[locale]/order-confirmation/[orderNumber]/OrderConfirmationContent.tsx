@@ -267,10 +267,45 @@ export function OrderConfirmationContent({ orderNumber }: OrderConfirmationConte
                 <span>{t('shipping')}</span>
                 <span>{order.shippingCost === 0 ? tCart('free') : formatCurrency(order.shippingCost, order.currency, locale)}</span>
               </div>
-              <div className="flex items-center justify-between text-slate-600">
-                <span>{t('discount')}</span>
-                <span>-{formatCurrency(order.discount, order.currency, locale)}</span>
-              </div>
+              {typeof order.taxAmount === 'number' && order.taxAmount > 0 ? (
+                <>
+                  <div className="flex items-center justify-between text-slate-600">
+                    <span>
+                      {tCart('tax')}
+                      {order.taxBreakdown?.taxName ? ` · ${order.taxBreakdown.taxName}` : ''}
+                      {typeof (order.taxBreakdown?.totalRate ?? order.taxRate) === 'number'
+                        ? ` (${(((order.taxBreakdown?.totalRate ?? order.taxRate) as number) * 100)
+                            .toFixed(2)
+                            .replace(/\.?0+$/, '')}%)`
+                        : ''}
+                    </span>
+                    <span>{formatCurrency(order.taxAmount, order.currency, locale)}</span>
+                  </div>
+                  {order.taxBreakdown?.components && order.taxBreakdown.components.length > 1 && (
+                    <ul className="pl-3 text-xs text-slate-500 space-y-0.5">
+                      {order.taxBreakdown.components.map((c) => (
+                        <li key={c.name} className="flex justify-between">
+                          <span>
+                            {c.label ?? c.name} ({(c.rate * 100).toFixed(3).replace(/\.?0+$/, '')}%)
+                          </span>
+                          <span>{formatCurrency(order.subtotal * c.rate, order.currency, locale)}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </>
+              ) : typeof order.taxAmount === 'number' ? (
+                <div className="flex items-center justify-between text-slate-600">
+                  <span>{tCart('tax')}</span>
+                  <span className="text-emerald-700 font-medium">{t('taxFree')}</span>
+                </div>
+              ) : null}
+              {order.discount > 0 && (
+                <div className="flex items-center justify-between text-slate-600">
+                  <span>{tCart('discount')}</span>
+                  <span>-{formatCurrency(order.discount, order.currency, locale)}</span>
+                </div>
+              )}
               <div className="flex items-center justify-between border-t border-slate-200 pt-3 text-base font-bold text-slate-900">
                 <span>{t('totalPaid')}</span>
                 <span className="text-emerald-700">{formatCurrency(order.totalAmount, order.currency, locale)}</span>

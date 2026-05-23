@@ -12,7 +12,7 @@ export {
 } from './categories';
 export type { APIBreadcrumbItem, CategoryProduct, CategoryProductCountry, CategoryVariantPricing, CategoryProductVariant, CategoryProductsResult } from './categories';
 export { fetchAllProducts, fetchProductBySlug } from './products';
-export { placeOrder, getOrderByNumber } from './orders';
+export { placeOrder, getOrderByNumber, getTaxEstimate } from './orders';
 export {
   fetchUserAddresses,
   fetchAddress,

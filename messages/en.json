@@ -300,7 +300,11 @@
     "selectProvince": "Select Province / State",
     "loadingProvinces": "Loading...",
     "countryConflictCA": "This portal only ships to Canada. Please select a Canadian address.",
-    "countryConflictUS": "This portal only ships to the United States. Please select a US address."
+    "countryConflictUS": "This portal only ships to the United States. Please select a US address.",
+    "taxAtCheckout": "Calculated after shipping",
+    "taxCalculating": "Calculating taxes…",
+    "taxEstimateError": "Could not calculate taxes. Please review your shipping address.",
+    "taxFree": "Tax-free"
   },
   "Auth": {
     "loginTitle": "Welcome Back",

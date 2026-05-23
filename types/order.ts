@@ -23,6 +23,39 @@ export interface OrderShippingAddress {
   countryCode: string;
 }
 
+export interface TaxComponent {
+  name: string;
+  rate: number;
+  label?: string;
+}
+
+export interface TaxBreakdown {
+  taxName: string;
+  stateName?: string;
+  stateCode?: string;
+  countryCode?: string;
+  /** Combined effective tax rate (e.g. 0.13 for HST) */
+  totalRate?: number;
+  components?: TaxComponent[];
+}
+
+/** Response body of `GET /api/v1/orders/tax-estimate` (data envelope already unwrapped). */
+export interface TaxEstimate {
+  countryCode: string;
+  stateCode: string;
+  stateName?: string;
+  taxApplicable: boolean;
+  taxRate: number;
+  taxName: string;
+  components: TaxComponent[];
+  subtotalCents: number;
+  taxAmountCents: number;
+  totalAmountCents: number;
+  subtotalDollars: string;
+  taxAmountDollars: string;
+  totalAmountDollars: string;
+}
+
 export interface OrderConfirmation {
   orderId: number;
   orderNumber: string;
@@ -34,6 +67,11 @@ export interface OrderConfirmation {
   subtotal: number;
   shippingCost: number;
   discount: number;
+  /** Tax in major currency units (e.g. dollars), already calculated server-side. */
+  taxAmount?: number;
+  /** Combined tax rate (e.g. 0.13). */
+  taxRate?: number;
+  taxBreakdown?: TaxBreakdown;
   totalAmount: number;
   currency: string;
   paymentMethod: string;
@@ -72,6 +110,14 @@ export interface PlaceOrderPayload {
 export interface PlaceOrderResponse {
   orderId: number;
   orderNumber: string;
+  /** Server-calculated subtotal (major units). */
+  subtotal?: number;
+  /** Server-calculated tax amount (major units). */
+  taxAmount?: number;
+  /** Server-calculated grand total (major units). */
+  totalAmount?: number;
+  taxBreakdown?: TaxBreakdown;
+  currency?: string;
   accountCreated?: boolean;
   alreadyProcessed?: boolean;
 }

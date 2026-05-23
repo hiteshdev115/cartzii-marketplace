@@ -2,25 +2,86 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, Loader2 } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { useCartStore } from '@/stores/cartStore';
 import { formatPrice } from '@/lib/utils';
 import { cn } from '@/lib/utils';
+import type { TaxEstimate } from '@/types/order';
 
-export function OrderSummary() {
+export type TaxState =
+  | { status: 'pending' }
+  | { status: 'loading' }
+  | { status: 'error'; message?: string }
+  | { status: 'ready'; estimate: TaxEstimate };
+
+interface OrderSummaryProps {
+  /** Tax estimate state from the checkout page (driven by the address + cart). */
+  taxState?: TaxState;
+}
+
+function formatRatePercent(rate: number, fractionDigits = 2): string {
+  return (rate * 100).toFixed(fractionDigits).replace(/\.?0+$/, '');
+}
+
+export function OrderSummary({ taxState = { status: 'pending' } }: OrderSummaryProps) {
   const t = useTranslations('Cart');
+  const tCheckout = useTranslations('Checkout');
   const locale = useLocale();
   const [expanded, setExpanded] = useState(false);
   const items = useCartStore((s) => s.items);
   const subtotal = useCartStore((s) =>
-    s.items.reduce((sum, item) => sum + (item.product.salePrice || item.product.price) * item.quantity, 0)
+    s.items.reduce(
+      (sum, item) =>
+        sum + (item.product.salePrice || item.product.price) * item.quantity,
+      0,
+    ),
   );
-  const shipping = subtotal >= 50 ? 0 : 9.99;
-  const tax = subtotal * 0.08;
-  const total = subtotal + shipping + tax;
+
+  // Shipping is server-determined at order time; surface as FREE here until the
+  // backend exposes a shipping quote endpoint.
+  const shipping = 0;
+
+  const taxAmount =
+    taxState.status === 'ready' ? taxState.estimate.taxAmountCents / 100 : 0;
+  const total = subtotal + shipping + taxAmount;
 
   const itemCount = items.reduce((sum, i) => sum + i.quantity, 0);
+
+  const renderTaxValue = () => {
+    switch (taxState.status) {
+      case 'loading':
+        return (
+          <span className="inline-flex items-center gap-1.5 text-slate-500">
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            {tCheckout('taxCalculating')}
+          </span>
+        );
+      case 'error':
+        return (
+          <span className="text-red-600 text-xs font-medium">
+            {tCheckout('taxEstimateError')}
+          </span>
+        );
+      case 'ready': {
+        const { estimate } = taxState;
+        if (!estimate.taxApplicable) {
+          return <span className="font-medium text-emerald-700">{tCheckout('taxFree')}</span>;
+        }
+        return <span className="font-medium">{formatPrice(taxAmount, locale)}</span>;
+      }
+      case 'pending':
+      default:
+        return (
+          <span className="text-xs text-slate-500">{tCheckout('taxAtCheckout')}</span>
+        );
+    }
+  };
+
+  const taxLabel =
+    taxState.status === 'ready' && taxState.estimate.taxApplicable
+      ? `${t('tax')} · ${taxState.estimate.taxName} (${formatRatePercent(taxState.estimate.taxRate)}%)`
+      : t('tax');
 
   return (
     <div className="bg-slate-50 rounded-2xl md:sticky md:top-24">
@@ -65,7 +126,22 @@ export function OrderSummary() {
           <div className="space-y-2 text-sm border-t pt-4">
             <div className="flex justify-between"><span className="text-slate-600">{t('subtotal')}</span><span className="font-medium">{formatPrice(subtotal, locale)}</span></div>
             <div className="flex justify-between"><span className="text-slate-600">{t('shipping')}</span><span className="font-medium">{shipping === 0 ? t('free') : formatPrice(shipping, locale)}</span></div>
-            <div className="flex justify-between"><span className="text-slate-600">{t('tax')}</span><span className="font-medium">{formatPrice(tax, locale)}</span></div>
+            <div className="flex justify-between items-start gap-3">
+              <span className="text-slate-600">{taxLabel}</span>
+              {renderTaxValue()}
+            </div>
+
+            {taxState.status === 'ready' && taxState.estimate.taxApplicable && taxState.estimate.components.length > 1 && (
+              <ul className="pl-3 text-xs text-slate-500 space-y-0.5">
+                {taxState.estimate.components.map((c) => (
+                  <li key={c.name} className="flex justify-between">
+                    <span>{c.label ?? c.name} ({formatRatePercent(c.rate, 3)}%)</span>
+                    <span>{formatPrice(subtotal * c.rate, locale)}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+
             <div className="flex justify-between border-t pt-2 font-bold text-base">
               <span>{t('total')}</span>
               <span className="text-primary">{formatPrice(total, locale)}</span>

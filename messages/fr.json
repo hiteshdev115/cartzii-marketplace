@@ -300,7 +300,11 @@
     "selectProvince": "Sélectionner une province / région",
     "loadingProvinces": "Chargement...",
     "countryConflictCA": "Ce portail livre uniquement au Canada. Veuillez sélectionner une adresse canadienne.",
-    "countryConflictUS": "Ce portail livre uniquement aux États-Unis. Veuillez sélectionner une adresse américaine."
+    "countryConflictUS": "Ce portail livre uniquement aux États-Unis. Veuillez sélectionner une adresse américaine.",
+    "taxAtCheckout": "Calculées après la livraison",
+    "taxCalculating": "Calcul des taxes…",
+    "taxEstimateError": "Impossible de calculer les taxes. Veuillez vérifier votre adresse de livraison.",
+    "taxFree": "Exonéré de taxes"
   },
   "Auth": {
     "loginTitle": "Bon Retour",

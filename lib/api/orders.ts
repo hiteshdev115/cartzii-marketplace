@@ -1,5 +1,10 @@
 import { api } from './client';
-import type { OrderConfirmation, PlaceOrderPayload, PlaceOrderResponse } from '@/types/order';
+import type {
+  OrderConfirmation,
+  PlaceOrderPayload,
+  PlaceOrderResponse,
+  TaxEstimate,
+} from '@/types/order';
 
 interface ApiEnvelope<T> {
   success?: boolean | number;
@@ -42,6 +47,29 @@ export async function placeOrder(
 export async function getOrderByNumber(orderNumber: string): Promise<OrderConfirmation> {
   const res = await api.get<ApiEnvelope<OrderConfirmation>>(
     `/api/v1/orders/${encodeURIComponent(orderNumber)}`,
+  );
+  return unwrap(res);
+}
+
+export interface TaxEstimateParams {
+  countryCode: string;
+  stateCode: string;
+  /** Subtotal in the smallest currency unit (e.g. cents). */
+  subtotalCents: number;
+}
+
+export async function getTaxEstimate(params: TaxEstimateParams): Promise<TaxEstimate> {
+  const isAuthenticated = !!getAuthToken();
+  const res = await api.get<ApiEnvelope<TaxEstimate>>(
+    '/api/v1/orders/tax-estimate',
+    {
+      params: {
+        countryCode: params.countryCode,
+        stateCode: params.stateCode,
+        subtotalCents: params.subtotalCents,
+      },
+      ...(isAuthenticated ? { skipGuestToken: true } : {}),
+    },
   );
   return unwrap(res);
 }

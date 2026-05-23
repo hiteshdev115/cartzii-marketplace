@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import { buildCountryPath, getCountryConfig } from '@/config/countries';
@@ -10,12 +10,11 @@ import { PaymentForm, type PaymentSubmitResult } from '@/components/checkout/Pay
 import { ShippingForm } from '@/components/checkout/ShippingForm';
 import { WalletPayButton } from '@/components/checkout/WalletPayButton';
 import { SavedPaymentMethods } from '@/components/checkout/SavedPaymentMethods';
-import { OrderSummary } from '@/components/checkout/OrderSummary';
+import { OrderSummary, type TaxState } from '@/components/checkout/OrderSummary';
 import { Toast, type ToastType } from '@/components/ui/Toast';
-import { placeOrder } from '@/lib/api/orders';
+import { getTaxEstimate, placeOrder } from '@/lib/api/orders';
 import { ApiError } from '@/lib/api/client';
 import type { ShippingFormData } from '@/lib/validators';
-import { useMemo } from 'react';
 import { CheckCircle2 } from 'lucide-react';
 
 /** Maps 2-letter ISO country code (as stored in ShippingFormData) to full country name */
@@ -31,16 +30,12 @@ export function CheckoutPageContent() {
   const tCommon = useTranslations('Common');
   const { currency } = getCountryConfig(locale); // 'CAD' for /ca, 'USD' for /us
 
-  // Derive total from live cart — same formula as OrderSummary
+  // Derive subtotal from live cart
   const cartItems = useCartStore((s) => s.items);
   const subtotal = useCartStore((s) =>
     s.items.reduce((sum, item) => sum + (item.product.salePrice || item.product.price) * item.quantity, 0)
   );
-  const shipping = subtotal >= 50 ? 0 : 9.99;
-  const tax = subtotal * 0.08;
-  const total = subtotal + shipping + tax;
-  // Stripe expects amount in the smallest currency unit (cents)
-  const orderAmountCents = Math.round(total * 100);
+  const subtotalCents = Math.round(subtotal * 100);
 
   const [selectedMethodId, setSelectedMethodId] = useState<string | null>(null);
   const [toast, setToast] = useState<{ message: string; type: ToastType } | null>(null);
@@ -49,6 +44,60 @@ export function CheckoutPageContent() {
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
   const [paymentComplete, setPaymentComplete] = useState(false);
   const [placedOrder, setPlacedOrder] = useState<{ orderNumber: string; orderId: number } | null>(null);
+  const [taxState, setTaxState] = useState<TaxState>({ status: 'pending' });
+
+  // Re-fetch the tax estimate whenever the locked shipping address or the cart
+  // subtotal changes. Skipped while the shipping form is still being edited.
+  useEffect(() => {
+    if (!shippingData || editingShipping) {
+      setTaxState({ status: 'pending' });
+      return;
+    }
+    if (subtotalCents <= 0) {
+      setTaxState({ status: 'pending' });
+      return;
+    }
+
+    const controller = new AbortController();
+    let cancelled = false;
+    setTaxState({ status: 'loading' });
+
+    (async () => {
+      try {
+        const estimate = await getTaxEstimate({
+          countryCode: shippingData.country,
+          stateCode: shippingData.state,
+          subtotalCents,
+        });
+        if (!cancelled) {
+          setTaxState({ status: 'ready', estimate });
+        }
+      } catch (cause) {
+        if (cancelled) return;
+        let message: string | undefined;
+        if (cause instanceof ApiError) {
+          const body = cause.body as { message?: string; error?: string } | null;
+          message = body?.message || body?.error;
+        } else if (cause instanceof Error) {
+          message = cause.message;
+        }
+        setTaxState({ status: 'error', message });
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+      controller.abort();
+    };
+  }, [shippingData, editingShipping, subtotalCents]);
+
+  // Stripe needs the grand total in the smallest currency unit. Until the tax
+  // estimate resolves we fall back to subtotal-only so the form can mount.
+  const orderAmountCents =
+    taxState.status === 'ready'
+      ? taxState.estimate.totalAmountCents
+      : subtotalCents;
+  const taxReady = taxState.status === 'ready';
 
   const shippingPreview = useMemo(() => {
     if (!shippingData) return null;
@@ -191,7 +240,7 @@ export function CheckoutPageContent() {
             </section>
 
             {/* Wallet: Google Pay / Apple Pay — only renders if available */}
-            {shippingData && !editingShipping && (
+            {shippingData && !editingShipping && taxReady && (
               <WalletPayButton
                 amount={orderAmountCents}
                 currency={currency}
@@ -207,7 +256,7 @@ export function CheckoutPageContent() {
             )}
 
             {/* Stripe card form */}
-            {shippingData && !editingShipping && !paymentComplete ? (
+            {shippingData && !editingShipping && !paymentComplete && taxReady ? (
               <PaymentForm
                 amount={orderAmountCents}
                 currency={currency}
@@ -218,6 +267,16 @@ export function CheckoutPageContent() {
               <section className="bg-white rounded-xl shadow-md border border-amber-200 p-4 sm:p-5">
                 <p className="text-sm font-medium text-amber-700">{t('orderPlacementFailed')}</p>
               </section>
+            ) : shippingData && !editingShipping && taxState.status === 'loading' ? (
+              <section className="bg-white rounded-xl shadow-md p-4 sm:p-5">
+                <p className="text-sm text-slate-500">{t('taxCalculating')}</p>
+              </section>
+            ) : shippingData && !editingShipping && taxState.status === 'error' ? (
+              <section className="bg-white rounded-xl shadow-md border border-red-200 p-4 sm:p-5">
+                <p className="text-sm font-medium text-red-700">
+                  {taxState.message ?? t('taxEstimateError')}
+                </p>
+              </section>
             ) : (
               <section className="bg-white rounded-xl shadow-md p-4 sm:p-5">
                 <p className="text-sm text-slate-500">{t('continueToPayment')}</p>
@@ -227,7 +286,7 @@ export function CheckoutPageContent() {
 
           {/* ---- Right column — Order summary ---- */}
           <div className="md:col-span-1 order-1 md:order-2">
-            <OrderSummary />
+            <OrderSummary taxState={taxState} />
           </div>
         </div>
       </div>

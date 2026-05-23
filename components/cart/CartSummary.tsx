@@ -23,8 +23,8 @@ export function CartSummary() {
   const [promoCode, setPromoCode] = useState('');
 
   const shipping = subtotal >= 50 ? 0 : 9.99;
-  const tax = subtotal * 0.08;
-  const total = subtotal + shipping + tax;
+  // Tax is calculated server-side at checkout based on the shipping address.
+  const total = subtotal + shipping;
 
   return (
     <div className="bg-slate-50 rounded-2xl p-4 sm:p-6 sticky top-20 md:top-24">
@@ -56,7 +56,7 @@ export function CartSummary() {
         </div>
         <div className="flex justify-between">
           <span className="text-slate-600">{t('tax')}</span>
-          <span className="font-medium">{formatPrice(tax, locale)}</span>
+          <span className="text-xs text-slate-500">{t('shippingCalculated')}</span>
         </div>
         {subtotal < 50 && (
           <p className="text-xs text-green-600 bg-green-50 p-2 rounded-lg">
