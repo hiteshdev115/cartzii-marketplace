@@ -395,6 +395,8 @@
       "returned": "Retourné"
     },
     "noOrders": "Vous n'avez pas encore passé de commande.",
+    "refresh": "Actualiser",
+    "viewDetails": "Voir les détails",
     "noWishlistItems": "Votre liste de souhaits est vide.",
     "moveToCart": "Ajouter au Panier",
     "removeFromWishlist": "Supprimer",

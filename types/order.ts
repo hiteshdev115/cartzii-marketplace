@@ -7,6 +7,8 @@ export interface OrderItem {
   unitPrice: number;
   /** quantity × unitPrice, in smallest currency unit (cents). */
   totalPrice: number;
+  /** Discount applied to the line in smallest currency unit (cents). */
+  discount?: number;
   /** Tax for the line in smallest currency unit (cents). */
   taxAmount?: number;
   /** totalPrice + taxAmount, in smallest currency unit (cents). */
@@ -14,6 +16,8 @@ export interface OrderItem {
   /** Seller information surfaced on the flat items[] for multi-seller orders. */
   sellerId?: number;
   sellerName?: string;
+  /** Present on order history items returned by `/orders/my-orders`. */
+  orderItemId?: number;
   variantInfo?: string;
   currencyCode: string;
 }
@@ -170,4 +174,57 @@ export interface PlaceOrderResponse {
   currency?: string;
   accountCreated?: boolean;
   alreadyProcessed?: boolean;
+}
+
+/** Shipping address shape returned by `/orders/my-orders`.
+ *  Note: uses `addressLine1` rather than `street`. */
+export interface OrderHistoryShippingAddress {
+  firstName?: string;
+  lastName?: string;
+  phone?: string;
+  addressLine1?: string;
+  addressLine2?: string;
+  city?: string;
+  state?: string;
+  postalCode?: string;
+  country?: string;
+}
+
+/** A single order row in `GET /api/v1/orders/my-orders`.
+ *  All monetary fields are integer cents. */
+export interface OrderHistoryRow {
+  orderId: number;
+  orderNumber: string;
+  orderDate: string;
+  currency: string;
+  countryCode?: string;
+  /** Subtotal in cents. */
+  subtotal: number;
+  /** Tax in cents. */
+  taxAmount: number;
+  taxRate?: number;
+  taxBreakdown?: TaxBreakdown | Record<string, number>;
+  /** Grand total in cents. */
+  totalAmount: number;
+  orderStatusId?: number;
+  paymentStatusId?: number;
+  paymentStatus?: string;
+  stripePaymentId?: string;
+  shippingAddress?: OrderHistoryShippingAddress;
+  itemCount: number;
+  sellerCount?: number;
+  sellerBreakdown?: OrderSellerBreakdown[];
+  items: OrderItem[];
+}
+
+export interface OrderHistoryPagination {
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
+export interface OrderHistoryResponse {
+  orders: OrderHistoryRow[];
+  pagination: OrderHistoryPagination;
 }

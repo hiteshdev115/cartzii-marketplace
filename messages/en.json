@@ -395,6 +395,8 @@
       "returned": "Returned"
     },
     "noOrders": "You haven't placed any orders yet.",
+    "refresh": "Refresh",
+    "viewDetails": "View details",
     "noWishlistItems": "Your wishlist is empty.",
     "moveToCart": "Move to Cart",
     "removeFromWishlist": "Remove",

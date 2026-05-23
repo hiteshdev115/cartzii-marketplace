@@ -1,6 +1,7 @@
 import { api } from './client';
 import type {
   OrderConfirmation,
+  OrderHistoryResponse,
   PlaceOrderPayload,
   PlaceOrderResponse,
   TaxEstimate,
@@ -69,6 +70,34 @@ export async function getTaxEstimate(params: TaxEstimateParams): Promise<TaxEsti
         subtotalCents: params.subtotalCents,
       },
       ...(isAuthenticated ? { skipGuestToken: true } : {}),
+    },
+  );
+  return unwrap(res);
+}
+
+export interface MyOrdersParams {
+  page?: number;
+  /** Max 100. */
+  limit?: number;
+  /** Optional `orders.statusid` filter. */
+  status?: number;
+  /** Optional `orders.paymentstatusid` filter. */
+  paymentStatusId?: number;
+}
+
+export async function fetchMyOrders(
+  params: MyOrdersParams = {},
+): Promise<OrderHistoryResponse> {
+  const res = await api.get<ApiEnvelope<OrderHistoryResponse>>(
+    '/api/v1/orders/my-orders',
+    {
+      params: {
+        page: params.page,
+        limit: params.limit,
+        status: params.status,
+        paymentStatusId: params.paymentStatusId,
+      },
+      skipGuestToken: true,
     },
   );
   return unwrap(res);
