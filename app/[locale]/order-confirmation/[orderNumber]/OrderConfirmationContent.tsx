@@ -223,39 +223,125 @@ export function OrderConfirmationContent({ orderNumber }: OrderConfirmationConte
 
             <div>
               <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">{t('items')}</p>
-              <div className="mt-3 overflow-x-auto rounded-xl border border-slate-200">
-                <table className="min-w-full divide-y divide-slate-200">
-                  <thead className="bg-slate-50 text-left text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-                    <tr>
-                      <th className="px-4 py-3">{t('items')}</th>
-                      <th className="px-4 py-3">{tCart('quantity')}</th>
-                      <th className="px-4 py-3">{t('subtotal')}</th>
-                      <th className="px-4 py-3">{t('totalPaid')}</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100 bg-white">
-                    {order.items.map((item) => (
-                      <tr key={`${item.productId}-${item.productName}`}>
-                        <td className="px-4 py-4">
-                          <div className="flex items-center gap-3">
-                            <div className="relative h-14 w-14 overflow-hidden rounded-lg border border-slate-200 bg-slate-50">
-                              <Image src={resolveImageUrl(item.imageUrl)} alt={item.productName} fill className="object-cover" sizes="56px" />
-                            </div>
-                            <div className="min-w-0">
-                              <p className="font-medium text-slate-900">{item.productName}</p>
-                              {item.variantInfo && <p className="text-xs text-slate-500">{item.variantInfo}</p>}
-                              <p className="text-xs text-slate-500">{item.currencyCode}</p>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-4 py-4 text-sm text-slate-700">{item.quantity}</td>
-                        <td className="px-4 py-4 text-sm text-slate-700">{formatCurrency(centsToAmount(item.unitPrice), item.currencyCode, locale)}</td>
-                        <td className="px-4 py-4 text-sm font-semibold text-slate-900">{formatCurrency(centsToAmount(item.totalPrice), item.currencyCode, locale)}</td>
+
+              {order.sellerBreakdown && order.sellerBreakdown.length > 0 ? (
+                <div className="mt-3 space-y-4">
+                  {order.sellerBreakdown.map((seller) => (
+                    <div key={seller.sellerId} className="overflow-hidden rounded-xl border border-slate-200">
+                      <div className="flex flex-wrap items-center justify-between gap-2 bg-slate-50 px-4 py-3 text-sm">
+                        <div>
+                          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                            {t('soldBy')}
+                          </p>
+                          <p className="mt-0.5 font-semibold text-slate-900">
+                            {seller.sellerName ?? `Seller #${seller.sellerId}`}
+                          </p>
+                        </div>
+                        <p className="text-xs text-slate-500">
+                          {seller.itemCount} {seller.itemCount === 1 ? tCart('item') : t('items')}
+                        </p>
+                      </div>
+
+                      <div className="overflow-x-auto">
+                        <table className="min-w-full divide-y divide-slate-200">
+                          <thead className="bg-white text-left text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                            <tr>
+                              <th className="px-4 py-3">{t('items')}</th>
+                              <th className="px-4 py-3">{tCart('quantity')}</th>
+                              <th className="px-4 py-3">{t('subtotal')}</th>
+                              <th className="px-4 py-3">{tCart('tax')}</th>
+                              <th className="px-4 py-3">{t('totalPaid')}</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-100 bg-white">
+                            {(seller.items ?? []).map((item) => {
+                              const flat = order.items.find((i) => i.productId === item.productId);
+                              const merged = { ...flat, ...item } as typeof item & { imageUrl?: string };
+                              return (
+                              <tr key={`${seller.sellerId}-${merged.productId}-${merged.productName}`}>
+                                <td className="px-4 py-4">
+                                  <div className="flex items-center gap-3">
+                                    <div className="relative h-14 w-14 overflow-hidden rounded-lg border border-slate-200 bg-slate-50">
+                                      <Image src={resolveImageUrl(merged.imageUrl ?? '')} alt={merged.productName} fill className="object-cover" sizes="56px" />
+                                    </div>
+                                    <div className="min-w-0">
+                                      <p className="font-medium text-slate-900">{merged.productName}</p>
+                                      {merged.variantInfo && <p className="text-xs text-slate-500">{merged.variantInfo}</p>}
+                                      <p className="text-xs text-slate-500">{merged.currencyCode}</p>
+                                    </div>
+                                  </div>
+                                </td>
+                                <td className="px-4 py-4 text-sm text-slate-700">{merged.quantity}</td>
+                                <td className="px-4 py-4 text-sm text-slate-700">{formatCurrency(centsToAmount(merged.totalPrice), merged.currencyCode, locale)}</td>
+                                <td className="px-4 py-4 text-sm text-slate-700">
+                                  {typeof merged.taxAmount === 'number'
+                                    ? formatCurrency(centsToAmount(merged.taxAmount), merged.currencyCode, locale)
+                                    : '—'}
+                                </td>
+                                <td className="px-4 py-4 text-sm font-semibold text-slate-900">
+                                  {typeof merged.finalPrice === 'number'
+                                    ? formatCurrency(centsToAmount(merged.finalPrice), merged.currencyCode, locale)
+                                    : formatCurrency(centsToAmount(merged.totalPrice), merged.currencyCode, locale)}
+                                </td>
+                              </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+
+                      <div className="flex flex-col gap-1 border-t border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-600 sm:flex-row sm:items-center sm:justify-end sm:gap-6">
+                        <span>
+                          {t('subtotal')}: <span className="font-medium text-slate-800">{formatCurrency(centsToAmount(seller.subtotal), order.currency, locale)}</span>
+                        </span>
+                        <span>
+                          {tCart('tax')}: <span className="font-medium text-slate-800">{formatCurrency(centsToAmount(seller.taxAmount), order.currency, locale)}</span>
+                        </span>
+                        <span>
+                          {t('totalPaid')}: <span className="font-semibold text-emerald-700">{formatCurrency(centsToAmount(seller.total), order.currency, locale)}</span>
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="mt-3 overflow-x-auto rounded-xl border border-slate-200">
+                  <table className="min-w-full divide-y divide-slate-200">
+                    <thead className="bg-slate-50 text-left text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                      <tr>
+                        <th className="px-4 py-3">{t('items')}</th>
+                        <th className="px-4 py-3">{tCart('quantity')}</th>
+                        <th className="px-4 py-3">{t('subtotal')}</th>
+                        <th className="px-4 py-3">{t('totalPaid')}</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 bg-white">
+                      {order.items.map((item) => (
+                        <tr key={`${item.productId}-${item.productName}`}>
+                          <td className="px-4 py-4">
+                            <div className="flex items-center gap-3">
+                              <div className="relative h-14 w-14 overflow-hidden rounded-lg border border-slate-200 bg-slate-50">
+                                <Image src={resolveImageUrl(item.imageUrl ?? '')} alt={item.productName} fill className="object-cover" sizes="56px" />
+                              </div>
+                              <div className="min-w-0">
+                                <p className="font-medium text-slate-900">{item.productName}</p>
+                                {item.variantInfo && <p className="text-xs text-slate-500">{item.variantInfo}</p>}
+                                {item.sellerName && (
+                                  <p className="text-xs text-slate-500">{t('soldBy')}: {item.sellerName}</p>
+                                )}
+                                <p className="text-xs text-slate-500">{item.currencyCode}</p>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-4 py-4 text-sm text-slate-700">{item.quantity}</td>
+                          <td className="px-4 py-4 text-sm text-slate-700">{formatCurrency(centsToAmount(item.unitPrice), item.currencyCode, locale)}</td>
+                          <td className="px-4 py-4 text-sm font-semibold text-slate-900">{formatCurrency(centsToAmount(item.totalPrice), item.currencyCode, locale)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
 
             <div className="ml-auto w-full max-w-md space-y-2 border-t border-slate-200 pt-4 text-sm">

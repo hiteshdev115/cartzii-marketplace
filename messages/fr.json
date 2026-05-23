@@ -304,7 +304,8 @@
     "taxAtCheckout": "Calculées après la livraison",
     "taxCalculating": "Calcul des taxes…",
     "taxEstimateError": "Impossible de calculer les taxes. Veuillez vérifier votre adresse de livraison.",
-    "taxFree": "Exonéré de taxes"
+    "taxFree": "Exonéré de taxes",
+    "soldBy": "Vendu par"
   },
   "Auth": {
     "loginTitle": "Bon Retour",

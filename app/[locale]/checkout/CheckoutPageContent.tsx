@@ -136,7 +136,6 @@ export function CheckoutPageContent() {
         const price = item.product.salePrice || item.product.price;
         return {
           productId: Number(item.product.id),
-          variantId: item.variantId ?? null,
           quantity: item.quantity,
           unitPrice: Math.round(price * 100),
           totalPrice: Math.round(price * item.quantity * 100),
