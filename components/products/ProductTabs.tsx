@@ -33,13 +33,13 @@ export function ProductTabs({ product, reviews, stats, activeTab: controlledTab,
   return (
     <div id="reviews-section">
       {/* Tab headers */}
-      <div className="flex overflow-x-auto border-b border-gray-200" role="tablist">
+      <div className="flex overflow-x-auto border-b border-gray-200 -mx-4 px-4 sm:mx-0 sm:px-0" role="tablist">
         {tabs.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
             className={cn(
-              'px-6 py-3 text-sm font-medium transition-colors relative',
+              'px-4 sm:px-6 py-3 text-sm font-medium transition-colors relative whitespace-nowrap shrink-0',
               activeTab === tab.id
                 ? 'text-primary'
                 : 'text-slate-500 hover:text-slate-700'
@@ -68,13 +68,13 @@ export function ProductTabs({ product, reviews, stats, activeTab: controlledTab,
         )}
 
         {activeTab === 'specifications' && (
-          <div id="panel-specifications" role="tabpanel">
+          <div id="panel-specifications" role="tabpanel" className="overflow-x-auto">
             <table className="w-full">
               <tbody>
                 {Object.entries(product.specifications).map(([key, val]) => (
                   <tr key={key} className="border-b border-gray-100">
-                    <td className="py-3 pr-4 text-sm font-medium text-slate-900 w-1/3">{key}</td>
-                    <td className="py-3 text-sm text-slate-600">{val}</td>
+                    <td className="py-3 pr-4 text-sm font-medium text-slate-900 w-2/5 sm:w-1/3 align-top">{key}</td>
+                    <td className="py-3 text-sm text-slate-600 break-words">{val}</td>
                   </tr>
                 ))}
               </tbody>

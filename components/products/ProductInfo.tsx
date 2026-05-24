@@ -72,7 +72,7 @@ export function ProductInfo({ product, onVariantChange, onShowReviews, onWriteRe
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 min-w-0">
       {/* Brand & Badges */}
       <div className="flex items-center gap-2">
         <span className="text-sm text-slate-500">{product.brand}</span>
@@ -80,7 +80,7 @@ export function ProductInfo({ product, onVariantChange, onShowReviews, onWriteRe
       </div>
 
       {/* Title */}
-      <h1 className="text-2xl md:text-3xl font-bold text-slate-900">{product.name}</h1>
+      <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-slate-900 break-words">{product.name}</h1>
 
       {/* Rating */}
       <div className="flex items-center gap-2 flex-wrap">
@@ -103,13 +103,13 @@ export function ProductInfo({ product, onVariantChange, onShowReviews, onWriteRe
       </div>
 
       {/* Price */}
-      <div className="flex items-baseline gap-3">
-        <span className="text-3xl font-bold text-primary">
+      <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <span className="text-2xl sm:text-3xl font-bold text-primary">
           {formatPrice(product.salePrice || product.price, locale)}
         </span>
         {product.onSale && product.salePrice && (
           <>
-            <span className="text-lg text-slate-400 line-through">{formatPrice(product.price, locale)}</span>
+            <span className="text-base sm:text-lg text-slate-400 line-through">{formatPrice(product.price, locale)}</span>
             <Badge variant="sale">-{product.discount}%</Badge>
           </>
         )}
@@ -165,15 +165,15 @@ export function ProductInfo({ product, onVariantChange, onShowReviews, onWriteRe
       )}
 
       {/* Quantity & Add to cart */}
-      <div className="flex items-center gap-4">
+      <div className="flex flex-wrap items-center gap-3 sm:gap-4">
         <QuantitySelector value={quantity} onChange={setQuantity} max={product.stockCount} />
-        <button onClick={handleAddToCart} className="btn-primary flex-1 flex items-center justify-center gap-2">
+        <button onClick={handleAddToCart} className="btn-primary flex-1 min-w-[10rem] flex items-center justify-center gap-2">
           <ShoppingCart className="w-5 h-5" />
           {t('addToCart')}
         </button>
         <button
           onClick={handleWishlistToggle}
-          className={cn('p-3 rounded-xl border transition-colors', wishlisted ? 'border-red-200 bg-red-50' : 'border-gray-200 hover:border-red-200')}
+          className={cn('p-3 rounded-xl border transition-colors shrink-0', wishlisted ? 'border-red-200 bg-red-50' : 'border-gray-200 hover:border-red-200')}
           aria-label={wishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
         >
           <Heart className={cn('w-5 h-5', wishlisted ? 'fill-red-500 text-red-500' : 'text-slate-400')} />

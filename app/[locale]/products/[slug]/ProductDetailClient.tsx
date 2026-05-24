@@ -160,11 +160,11 @@ export function ProductDetailClient({ slug }: ProductDetailClientProps) {
           { label: product.name },
         ]}
       />
-      <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 mt-6">
+      <div className="grid sm:grid-cols-2 gap-6 sm:gap-8 lg:gap-12 mt-6">
         <ProductGallery images={activeImages} productName={product.name} />
         <ProductInfo product={product} onVariantChange={handleVariantChange} onShowReviews={scrollToReviews} onWriteReview={scrollToWriteReview} />
       </div>
-      <div className="mt-12 bg-white rounded-2xl border border-gray-200 p-6 sm:p-8">
+      <div className="mt-8 sm:mt-12 bg-white rounded-2xl border border-gray-200 p-4 sm:p-6 lg:p-8">
         <ProductTabs product={product} reviews={reviews} stats={reviewStats} activeTab={activeTab} onTabChange={setActiveTab} />
         <ReviewForm productId={parseInt(product.id, 10)} reviews={reviews} onReviewPosted={handleReviewPosted} />
       </div>

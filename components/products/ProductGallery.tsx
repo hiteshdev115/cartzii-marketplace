@@ -24,7 +24,7 @@ export function ProductGallery({ images, productName }: ProductGalleryProps) {
   const next = () => setSelected((i) => (i === images.length - 1 ? 0 : i + 1));
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 min-w-0">
       {/* Main image with arrows */}
       <div className="relative aspect-square overflow-hidden rounded-2xl bg-slate-100 group">
         <Image
@@ -40,14 +40,14 @@ export function ProductGallery({ images, productName }: ProductGalleryProps) {
           <>
             <button
               onClick={prev}
-              className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/80 backdrop-blur-sm shadow-md flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white"
+              className="absolute left-2 sm:left-3 top-1/2 -translate-y-1/2 w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/80 backdrop-blur-sm shadow-md flex items-center justify-center transition-opacity hover:bg-white opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
               aria-label="Previous image"
             >
               <ChevronLeft className="w-5 h-5 text-slate-700" />
             </button>
             <button
               onClick={next}
-              className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/80 backdrop-blur-sm shadow-md flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white"
+              className="absolute right-2 sm:right-3 top-1/2 -translate-y-1/2 w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/80 backdrop-blur-sm shadow-md flex items-center justify-center transition-opacity hover:bg-white opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
               aria-label="Next image"
             >
               <ChevronRight className="w-5 h-5 text-slate-700" />
@@ -73,13 +73,13 @@ export function ProductGallery({ images, productName }: ProductGalleryProps) {
 
       {/* Thumbnails */}
       {images.length > 1 && (
-        <div className="flex gap-3 overflow-x-auto pb-1">
+        <div className="flex gap-2 sm:gap-3 overflow-x-auto pb-1">
           {images.map((img, i) => (
             <button
               key={i}
               onClick={() => setSelected(i)}
               className={cn(
-                'relative w-20 h-20 rounded-xl overflow-hidden border-2 shrink-0 transition-colors',
+                'relative w-16 h-16 sm:w-20 sm:h-20 rounded-xl overflow-hidden border-2 shrink-0 transition-colors',
                 selected === i ? 'border-primary' : 'border-transparent hover:border-slate-300'
               )}
               aria-label={`View image ${i + 1}`}
