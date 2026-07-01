@@ -11,9 +11,11 @@ import { ShippingForm } from '@/components/checkout/ShippingForm';
 import { WalletPayButton } from '@/components/checkout/WalletPayButton';
 import { SavedPaymentMethods } from '@/components/checkout/SavedPaymentMethods';
 import { OrderSummary, type TaxState } from '@/components/checkout/OrderSummary';
+import { RateSelectorPanel } from '@/components/shipping/RateSelectorPanel';
 import { Toast, type ToastType } from '@/components/ui/Toast';
 import { getTaxEstimate, placeOrder } from '@/lib/api/orders';
 import { ApiError } from '@/lib/api/client';
+import { useCheckoutStore } from '@/stores/checkoutStore';
 import type { ShippingFormData } from '@/lib/validators';
 import { CheckCircle2 } from 'lucide-react';
 
@@ -41,10 +43,14 @@ export function CheckoutPageContent() {
   const [toast, setToast] = useState<{ message: string; type: ToastType } | null>(null);
   const [shippingData, setShippingData] = useState<ShippingFormData | null>(null);
   const [editingShipping, setEditingShipping] = useState(true);
+  const [ratesEligible, setRatesEligible] = useState(false);
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
   const [paymentComplete, setPaymentComplete] = useState(false);
   const [placedOrder, setPlacedOrder] = useState<{ orderNumber: string; orderId: number } | null>(null);
   const [taxState, setTaxState] = useState<TaxState>({ status: 'pending' });
+
+  // Pull selected shipping total from checkout store for Stripe amount calculation
+  const getTotalShippingCents = useCheckoutStore((s) => s.getTotalShippingCents);
 
   // Re-fetch the tax estimate whenever the locked shipping address or the cart
   // subtotal changes. Skipped while the shipping form is still being edited.
@@ -93,10 +99,12 @@ export function CheckoutPageContent() {
 
   // Stripe needs the grand total in the smallest currency unit. Until the tax
   // estimate resolves we fall back to subtotal-only so the form can mount.
+  // Include selected shipping cost in the total charged to the card.
+  const shippingCents = getTotalShippingCents();
   const orderAmountCents =
     taxState.status === 'ready'
-      ? taxState.estimate.totalAmountCents
-      : subtotalCents;
+      ? taxState.estimate.totalAmountCents + shippingCents
+      : subtotalCents + shippingCents;
   const taxReady = taxState.status === 'ready';
 
   const shippingPreview = useMemo(() => {
@@ -227,6 +235,16 @@ export function CheckoutPageContent() {
               )}
             </section>
 
+            {/* Shipping rate selection — appears after address is locked */}
+            {shippingData && !editingShipping && !paymentComplete && (
+              <section className="bg-white rounded-xl p-4 sm:p-5 shadow-sm border border-slate-200">
+                <RateSelectorPanel
+                  shippingAddress={shippingData}
+                  onEligibilityChange={setRatesEligible}
+                />
+              </section>
+            )}
+
             {/* Saved cards */}
             <section className="bg-white rounded-xl p-4 shadow-sm">
               <h2 className="text-sm font-semibold text-gray-700 mb-3">
@@ -239,7 +257,7 @@ export function CheckoutPageContent() {
             </section>
 
             {/* Wallet: Google Pay / Apple Pay — only renders if available */}
-            {shippingData && !editingShipping && taxReady && (
+            {shippingData && !editingShipping && taxReady && ratesEligible && (
               <WalletPayButton
                 amount={orderAmountCents}
                 currency={currency}
@@ -255,7 +273,7 @@ export function CheckoutPageContent() {
             )}
 
             {/* Stripe card form */}
-            {shippingData && !editingShipping && !paymentComplete && taxReady ? (
+            {shippingData && !editingShipping && !paymentComplete && taxReady && ratesEligible ? (
               <PaymentForm
                 amount={orderAmountCents}
                 currency={currency}

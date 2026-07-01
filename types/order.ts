@@ -215,6 +215,8 @@ export interface OrderHistoryRow {
   sellerCount?: number;
   sellerBreakdown?: OrderSellerBreakdown[];
   items: OrderItem[];
+  /** Tracking code for the shipment, if one has been created. */
+  trackingNumber?: string | null;
 }
 
 export interface OrderHistoryPagination {

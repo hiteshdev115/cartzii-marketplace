@@ -305,7 +305,10 @@
     "taxCalculating": "Calcul des taxes…",
     "taxEstimateError": "Impossible de calculer les taxes. Veuillez vérifier votre adresse de livraison.",
     "taxFree": "Exonéré de taxes",
-    "soldBy": "Vendu par"
+    "soldBy": "Vendu par",
+    "shippingMethod": "Mode de livraison",
+    "selectShippingMethod": "Veuillez choisir un mode de livraison pour continuer",
+    "shippingCost": "Livraison"
   },
   "Auth": {
     "loginTitle": "Bon Retour",
@@ -533,5 +536,39 @@
     "invalidCoupon": "Ce code promo est invalide ou expiré",
     "maxQuantity": "Quantité maximale disponible : {max}",
     "minQuantity": "La quantité minimale est de 1"
+  },
+  "Shipping": {
+    "loadingRates": "Recherche des tarifs de livraison…",
+    "shippingMethod": "Mode de livraison",
+    "freeShipping": "GRATUIT",
+    "estDelivery": "Livraison estimée dans {days} jour(s) ouvrable(s)",
+    "noRatesAvailable": "Aucun tarif de livraison disponible pour cette adresse.",
+    "sellerLabel": "Vendeur #{id}",
+    "sellerFallback": "Ce vendeur",
+    "notConfiguredTitle": "Livraison temporairement indisponible",
+    "notConfiguredMessage": "La livraison est temporairement indisponible. Veuillez réessayer sous peu.",
+    "ratesErrorTitle": "Impossible d’obtenir les tarifs de livraison",
+    "retry": "Réessayer",
+    "noOriginError": "Ce vendeur n’est actuellement pas en mesure d’expédier à votre adresse. Supprimez ses articles pour continuer.",
+    "rateFetchError": "Impossible de récupérer les tarifs de livraison pour ce vendeur."
+  },
+  "Tracking": {
+    "pageTitle": "Suivre votre commande",
+    "trackingCodeLabel": "Code de suivi",
+    "trackingCodePlaceholder": "Entrez votre code de suivi",
+    "track": "Suivre",
+    "codeRequired": "Veuillez entrer un code de suivi",
+    "notFound": "Aucune information de suivi trouvée. Vérifiez le code et réessayez.",
+    "errorTitle": "Impossible de récupérer les informations de suivi",
+    "tryAnotherCode": "Essayer un autre code",
+    "backToLookup": "Retour à la recherche de suivi",
+    "orderNumber": "Commande",
+    "carrier": "Transporteur",
+    "trackingCode": "Code de suivi",
+    "estDelivery": "Livraison estimée",
+    "delivered": "Livré",
+    "trackingHistory": "Historique de suivi",
+    "noEventsYet": "Aucun événement de suivi pour l’instant. Revenez bientôt.",
+    "pageDescription": "Entrez votre code de suivi ci-dessous pour voir le statut actuel de votre colis."
   }
 }
