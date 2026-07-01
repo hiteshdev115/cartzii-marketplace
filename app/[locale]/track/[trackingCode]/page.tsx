@@ -35,7 +35,6 @@ function TrackingDetailContent({ trackingCode }: { trackingCode: string }) {
 
   useEffect(() => {
     let cancelled = false;
-    setLoading(true);
 
     getTracking(trackingCode).then((result) => {
       if (cancelled) return;
