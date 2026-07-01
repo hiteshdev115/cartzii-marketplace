@@ -17,9 +17,25 @@ import { useHydrated } from '@/hooks/useHydration';
 
 interface ProductInfoProps {
   product: Product;
-  onVariantChange?: (images: string[], price: number, salePrice?: number, discount?: number) => void;
+  onVariantChange?: (
+    images: string[],
+    price: number,
+    salePrice?: number,
+    discount?: number,
+    measurements?: VariantMeasurements | null,
+  ) => void;
   onShowReviews?: () => void;
   onWriteReview?: () => void;
+}
+
+/** Per-variant weight + dimensions used by the PDP specs override. */
+export interface VariantMeasurements {
+  weight: number | null;
+  weightUnit: string | null;
+  length: number | null;
+  width: number | null;
+  height: number | null;
+  dimensionUnit: string | null;
 }
 
 export function ProductInfo({ product, onVariantChange, onShowReviews, onWriteReview }: ProductInfoProps) {
@@ -63,7 +79,25 @@ export function ProductInfo({ product, onVariantChange, onShowReviews, onWriteRe
   useEffect(() => {
     const variant = findMatchingVariant(selectedColor, selectedSize);
     if (variant && onVariantChange) {
-      onVariantChange(variant.images, variant.price, variant.salePrice, variant.discount);
+      // Per the shipping contract: only override product-level weight/dims when
+      // ALL four measurements are populated on the variant. Otherwise fall
+      // back to product values (indicated by `null`).
+      const hasFullVariantMeasurements =
+        variant.weight != null &&
+        variant.length != null &&
+        variant.width != null &&
+        variant.height != null;
+      const measurements: VariantMeasurements | null = hasFullVariantMeasurements
+        ? {
+            weight: variant.weight ?? null,
+            weightUnit: variant.weightUnit ?? null,
+            length: variant.length ?? null,
+            width: variant.width ?? null,
+            height: variant.height ?? null,
+            dimensionUnit: variant.dimensionUnit ?? null,
+          }
+        : null;
+      onVariantChange(variant.images, variant.price, variant.salePrice, variant.discount, measurements);
     }
   }, [selectedColor, selectedSize, findMatchingVariant, onVariantChange]);
 

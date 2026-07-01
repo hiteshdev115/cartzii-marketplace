@@ -144,7 +144,20 @@ export function RateSelectorPanel({
   }
 
   if (fetchState.status === 'error') {
-    // Global NOT_CONFIGURED banner
+    // Unsupported destination country → hide the rate list entirely.
+    if (fetchState.errorCode === SHIPPING_ERROR_CODES.UNSUPPORTED_COUNTRY) {
+      return (
+        <div className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+          <div>
+            <p className="font-semibold">{t('unsupportedCountryTitle')}</p>
+            <p className="mt-0.5">{t('unsupportedCountryMessage')}</p>
+          </div>
+        </div>
+      );
+    }
+
+    // Global NOT_CONFIGURED banner (legacy top-level error)
     if (fetchState.errorCode === SHIPPING_ERROR_CODES.NOT_CONFIGURED) {
       return (
         <div className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">

@@ -139,6 +139,9 @@
   "ProductDetail": {
     "description": "Description",
     "specifications": "Specifications",
+    "noSpecifications": "No specifications available.",
+    "weight": "Weight",
+    "dimensions": "Dimensions",
     "reviews": "Reviews",
     "reviewsCount": "{count} reviews",
     "writeReview": "Write a Review",
@@ -547,6 +550,8 @@
     "sellerFallback": "This Seller",
     "notConfiguredTitle": "Shipping temporarily unavailable",
     "notConfiguredMessage": "Shipping is temporarily unavailable. Please try again shortly.",
+    "unsupportedCountryTitle": "Shipping unavailable to this country",
+    "unsupportedCountryMessage": "We currently ship only to the United States and Canada. Please choose a supported destination.",
     "ratesErrorTitle": "Could not get shipping rates",
     "retry": "Retry",
     "noOriginError": "This seller is not currently able to fulfill your address. Remove their items to continue.",

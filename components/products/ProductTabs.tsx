@@ -69,16 +69,7 @@ export function ProductTabs({ product, reviews, stats, activeTab: controlledTab,
 
         {activeTab === 'specifications' && (
           <div id="panel-specifications" role="tabpanel" className="overflow-x-auto">
-            <table className="w-full">
-              <tbody>
-                {Object.entries(product.specifications).map(([key, val]) => (
-                  <tr key={key} className="border-b border-gray-100">
-                    <td className="py-3 pr-4 text-sm font-medium text-slate-900 w-2/5 sm:w-1/3 align-top">{key}</td>
-                    <td className="py-3 text-sm text-slate-600 break-words">{val}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <SpecificationsTable product={product} t={t} />
           </div>
         )}
 
@@ -89,5 +80,60 @@ export function ProductTabs({ product, reviews, stats, activeTab: controlledTab,
         )}
       </div>
     </div>
+  );
+}
+
+// ---- Specifications tab -----------------------------------------------------
+
+/** Build the ordered rows for the specifications table, including
+ *  weight/dimensions when the product (or its currently-selected variant)
+ *  exposes them. */
+function SpecificationsTable({
+  product,
+  t,
+}: {
+  product: Product;
+  t: (key: string) => string;
+}) {
+  const weightRow =
+    product.weight != null
+      ? { key: t('weight'), val: `${product.weight}${product.weightUnit ? ` ${product.weightUnit}` : ''}` }
+      : null;
+
+  const hasAnyDim =
+    product.length != null || product.width != null || product.height != null;
+  const dimsRow = hasAnyDim
+    ? (() => {
+        const parts = [product.length, product.width, product.height]
+          .filter((n): n is number => n != null)
+          .map((n) => String(n));
+        const unit = product.dimensionUnit ? ` ${product.dimensionUnit}` : '';
+        return { key: t('dimensions'), val: `${parts.join(' × ')}${unit}` };
+      })()
+    : null;
+
+  const specRows = Object.entries(product.specifications).map(([key, val]) => ({ key, val }));
+
+  const rows = [
+    ...(weightRow ? [weightRow] : []),
+    ...(dimsRow ? [dimsRow] : []),
+    ...specRows,
+  ];
+
+  if (rows.length === 0) {
+    return <p className="text-sm text-slate-500">{t('noSpecifications')}</p>;
+  }
+
+  return (
+    <table className="w-full">
+      <tbody>
+        {rows.map((row) => (
+          <tr key={row.key} className="border-b border-gray-100">
+            <td className="py-3 pr-4 text-sm font-medium text-slate-900 w-2/5 sm:w-1/3 align-top">{row.key}</td>
+            <td className="py-3 text-sm text-slate-600 break-words">{row.val}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
   );
 }

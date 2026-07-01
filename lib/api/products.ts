@@ -47,6 +47,14 @@ interface APIVariant {
   pricing: APIVariantPricing[];
   images: APIVariantImage[];
   attributes: APIVariantAttribute[];
+  // Optional per-variant shipping measurements — used by the /shipping/rates
+  // engine and (optionally) surfaced on the PDP specifications block.
+  weight?: number | string | null;
+  weightunit?: string | null;
+  length?: number | string | null;
+  width?: number | string | null;
+  height?: number | string | null;
+  dimensionunit?: string | null;
 }
 
 interface APIProductCountry {
@@ -125,6 +133,13 @@ interface APIProduct {
   reviewCount?: number;
   productattributes?: APIProductAttribute[];
   category?: APICategory;
+  // Optional shipping measurements exposed by all product read endpoints.
+  weight?: number | string | null;
+  weightunit?: string | null;
+  length?: number | string | null;
+  width?: number | string | null;
+  height?: number | string | null;
+  dimensionunit?: string | null;
 }
 
 // ---- Helpers --------------------------------------------------------------
@@ -145,6 +160,17 @@ function unwrap<T>(res: unknown): T {
     return (res as { data: T }).data;
   }
   return res as T;
+}
+
+/**
+ * Coerce a numeric field that the API may return as `number`, `"0.25"`, or
+ * `null`. Empty strings and zero-length values become `null` so downstream
+ * code can `!= null`-guard consistently.
+ */
+function toNumberOrNull(value: number | string | null | undefined): number | null {
+  if (value == null || value === '') return null;
+  const n = typeof value === 'number' ? value : parseFloat(value);
+  return Number.isFinite(n) ? n : null;
 }
 
 /**
@@ -196,6 +222,12 @@ function buildDetailVariants(variants: APIVariant[], country: string): DetailVar
       discount: disc,
       stockCount: v.stockquantity,
       inStock: v.stockquantity > 0,
+      weight: toNumberOrNull(v.weight),
+      weightUnit: v.weightunit ?? null,
+      length: toNumberOrNull(v.length),
+      width: toNumberOrNull(v.width),
+      height: toNumberOrNull(v.height),
+      dimensionUnit: v.dimensionunit ?? null,
     };
   });
 }
@@ -357,6 +389,12 @@ function mapProduct(raw: APIProduct, country: string): Product {
     specifications: {},
     createdAt: raw.createdat,
     detailVariants: buildDetailVariants(activeVariants, country),
+    weight: toNumberOrNull(raw.weight),
+    weightUnit: raw.weightunit ?? null,
+    length: toNumberOrNull(raw.length),
+    width: toNumberOrNull(raw.width),
+    height: toNumberOrNull(raw.height),
+    dimensionUnit: raw.dimensionunit ?? null,
   };
 }
 

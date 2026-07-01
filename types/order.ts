@@ -134,6 +134,16 @@ export interface PlaceOrderItem {
   currencyCode: string;
 }
 
+/**
+ * Per-seller shipping selection captured from `/api/v1/shipping/rates`.
+ * The backend uses these to buy the carrier label after order creation.
+ */
+export interface PlaceOrderShippingSelection {
+  sellerId: number;
+  providerShipmentId: string;
+  rateId: string;
+}
+
 export interface PlaceOrderPayload {
   /** Stripe PaymentIntent id returned by Stripe after the card is confirmed. */
   paymentIntentId: string;
@@ -141,6 +151,11 @@ export interface PlaceOrderPayload {
   countryCode: string;
   shippingAddress: PlaceOrderShippingAddress;
   items: PlaceOrderItem[];
+  /**
+   * One entry per seller in the cart. Optional so we don't break clients that
+   * haven't been upgraded yet, but the server needs this to buy labels.
+   */
+  shippingSelections?: PlaceOrderShippingSelection[];
   guest?: {
     email: string;
     firstName: string;

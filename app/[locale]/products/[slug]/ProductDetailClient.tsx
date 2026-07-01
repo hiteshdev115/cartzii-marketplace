@@ -6,7 +6,7 @@ import { getCountryFromLocale, buildCountryPath, getCountryConfig } from '@/conf
 import { fetchProductBySlug } from '@/lib/api/products';
 import { fetchProductReviews } from '@/lib/api/reviews';
 import { ProductGallery } from '@/components/products/ProductGallery';
-import { ProductInfo } from '@/components/products/ProductInfo';
+import { ProductInfo, type VariantMeasurements } from '@/components/products/ProductInfo';
 import { ProductTabs } from '@/components/products/ProductTabs';
 import { ReviewForm } from '@/components/products/ReviewForm';
 import { Breadcrumb } from '@/components/layout/Breadcrumb';
@@ -96,16 +96,36 @@ export function ProductDetailClient({ slug }: ProductDetailClientProps) {
     }, 50);
   }, [reviews, userId]);
 
-  const handleVariantChange = useCallback((images: string[], price: number, salePrice?: number, discount?: number) => {
+  const handleVariantChange = useCallback((
+    images: string[],
+    price: number,
+    salePrice?: number,
+    discount?: number,
+    measurements?: VariantMeasurements | null,
+  ) => {
     if (images.length > 0) setActiveImages(images);
     setProduct((prev) => {
       if (!prev) return prev;
+      // When the variant has a full set of measurements, override the product
+      // values so the specifications tab reflects the current selection.
+      // Otherwise leave the product-level values untouched (fallback).
+      const measurementPatch = measurements
+        ? {
+            weight: measurements.weight,
+            weightUnit: measurements.weightUnit,
+            length: measurements.length,
+            width: measurements.width,
+            height: measurements.height,
+            dimensionUnit: measurements.dimensionUnit,
+          }
+        : {};
       return {
         ...prev,
         price,
         salePrice,
         discount,
         onSale: salePrice !== undefined && salePrice < price,
+        ...measurementPatch,
       };
     });
   }, []);
