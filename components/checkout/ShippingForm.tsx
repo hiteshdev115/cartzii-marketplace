@@ -16,6 +16,7 @@ import { Button } from '@/components/ui/Button';
 import { AlertCircle, Plus } from 'lucide-react';
 import { useHydrated } from '@/hooks/useHydration';
 import { useAuthStore } from '@/stores/authStore';
+import { useCheckoutStore } from '@/stores/checkoutStore';
 import { fetchUserAddresses, createAddress } from '@/lib/api/addresses';
 import { fetchStatesByCountry } from '@/lib/api';
 import { getCountryFromLocale } from '@/config/countries';
@@ -32,6 +33,17 @@ export function ShippingForm({ onSubmit, defaultValues }: ShippingFormProps) {
   const portalCountry = getCountryFromLocale(locale); // "ca" | "us"
   const portalCountryISO = portalCountry === 'ca' ? 'CA' : 'US';
   const hydrated = useHydrated();
+
+  // Persist address + clear stale rates whenever a new address is confirmed
+  const setCheckoutAddress = useCheckoutStore((s) => s.setShippingAddress);
+  const clearRates = useCheckoutStore((s) => s.clearRates);
+
+  /** Wraps every onSubmit call to also persist the address and reset rates. */
+  const handleConfirmedAddress = (data: ShippingFormData) => {
+    setCheckoutAddress(data);
+    clearRates();
+    onSubmit(data);
+  };
 
   // Real auth state from Zustand persist store (key: 'cartzii-auth')
   const authUserId = useAuthStore((s) => s.userId);
@@ -193,7 +205,7 @@ export function ShippingForm({ onSubmit, defaultValues }: ShippingFormProps) {
         zipCode: newAddr.postal_code,
         country: newAddr.country,
       };
-      onSubmit(mappedData);
+      handleConfirmedAddress(mappedData);
     } catch {
       setSaveError(t('networkError'));
     } finally {
@@ -231,7 +243,7 @@ export function ShippingForm({ onSubmit, defaultValues }: ShippingFormProps) {
       country: selected.country,
     };
 
-    onSubmit(mappedData);
+    handleConfirmedAddress(mappedData);
   };
 
   // New address form fields (shared between "use new address" and "no saved addresses" flows)
@@ -497,7 +509,7 @@ export function ShippingForm({ onSubmit, defaultValues }: ShippingFormProps) {
       return;
     }
     setGuestCountryError(null);
-    onSubmit(data);
+    handleConfirmedAddress(data);
   };
 
   return (
