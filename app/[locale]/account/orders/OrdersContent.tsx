@@ -240,12 +240,22 @@ function OrderCard({ order, locale, tCart, tCheckout, tAccount }: OrderCardProps
         <span>
           {order.itemCount} {order.itemCount === 1 ? tCart('item') : tCheckout('items')}
         </span>
-        <Link
-          href={buildCountryPath(locale, `/order-confirmation/${order.orderNumber}`)}
-          className="font-medium text-blue-600 hover:underline"
-        >
-          {tAccount('viewDetails')}
-        </Link>
+        <div className="flex items-center gap-3">
+          {order.trackingNumber && (
+            <Link
+              href={buildCountryPath(locale, `/track/${encodeURIComponent(order.trackingNumber)}`)}
+              className="font-medium text-primary hover:underline"
+            >
+              {tCheckout('trackOrder')}
+            </Link>
+          )}
+          <Link
+            href={buildCountryPath(locale, `/order-confirmation/${order.orderNumber}`)}
+            className="font-medium text-blue-600 hover:underline"
+          >
+            {tAccount('viewDetails')}
+          </Link>
+        </div>
       </div>
     </div>
   );

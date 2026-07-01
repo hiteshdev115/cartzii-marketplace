@@ -305,7 +305,10 @@
     "taxCalculating": "Calculating taxes…",
     "taxEstimateError": "Could not calculate taxes. Please review your shipping address.",
     "taxFree": "Tax-free",
-    "soldBy": "Sold by"
+    "soldBy": "Sold by",
+    "shippingMethod": "Shipping Method",
+    "selectShippingMethod": "Please select a shipping method to continue",
+    "shippingCost": "Shipping"
   },
   "Auth": {
     "loginTitle": "Welcome Back",
@@ -533,5 +536,38 @@
     "invalidCoupon": "This coupon code is invalid or expired",
     "maxQuantity": "Maximum available quantity is {max}",
     "minQuantity": "Minimum quantity is 1"
+  },
+  "Shipping": {
+    "loadingRates": "Getting shipping rates…",
+    "shippingMethod": "Shipping Method",
+    "freeShipping": "FREE",
+    "estDelivery": "Est. {days} business day(s)",
+    "noRatesAvailable": "No shipping rates available for this address.",
+    "sellerLabel": "Seller #{id}",
+    "sellerFallback": "This Seller",
+    "notConfiguredTitle": "Shipping temporarily unavailable",
+    "notConfiguredMessage": "Shipping is temporarily unavailable. Please try again shortly.",
+    "ratesErrorTitle": "Could not get shipping rates",
+    "retry": "Retry",
+    "noOriginError": "This seller is not currently able to fulfill your address. Remove their items to continue.",
+    "rateFetchError": "Couldn't retrieve shipping rates for this seller."
+  },
+  "Tracking": {
+    "pageTitle": "Track Your Order",
+    "trackingCodeLabel": "Tracking Code",
+    "trackingCodePlaceholder": "Enter your tracking code",
+    "track": "Track",
+    "codeRequired": "Please enter a tracking code",
+    "notFound": "Tracking information not found. Please check the code and try again.",
+    "errorTitle": "Could not retrieve tracking information",
+    "tryAnotherCode": "Try a different code",
+    "backToLookup": "Back to tracking lookup",
+    "orderNumber": "Order",
+    "carrier": "Carrier",
+    "trackingCode": "Tracking Code",
+    "estDelivery": "Est. Delivery",
+    "delivered": "Delivered",
+    "trackingHistory": "Tracking History",
+    "noEventsYet": "No tracking events yet. Check back soon."
   }
 }

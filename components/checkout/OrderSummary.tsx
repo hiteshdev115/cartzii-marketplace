@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { ChevronDown, Loader2 } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { useCartStore } from '@/stores/cartStore';
+import { useCheckoutStore } from '@/stores/checkoutStore';
 import { formatPrice } from '@/lib/utils';
 import { cn } from '@/lib/utils';
 import type { TaxEstimate } from '@/types/order';
@@ -38,9 +39,10 @@ export function OrderSummary({ taxState = { status: 'pending' } }: OrderSummaryP
     ),
   );
 
-  // Shipping is server-determined at order time; surface as FREE here until the
-  // backend exposes a shipping quote endpoint.
-  const shipping = 0;
+  // Shipping: use real selected rates from checkoutStore when available.
+  const getTotalShippingCents = useCheckoutStore((s) => s.getTotalShippingCents);
+  const shippingCents = getTotalShippingCents();
+  const shipping = shippingCents / 100;
 
   const taxAmount =
     taxState.status === 'ready' ? taxState.estimate.taxAmountCents / 100 : 0;
