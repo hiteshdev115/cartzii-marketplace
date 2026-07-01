@@ -1,17 +1,52 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import Link from 'next/link';
+import Image from 'next/image';
 import { buildCountryPath } from '@/config/countries';
-import { mockUser, mockOrders } from '@/lib/mockData';
+import { mockOrders } from '@/lib/mockData';
 import { Breadcrumb } from '@/components/layout/Breadcrumb';
 import { formatPrice, formatDate } from '@/lib/utils';
 import { Package, Heart, MapPin, Settings, ShoppingBag, ArrowRight } from 'lucide-react';
+import { useAuthStore } from '@/stores/authStore';
+import { fetchUserProfile } from '@/lib/api';
+import type { UserProfile } from '@/types';
 
 export function AccountDashboard() {
   const t = useTranslations('Account');
   const locale = useLocale();
-  const user = mockUser;
+  const userId = useAuthStore((s) => s.userId);
+  const authFirstName = useAuthStore((s) => s.firstName);
+  const authEmail = useAuthStore((s) => s.email);
+  const setUser = useAuthStore((s) => s.setUser);
+
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+
+  useEffect(() => {
+    if (!userId) return;
+    let cancelled = false;
+    (async () => {
+      const result = await fetchUserProfile(Number(userId));
+      if (cancelled || !result.data) return;
+      setProfile(result.data);
+      setUser({
+        firstName: result.data.firstname || undefined,
+        email: result.data.email || undefined,
+      });
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [userId, setUser]);
+
+  const firstName = profile?.firstname || authFirstName || '';
+  const lastName = profile?.lastname || '';
+  const fullName = [firstName, lastName].filter(Boolean).join(' ').trim();
+  const email = profile?.email || authEmail || '';
+  const displayName = fullName || email || t('dashboard');
+  const avatarUrl = profile?.profilepicture || '';
+  const initial = (firstName || email || '?').charAt(0).toUpperCase();
 
   const quickLinks = [
     { icon: Package, label: t('orders'), href: '/account/orders', count: mockOrders.length },
@@ -24,12 +59,22 @@ export function AccountDashboard() {
     <main className="max-w-[var(--container-max)] mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <Breadcrumb items={[{ label: t('dashboard') }]} />
       <div className="flex items-center gap-4 mb-8 mt-4">
-        <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
-          <span className="text-2xl font-bold text-primary">{user.name[0]}</span>
+        <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden">
+          {avatarUrl ? (
+            <Image
+              src={avatarUrl}
+              alt={displayName}
+              width={64}
+              height={64}
+              className="w-16 h-16 object-cover"
+            />
+          ) : (
+            <span className="text-2xl font-bold text-primary">{initial}</span>
+          )}
         </div>
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">{t('hello', { name: user.name })}</h1>
-          <p className="text-sm text-slate-600">{user.email}</p>
+          <h1 className="text-2xl font-bold text-slate-900">{t('hello', { name: displayName })}</h1>
+          {email && <p className="text-sm text-slate-600">{email}</p>}
         </div>
       </div>
 
