@@ -568,6 +568,7 @@
     "estDelivery": "Livraison estimée",
     "delivered": "Livré",
     "trackingHistory": "Historique de suivi",
-    "noEventsYet": "Aucun événement de suivi pour l’instant. Revenez bientôt."
+    "noEventsYet": "Aucun événement de suivi pour l’instant. Revenez bientôt.",
+    "pageDescription": "Entrez votre code de suivi ci-dessous pour voir le statut actuel de votre colis."
   }
 }

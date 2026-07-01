@@ -568,6 +568,7 @@
     "estDelivery": "Est. Delivery",
     "delivered": "Delivered",
     "trackingHistory": "Tracking History",
-    "noEventsYet": "No tracking events yet. Check back soon."
+    "noEventsYet": "No tracking events yet. Check back soon.",
+    "pageDescription": "Enter your tracking code below to see the latest status of your shipment."
   }
 }

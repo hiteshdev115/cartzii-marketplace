@@ -32,6 +32,10 @@ const BLOCKING_ERROR_CODES: ReadonlySet<number> = new Set([
   SHIPPING_ERROR_CODES.NO_ORIGIN,
 ]);
 
+// Temporary fallback: treat the whole cart as a single seller until the cart
+// API exposes sellerId on cart items (see TODO: multi-seller in doFetch).
+const DEFAULT_SELLER_ID = 1;
+
 export function RateSelectorPanel({
   shippingAddress,
   onEligibilityChange,
@@ -54,7 +58,7 @@ export function RateSelectorPanel({
     // on cart items.
     const sellerCarts = [
       {
-        sellerId: 1,
+        sellerId: DEFAULT_SELLER_ID,
         items: cartItems.map((ci) => ({
           productId: Number(ci.product.id),
           variantId: ci.variantId ?? null,
