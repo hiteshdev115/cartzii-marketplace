@@ -7,9 +7,10 @@ import { useLocale } from 'next-intl';
 import { buildCountryPath } from '@/config/countries';
 import { formatPrice } from '@/lib/utils';
 import { StarRating } from '@/components/ui/StarRating';
-import { Badge } from '@/components/ui/Badge';
 import { useWishlistStore } from '@/stores/wishlistStore';
 import { useCartStore } from '@/stores/cartStore';
+import { useAuthStore } from '@/stores/authStore';
+import { useLoginModalStore } from '@/stores/loginModalStore';
 import { Product } from '@/types';
 import { useHydrated } from '@/hooks/useHydration';
 
@@ -20,10 +21,21 @@ interface ProductCardProps {
 export function ProductCard({ product }: ProductCardProps) {
   const locale = useLocale();
   const toggleWishlist = useWishlistStore((s) => s.toggleItem);
-  const isInWishlist = useWishlistStore((s) => s.isInWishlist(product.id));
+  const isInWishlist = useWishlistStore((s) => s.isInWishlist(Number(product.id)));
   const addToCart = useCartStore((s) => s.addItem);
+  const userId = useAuthStore((s) => s.userId);
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated());
+  const openLoginModal = useLoginModalStore((s) => s.open);
   const hydrated = useHydrated();
   const wishlisted = hydrated && isInWishlist;
+
+  const handleWishlistToggle = () => {
+    if (!isAuthenticated || !userId) {
+      openLoginModal();
+      return;
+    }
+    toggleWishlist(userId, Number(product.id));
+  };
 
   return (
     <article
@@ -42,13 +54,13 @@ export function ProductCard({ product }: ProductCardProps) {
           {product.onSale && product.discount && (
             <span className="badge-sale absolute top-3 left-3">-{product.discount}%</span>
           )}
-          {product.isNew && <span className="badge-new absolute top-3 right-3">NEW</span>}
+
         </div>
       </Link>
 
       <button
-        onClick={() => toggleWishlist(product)}
-        className="absolute top-3 right-3 z-10 p-2 bg-white/80 backdrop-blur-sm rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white shadow-sm"
+        onClick={handleWishlistToggle}
+        className="absolute top-3 right-3 z-10 p-2 bg-white/80 backdrop-blur-sm rounded-full hover:bg-white shadow-sm"
         aria-label={`${wishlisted ? 'Remove from' : 'Add to'} wishlist: ${product.name}`}
       >
         <Heart className={`w-4 h-4 ${wishlisted ? 'fill-red-500 text-red-500' : 'text-slate-600'}`} />
@@ -61,7 +73,7 @@ export function ProductCard({ product }: ProductCardProps) {
             {product.name}
           </h3>
         </Link>
-        <StarRating value={product.rating} size="sm" />
+        <StarRating value={product.rating} size="sm" reviewCount={product.reviewCount} />
         <div className="flex items-center gap-2 mt-2">
           <span className="text-lg font-bold text-primary">
             {formatPrice(product.salePrice || product.price, locale)}
@@ -73,8 +85,8 @@ export function ProductCard({ product }: ProductCardProps) {
           )}
         </div>
         <button
-          onClick={() => addToCart(product)}
-          className="mt-3 w-full btn-primary text-xs py-2 opacity-0 group-hover:opacity-100 transition-opacity"
+          onClick={() => addToCart(product, 1, undefined, undefined, locale)}
+          className="mt-3 w-full btn-primary text-xs py-2"
         >
           Add to Cart
         </button>

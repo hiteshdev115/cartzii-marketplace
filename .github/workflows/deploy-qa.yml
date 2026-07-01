@@ -1,0 +1,164 @@
+name: Deploy to QA (qa.cartzii.com)
+
+on:
+  push:
+    branches:
+      - feature/dev
+  workflow_dispatch:
+
+env:
+  NODE_VERSION: "20"
+  APP_DIR: /home/cartziidev/cartzii-marketplace
+  PM2_APP_NAME: cartzii-qa
+
+jobs:
+  build-and-deploy:
+    name: Build & Deploy to QA
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Build
+        run: npm run build
+        env:
+          NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
+          NEXT_PUBLIC_GUEST_API_TOKEN: ${{ secrets.NEXT_PUBLIC_GUEST_API_TOKEN }}
+
+      - name: Verify build output
+        run: |
+          echo "=== Build ID ==="
+          cat .next/BUILD_ID
+          echo ""
+          echo "=== Standalone check ==="
+          ls -la .next/standalone/server.js
+          echo "=== Static chunks count ==="
+          find .next/static -name "*.js" | wc -l
+          echo "=== API endpoint in build ==="
+          grep -rl "api/v1/categories" .next/static/ || echo "WARNING: API endpoints not found in static chunks"
+
+      - name: Prepare deployment artifact
+        run: |
+          rm -rf deploy
+          mkdir -p deploy
+          # Use cp -a with dot-source to include hidden dirs (.next/, .env.production)
+          cp -a .next/standalone/. deploy/
+          cp -r .next/static deploy/.next/static
+          cp -r public deploy/public
+          cp ecosystem.config.js deploy/
+          echo "=== Deploy artifact contents ==="
+          ls -la deploy/
+          echo "=== .next contents ==="
+          ls -la deploy/.next/
+          echo "=== BUILD_ID ==="
+          cat deploy/.next/BUILD_ID
+
+      - name: Create deployment archive
+        run: |
+          cd deploy && tar czf ../deploy.tar.gz .
+          cd ..
+          ls -lh deploy.tar.gz
+
+      - name: Stop app and clean target
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          host: ${{ secrets.QA_SSH_HOST }}
+          username: ${{ secrets.QA_SSH_USERNAME }}
+          password: ${{ secrets.QA_SSH_PASSWORD }}
+          port: 22
+          script: |
+            export NVM_DIR="$HOME/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+
+            echo "=== Current PM2 processes ==="
+            pm2 list || true
+
+            echo "=== Stopping marketplace only ==="
+            pm2 stop ${{ env.PM2_APP_NAME }} 2>/dev/null || true
+            pm2 delete ${{ env.PM2_APP_NAME }} 2>/dev/null || true
+
+            echo "=== Kill any process on port 3003 ==="
+            lsof -ti:3003 | xargs kill -9 2>/dev/null || true
+            fuser -k 3003/tcp 2>/dev/null || true
+            sleep 1
+
+            echo "=== Cleaning app directory (from parent to handle ownership) ==="
+            cd /home/cartziidev
+            mv cartzii-marketplace cartzii-marketplace-old 2>/dev/null || true
+            rm -rf cartzii-marketplace-old &
+            mkdir -p cartzii-marketplace
+
+            echo "=== Cleaning /tmp deploy artifact ==="
+            rm -f /tmp/deploy.tar.gz
+
+            echo "=== Directory cleaned ==="
+            ls -la ${{ env.APP_DIR }}
+
+      - name: Upload deployment archive
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.QA_SSH_HOST }}
+          username: ${{ secrets.QA_SSH_USERNAME }}
+          password: ${{ secrets.QA_SSH_PASSWORD }}
+          port: 22
+          source: "deploy.tar.gz"
+          target: "/tmp"
+
+      - name: Extract and start application
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          host: ${{ secrets.QA_SSH_HOST }}
+          username: ${{ secrets.QA_SSH_USERNAME }}
+          password: ${{ secrets.QA_SSH_PASSWORD }}
+          port: 22
+          script: |
+            export NVM_DIR="$HOME/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+
+            echo "=== Verify archive exists ==="
+            ls -lh /tmp/deploy.tar.gz
+
+            cd ${{ env.APP_DIR }}
+
+            echo "=== Extracting archive ==="
+            tar xzf /tmp/deploy.tar.gz
+            rm -f /tmp/deploy.tar.gz
+
+            echo "=== Files after extraction ==="
+            ls -la
+            echo "=== .next contents ==="
+            ls -la .next/
+            echo "=== Build ID ==="
+            cat .next/BUILD_ID || echo "ERROR: No BUILD_ID found"
+
+            command -v pm2 >/dev/null 2>&1 || npm install -g pm2
+
+            echo "=== Starting marketplace ==="
+            pm2 start ecosystem.config.js
+            sleep 5
+
+            echo "=== Ensure API server is also running ==="
+            pm2 describe cartzii-api >/dev/null 2>&1 || (cd /home/cartziidev/cartzii-api-server && pm2 start ecosystem.config.cjs) || true
+
+            pm2 list
+            echo "=== PM2 logs (last 10 lines) ==="
+            pm2 logs ${{ env.PM2_APP_NAME }} --nostream --lines 10 || true
+
+            echo "=== Quick health check ==="
+            curl -s -o /dev/null -w "HTTP Status: %{http_code}\n" http://localhost:3003/ || echo "WARNING: Health check failed"
+
+            pm2 save
+            echo "=== Deployment complete ==="

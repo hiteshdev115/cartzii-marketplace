@@ -22,8 +22,8 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
           aria-invalid={!!error}
           {...props}
         >
-          {options.map((opt) => (
-            <option key={opt.value} value={opt.value}>{opt.label}</option>
+          {options.map((opt, idx) => (
+            <option key={`${opt.value}-${idx}`} value={opt.value}>{opt.label}</option>
           ))}
         </select>
         {error && <p className="error-text" role="alert">{error}</p>}

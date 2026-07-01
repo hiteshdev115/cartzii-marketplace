@@ -1,13 +1,20 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { useFilterStore } from '@/stores/filterStore';
-import { allCategories } from '@/lib/mockData';
+import { fetchRootCategories } from '@/lib/api';
+import { Category } from '@/types';
 import { X, Star } from 'lucide-react';
-import { useTranslations } from 'next-intl';
 
 export function ActiveFilterChips() {
-  const t = useTranslations('Products');
   const filters = useFilterStore();
+  const [categories, setCategories] = useState<Category[]>([]);
+
+  useEffect(() => {
+    fetchRootCategories()
+      .then(setCategories)
+      .catch(() => setCategories([]));
+  }, []);
 
   const hasPriceFilter = filters.priceRange[0] > 0 || filters.priceRange[1] < 500;
   const activeCount =
@@ -20,13 +27,13 @@ export function ActiveFilterChips() {
 
   return (
     <div className="flex items-center gap-2 flex-wrap py-3">
-      <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider mr-1">
+      <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider mr-1">
         Active filters:
       </span>
 
       {/* Category chips */}
       {filters.categories.map((slug) => {
-        const cat = allCategories.find((c) => c.slug === slug);
+        const cat = categories.find((c) => c.slug === slug);
         return (
           <button
             key={`cat-${slug}`}

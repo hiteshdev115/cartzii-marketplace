@@ -1,6 +1,6 @@
 import { buildCountryPath, allLocales } from '@/config/countries';
 
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://cartzii.com';
+export const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://cartzii.com';
 
 export function generateAlternates(baseUrl: string, pagePath: string, currentLocale: string) {
   const languages: Record<string, string> = {
@@ -54,53 +54,60 @@ export function generateProductJsonLd(product: {
   };
 }
 
+/**
+ * Generates Schema.org Product JSON-LD with AggregateOffer for products that have
+ * multiple variants (e.g., different sizes, colors, or SKUs). Use this instead of
+ * `generateProductJsonLd` when a product has variant-level pricing so that search
+ * engines can display a price range rather than a single price.
+ */
 export function generateVariantProductJsonLd(product: {
   name: string;
   description: string;
   image: string;
-  sku: string;
-  lowPrice: number;
-  highPrice: number;
   currency: string;
-  offerCount: number;
-  offers: {
-    price: number;
-    currency: string;
-    availability: 'InStock' | 'OutOfStock';
-    url: string;
-    sku?: string;
-  }[];
+  availability: 'InStock' | 'OutOfStock';
   rating?: number;
   reviewCount?: number;
   url: string;
+  offers: {
+    sku: string;
+    price: number;
+    currency: string;
+    availability: 'InStock' | 'OutOfStock';
+  }[];
 }) {
+  const prices = product.offers.map((o) => o.price);
+  if (prices.length === 0) {
+    throw new Error(
+      `Product '${product.name}' has no offers. At least one offer is required for generateVariantProductJsonLd.`
+    );
+  }
   return {
     '@context': 'https://schema.org',
     '@type': 'Product',
     name: product.name,
     description: product.description,
     image: product.image,
-    sku: product.sku,
     offers: {
       '@type': 'AggregateOffer',
-      lowPrice: product.lowPrice.toFixed(2),
-      highPrice: product.highPrice.toFixed(2),
+      lowPrice: Math.min(...prices).toFixed(2),
+      highPrice: Math.max(...prices).toFixed(2),
       priceCurrency: product.currency,
-      offerCount: product.offerCount,
-      offers: product.offers.map((offer) => ({
+      offerCount: product.offers.length,
+      offers: product.offers.map((o) => ({
         '@type': 'Offer',
-        price: offer.price.toFixed(2),
-        priceCurrency: offer.currency,
-        availability: `https://schema.org/${offer.availability}`,
-        url: offer.url,
-        ...(offer.sku && { sku: offer.sku }),
+        sku: o.sku,
+        price: o.price.toFixed(2),
+        priceCurrency: o.currency,
+        availability: `https://schema.org/${o.availability}`,
+        url: product.url,
       })),
     },
-    ...(product.rating && {
+    ...(product.rating !== undefined && product.reviewCount !== undefined && {
       aggregateRating: {
         '@type': 'AggregateRating',
         ratingValue: product.rating,
-        ...(product.reviewCount !== undefined && { reviewCount: product.reviewCount }),
+        reviewCount: product.reviewCount,
       },
     }),
   };

@@ -2,8 +2,9 @@
 
 import { useTranslations } from 'next-intl';
 import { useFilterStore } from '@/stores/filterStore';
-import { allCategories } from '@/lib/mockData';
-import { X, SlidersHorizontal, ChevronDown, Star } from 'lucide-react';
+import { fetchRootCategories } from '@/lib/api';
+import { Category } from '@/types';
+import { X, SlidersHorizontal, ChevronDown } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 
 function FilterDropdown({
@@ -46,6 +47,13 @@ export function ProductFilters() {
   const t = useTranslations('Products');
   const filters = useFilterStore();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [categories, setCategories] = useState<Category[]>([]);
+
+  useEffect(() => {
+    fetchRootCategories()
+      .then(setCategories)
+      .catch(() => setCategories([]));
+  }, []);
 
   const brands = ['SoundMax', 'UrbanCraft', 'FitTech', 'EcoWear', 'LumiCraft', 'ZenFit', 'CraftHome', 'PureGlow', 'RunElite', 'KeyMaster'];
 
@@ -61,7 +69,7 @@ export function ProductFilters() {
       <div>
         <h3 className="text-sm font-semibold text-slate-900 mb-3">{t('filterCategory')}</h3>
         <div className="space-y-2">
-          {allCategories.map((cat) => (
+          {categories.map((cat) => (
             <label key={cat.id} className="flex items-center gap-2 text-sm text-slate-600 cursor-pointer">
               <input
                 type="checkbox"
@@ -76,7 +84,7 @@ export function ProductFilters() {
                 className="rounded border-gray-300 text-primary focus:ring-primary"
               />
               {cat.name}
-              <span className="text-slate-400 ml-auto">({cat.productCount})</span>
+              <span className="text-slate-500 ml-auto">({cat.productCount})</span>
             </label>
           ))}
         </div>
@@ -170,7 +178,7 @@ export function ProductFilters() {
       <div className="hidden md:flex items-center gap-2 flex-wrap">
         <FilterDropdown label={t('filterCategory')}>
           <div className="space-y-2">
-            {allCategories.map((cat) => (
+            {categories.map((cat) => (
               <label key={cat.id} className="flex items-center gap-2 text-sm text-slate-600 cursor-pointer">
                 <input
                   type="checkbox"
@@ -185,7 +193,7 @@ export function ProductFilters() {
                   className="rounded border-gray-300 text-primary focus:ring-primary"
                 />
                 {cat.name}
-                <span className="text-slate-400 ml-auto">({cat.productCount})</span>
+                <span className="text-slate-500 ml-auto">({cat.productCount})</span>
               </label>
             ))}
           </div>

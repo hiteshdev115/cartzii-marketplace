@@ -1,6 +1,9 @@
 @import "tailwindcss";
 
 @theme {
+  --container-max: 1480px;
+  --color-bg-site: #F0F2F2;
+
   --color-primary: #c2410c;
   --color-primary-light: #ea580c;
   --color-primary-dark: #9a3412;
@@ -55,10 +58,10 @@
 
 /* Cards */
 .card {
-  @apply bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden transition-shadow hover:shadow-md;
+  @apply bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden transition-shadow hover:shadow-md;
 }
 .card-interactive {
-  @apply bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:-translate-y-1 hover:shadow-lg transition-all duration-300;
+  @apply bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden hover:-translate-y-1 hover:shadow-lg transition-all duration-300;
 }
 
 /* Badges */
@@ -74,7 +77,7 @@
 
 /* Form inputs */
 .input {
-  @apply w-full px-4 py-3 border border-gray-300 rounded-xl text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all text-sm;
+  @apply w-full px-4 py-3 border border-gray-300 rounded-xl text-slate-900 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all text-sm;
 }
 .label {
   @apply block text-sm font-semibold text-slate-800 mb-1.5;
@@ -89,7 +92,7 @@
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #f1f5f9;
+  background: #E3E6E6;
 }
 ::-webkit-scrollbar-thumb {
   background: #cbd5e1;
@@ -101,4 +104,26 @@
 
 html {
   scroll-behavior: smooth;
+}
+
+@media print {
+  body.order-confirmation-print header,
+  body.order-confirmation-print footer,
+  body.order-confirmation-print button,
+  body.order-confirmation-print .skip-link {
+    display: none !important;
+  }
+
+  body.order-confirmation-print #main-content {
+    background: #ffffff !important;
+  }
+
+  body.order-confirmation-print .order-confirmation-shell > :not(.order-invoice) {
+    display: none !important;
+  }
+
+  body.order-confirmation-print .order-invoice {
+    box-shadow: none !important;
+    border-color: #cbd5e1 !important;
+  }
 }

@@ -4,19 +4,27 @@ import { useLocale, useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { ArrowRight, Tag } from 'lucide-react';
 import { useCartStore } from '@/stores/cartStore';
+import { useAuthStore } from '@/stores/authStore';
 import { buildCountryPath } from '@/config/countries';
 import { formatPrice } from '@/lib/utils';
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { GuestCheckoutModal } from '@/components/checkout/GuestCheckoutModal';
 
 export function CartSummary() {
   const t = useTranslations('Cart');
   const locale = useLocale();
-  const subtotal = useCartStore((s) => s.getSubtotal());
+  const subtotal = useCartStore((s) =>
+    s.items.reduce((sum, item) => sum + (item.product.salePrice || item.product.price) * item.quantity, 0)
+  );
+  const router = useRouter();
+  const token = useAuthStore((s) => s.token);
+  const [showCheckoutModal, setShowCheckoutModal] = useState(false);
   const [promoCode, setPromoCode] = useState('');
 
   const shipping = subtotal >= 50 ? 0 : 9.99;
-  const tax = subtotal * 0.08;
-  const total = subtotal + shipping + tax;
+  // Tax is calculated server-side at checkout based on the shipping address.
+  const total = subtotal + shipping;
 
   return (
     <div className="bg-slate-50 rounded-2xl p-4 sm:p-6 sticky top-20 md:top-24">
@@ -24,14 +32,14 @@ export function CartSummary() {
 
       {/* Promo code */}
       <div className="flex gap-2 mb-6">
-        <div className="flex-1 relative">
-          <Tag className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+        <div className="flex-1 flex items-center border border-gray-300 rounded-xl focus-within:ring-2 focus-within:ring-primary/30 focus-within:border-primary transition-all bg-white overflow-hidden">
+          <Tag className="shrink-0 ml-3 w-4 h-4 text-slate-400" />
           <input
             type="text"
             placeholder={t('promoPlaceholder')}
             value={promoCode}
             onChange={(e) => setPromoCode(e.target.value)}
-            className="input pl-10 text-sm py-2"
+            className="flex-1 px-2 py-2 text-sm text-slate-900 placeholder:text-slate-500 focus:outline-none bg-transparent"
           />
         </div>
         <button className="btn-secondary text-sm px-4">{t('apply')}</button>
@@ -48,7 +56,7 @@ export function CartSummary() {
         </div>
         <div className="flex justify-between">
           <span className="text-slate-600">{t('tax')}</span>
-          <span className="font-medium">{formatPrice(tax, locale)}</span>
+          <span className="text-xs text-slate-500">{t('shippingCalculated')}</span>
         </div>
         {subtotal < 50 && (
           <p className="text-xs text-green-600 bg-green-50 p-2 rounded-lg">
@@ -61,12 +69,20 @@ export function CartSummary() {
         </div>
       </div>
 
-      <Link
-        href={buildCountryPath(locale, '/checkout')}
+      <button
+        onClick={() => {
+          if (token) {
+            router.push(buildCountryPath(locale, '/checkout'));
+          } else {
+            setShowCheckoutModal(true);
+          }
+        }}
         className="mt-6 btn-primary w-full flex items-center justify-center gap-2"
       >
         {t('proceedToCheckout')} <ArrowRight className="w-4 h-4" />
-      </Link>
+      </button>
+
+      <GuestCheckoutModal isOpen={showCheckoutModal} onClose={() => setShowCheckoutModal(false)} />
 
       <Link
         href={buildCountryPath(locale, '/products')}

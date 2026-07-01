@@ -14,9 +14,13 @@ export function CountdownTimer({ endDate, compact }: CountdownTimerProps) {
   const [time, setTime] = useState<ReturnType<typeof getTimeRemaining> | null>(null);
 
   useEffect(() => {
-    setTime(getTimeRemaining(endDate));
-    const timer = setInterval(() => setTime(getTimeRemaining(endDate)), 1000);
-    return () => clearInterval(timer);
+    const update = () => setTime(getTimeRemaining(endDate));
+    const immediate = setTimeout(update, 0);
+    const timer = setInterval(update, 1000);
+    return () => {
+      clearTimeout(immediate);
+      clearInterval(timer);
+    };
   }, [endDate]);
 
   if (!time) {
@@ -28,7 +32,7 @@ export function CountdownTimer({ endDate, compact }: CountdownTimerProps) {
         {[t('days'), t('hours'), t('minutes'), t('seconds')].map((label) => (
           <div key={label} className="flex flex-col items-center bg-slate-900 text-white rounded-lg px-3 py-2 min-w-[3.5rem]">
             <span className="text-xl font-bold font-mono">--</span>
-            <span className="text-[10px] uppercase tracking-wider text-slate-400">{label}</span>
+            <span className="text-[10px] uppercase tracking-wider text-slate-500">{label}</span>
           </div>
         ))}
       </div>

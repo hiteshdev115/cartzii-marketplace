@@ -8,6 +8,8 @@ import { formatPrice } from '@/lib/utils';
 import { StarRating } from '@/components/ui/StarRating';
 import { useCartStore } from '@/stores/cartStore';
 import { useWishlistStore } from '@/stores/wishlistStore';
+import { useAuthStore } from '@/stores/authStore';
+import { useLoginModalStore } from '@/stores/loginModalStore';
 import { buildCountryPath } from '@/config/countries';
 import Link from 'next/link';
 
@@ -21,7 +23,18 @@ export function QuickView({ product, onClose }: QuickViewProps) {
   const t = useTranslations('Products');
   const addToCart = useCartStore((s) => s.addItem);
   const toggleWishlist = useWishlistStore((s) => s.toggleItem);
-  const isInWishlist = useWishlistStore((s) => s.isInWishlist(product.id));
+  const isInWishlist = useWishlistStore((s) => s.isInWishlist(Number(product.id)));
+  const userId = useAuthStore((s) => s.userId);
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated());
+  const openLoginModal = useLoginModalStore((s) => s.open);
+
+  const handleWishlistToggle = () => {
+    if (!isAuthenticated || !userId) {
+      openLoginModal();
+      return;
+    }
+    toggleWishlist(userId, Number(product.id));
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -62,11 +75,11 @@ export function QuickView({ product, onClose }: QuickViewProps) {
             </div>
             <p className="text-sm text-slate-600">{product.shortDescription}</p>
             <div className="flex gap-3 pt-4">
-              <button onClick={() => { addToCart(product); onClose(); }} className="btn-primary flex-1 flex items-center justify-center gap-2">
+              <button onClick={() => { addToCart(product, 1, undefined, undefined, locale); onClose(); }} className="btn-primary flex-1 flex items-center justify-center gap-2">
                 <ShoppingCart className="w-4 h-4" /> {t('addToCart')}
               </button>
               <button
-                onClick={() => toggleWishlist(product)}
+                onClick={handleWishlistToggle}
                 className="p-3 border rounded-xl hover:bg-slate-50"
                 aria-label={isInWishlist ? 'Remove from wishlist' : 'Add to wishlist'}
               >

@@ -1,11 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useSyncExternalStore, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { Menu, X, Home, ShoppingBag, Tag, Sparkles, User, Heart, ChevronDown, ChevronRight, Globe } from 'lucide-react';
+import { Menu, X, Home, Tag, Sparkles, ChevronDown, ChevronRight, Globe, ShoppingBag } from 'lucide-react';
 import { useTranslations, useLocale } from 'next-intl';
-import { buildCountryPath, getCountryFromLocale, countries } from '@/config/countries';
-import { allCategories } from '@/lib/mockData';
+import { buildCountryPath, getCountryFromLocale, countries, extractPagePath } from '@/config/countries';
+import { fetchCategories } from '@/lib/api';
 import { Category } from '@/types';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -73,62 +73,31 @@ function MobileCategoryTree({
   );
 }
 
-const mobileCountryOptions = [
-  { code: 'us', label: 'United States', flag: '🇺🇸' },
-  { code: 'ca', label: 'Canada', flag: '🇨🇦' },
-];
-
 const mobileLocaleLabels: Record<string, string> = {
   'en-US': 'English',
   'en-CA': 'English',
   'fr-CA': 'Français',
 };
 
-function MobileRegionSwitcher({ locale, onClose }: { locale: string; onClose: () => void }) {
+function MobileRegionSwitcher({ locale }: { locale: string }) {
   const country = getCountryFromLocale(locale);
   const countryConfig = countries[country];
   const pathname = usePathname();
 
-  const getPagePath = () => {
-    const localePrefix = `/${locale}`;
-    return pathname.startsWith(localePrefix)
-      ? pathname.slice(localePrefix.length) || '/'
-      : '/';
-  };
+  // US only has English — no need to show region/language switcher
+  if (country === 'us') return null;
 
   const switchTo = (targetLocale: string) => {
     if (targetLocale === locale) return;
-    window.location.href = buildCountryPath(targetLocale, getPagePath());
+    window.location.assign(buildCountryPath(targetLocale, extractPagePath(pathname, locale)));
   };
 
   return (
     <div className="px-4 py-2 mb-2 space-y-3">
-      <div>
-        <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-2">
-          <Globe className="w-3.5 h-3.5" /> Country
-        </p>
-        <div className="flex gap-2">
-          {mobileCountryOptions.map((opt) => (
-            <button
-              key={opt.code}
-              onClick={() => switchTo(countries[opt.code].defaultLocale)}
-              className={cn(
-                'flex-1 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors',
-                country === opt.code
-                  ? 'bg-primary text-white'
-                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-              )}
-            >
-              {opt.flag} {opt.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
       {countryConfig.locales.length > 1 && (
         <div>
-          <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
-            Language
+          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2 flex items-center gap-2">
+            <Globe className="w-3.5 h-3.5" /> Language
           </p>
           <div className="flex gap-2">
             {countryConfig.locales.map((loc) => (
@@ -154,23 +123,42 @@ function MobileRegionSwitcher({ locale, onClose }: { locale: string; onClose: ()
 
 export function MobileNav() {
   const [open, setOpen] = useState(false);
-  const [mounted, setMounted] = useState(false);
   const t = useTranslations('Nav');
   const ta = useTranslations('Accessibility');
   const locale = useLocale();
 
   const [categoriesOpen, setCategoriesOpen] = useState(false);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [catLoading, setCatLoading] = useState(false);
+  const hasFetchedCats = useRef(false);
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const handleCategoriesToggle = () => {
+    const next = !categoriesOpen;
+    setCategoriesOpen(next);
+    if (next && !hasFetchedCats.current) {
+      setCatLoading(true);
+      fetchCategories()
+        .then((data) => {
+          setCategories(data);
+          hasFetchedCats.current = true;
+        })
+        .catch(() => setCategories([]))
+        .finally(() => setCatLoading(false));
+    }
+  };
+
+  const emptySubscribe = () => () => {};
+  const mounted = useSyncExternalStore(emptySubscribe, () => true, () => false);
 
   const navLinks = [
     { label: t('home'), href: buildCountryPath(locale, '/'), icon: Home },
+    { label: t('shop'), href: buildCountryPath(locale, '/products'), icon: ShoppingBag },
   ];
 
   const navLinksAfter = [
     { label: t('deals'), href: buildCountryPath(locale, '/deals'), icon: Sparkles },
+    { label: t('handicraft'), href: buildCountryPath(locale, '/handicraft'), icon: Sparkles },
+    { label: t('dollarStreet'), href: buildCountryPath(locale, '/dollar-street'), icon: Tag },
   ];
 
   return (
@@ -188,7 +176,7 @@ export function MobileNav() {
           <div className="fixed inset-0 bg-black/50" onClick={() => setOpen(false)} aria-hidden="true" />
           <div className="fixed left-0 top-0 bottom-0 w-80 bg-white shadow-xl flex flex-col">
             <div className="flex items-center justify-between p-4 border-b">
-              <Image src="/assets/cartzii-logo-nt.png" alt="Cartzii" width={120} height={32} className="object-contain" />
+              <Image src="/assets/cartzii-logo-wt-bg.png" alt="Cartzii" width={120} height={32} className="object-contain" />
               <button
                 onClick={() => setOpen(false)}
                 className="p-2 hover:bg-slate-100 rounded-lg"
@@ -215,7 +203,7 @@ export function MobileNav() {
                 {/* Expandable Categories */}
                 <li>
                   <button
-                    onClick={() => setCategoriesOpen(!categoriesOpen)}
+                    onClick={handleCategoriesToggle}
                     className="flex items-center gap-3 px-4 py-3 w-full rounded-xl text-slate-700 hover:bg-slate-100 transition-colors"
                   >
                     <Tag className="w-5 h-5 text-slate-400" />
@@ -229,12 +217,20 @@ export function MobileNav() {
                   </button>
                   {categoriesOpen && (
                     <div className="mt-1 mb-2">
-                      <MobileCategoryTree
-                        categories={allCategories}
-                        locale={locale}
-                        depth={0}
-                        onClose={() => setOpen(false)}
-                      />
+                      {catLoading ? (
+                        <div className="flex justify-center py-4">
+                          <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                        </div>
+                      ) : categories.length === 0 ? (
+                        <p className="px-4 py-3 text-sm text-slate-500">No categories found</p>
+                      ) : (
+                        <MobileCategoryTree
+                          categories={categories}
+                          locale={locale}
+                          depth={0}
+                          onClose={() => setOpen(false)}
+                        />
+                      )}
                     </div>
                   )}
                 </li>
@@ -253,24 +249,8 @@ export function MobileNav() {
                 ))}
               </ul>
             </nav>
-            <div className="border-t p-4 space-y-2">
-              <MobileRegionSwitcher locale={locale} onClose={() => setOpen(false)} />
-              <Link
-                href={buildCountryPath(locale, '/account/wishlist')}
-                onClick={() => setOpen(false)}
-                className="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-700 hover:bg-slate-100"
-              >
-                <Heart className="w-5 h-5 text-slate-400" />
-                Wishlist
-              </Link>
-              <Link
-                href={buildCountryPath(locale, '/account')}
-                onClick={() => setOpen(false)}
-                className="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-700 hover:bg-slate-100"
-              >
-                <User className="w-5 h-5 text-slate-400" />
-                Account
-              </Link>
+            <div className="border-t p-4">
+              <MobileRegionSwitcher locale={locale} />
             </div>
           </div>
         </div>,

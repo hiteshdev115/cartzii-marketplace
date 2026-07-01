@@ -3,14 +3,14 @@ import { getMessages, getTranslations } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { routing } from "@/i18n/routing";
 import {
-  getCountryFromLocale,
-  getCountryConfig,
   buildCountryPath,
   allLocales,
 } from "@/config/countries";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { SkipLink } from "@/components/accessibility/SkipLink";
+import { LoginModal } from "@/components/auth/LoginModal";
+import { CartDrawer } from "@/components/cart/CartDrawer";
 
 type Props = {
   children: React.ReactNode;
@@ -58,7 +58,6 @@ export default async function LocaleLayout({ children, params }: Props) {
   }
 
   const messages = await getMessages();
-  const country = getCountryFromLocale(locale);
   const lang = locale.split("-")[0];
   const dir = ["ar", "he", "fa", "ur"].includes(lang) ? "rtl" : "ltr";
 
@@ -67,6 +66,8 @@ export default async function LocaleLayout({ children, params }: Props) {
       <NextIntlClientProvider messages={messages}>
         <SkipLink />
         <Header />
+        <LoginModal />
+        <CartDrawer />
         <main id="main-content" role="main" className="flex-1">
           {children}
         </main>

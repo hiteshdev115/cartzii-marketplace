@@ -27,6 +27,8 @@ export interface Product {
   isBestSeller: boolean;
   specifications: Record<string, string>;
   createdAt: string;
+  /** Full variant details – populated on detail page only */
+  detailVariants?: DetailVariant[];
 }
 
 export interface ProductVariant {
@@ -34,6 +36,21 @@ export interface ProductVariant {
   value: string;
   hex?: string;
   image?: string;
+}
+
+/** Full variant data used on the product detail page */
+export interface DetailVariant {
+  variantId: string;
+  sku: string;
+  color?: string;
+  colorHex?: string;
+  size?: string;
+  images: string[];
+  price: number;
+  salePrice?: number;
+  discount?: number;
+  stockCount: number;
+  inStock: boolean;
 }
 
 export interface Category {
@@ -52,6 +69,16 @@ export interface CartItem {
   quantity: number;
   selectedColor?: string;
   selectedSize?: string;
+  /** All variant attributes from server (e.g. Color, Size, Material) */
+  variantAttributes?: Array<{ name: string; value: string }>;
+  /** Server-side cart ID (present when user is authenticated) */
+  cartId?: number;
+  /** Server-side variant ID */
+  variantId?: number;
+  /** Price string as stored on the server */
+  price?: string;
+  countryCode?: string;
+  currencyCode?: string;
 }
 
 export interface WishlistItem {
@@ -103,6 +130,49 @@ export interface Address {
   country: string;
 }
 
+/** Address record returned by the Address Management API */
+export interface ApiAddress {
+  id: number;
+  userid: number;
+  street: string;
+  city: string;
+  state: string;
+  postal_code: string;
+  country: string;
+  is_primary: boolean;
+  is_shipping: boolean;
+  is_billing: boolean;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+/** Payload for creating a new address */
+export interface CreateAddressPayload {
+  userid: number;
+  street: string;
+  city: string;
+  state: string;
+  postal_code: string;
+  country: string;
+  is_primary?: boolean;
+  is_shipping?: boolean;
+  is_billing?: boolean;
+}
+
+/** Payload for updating an existing address (all fields optional) */
+export interface UpdateAddressPayload {
+  street?: string;
+  city?: string;
+  state?: string;
+  postal_code?: string;
+  country?: string;
+  is_primary?: boolean;
+  is_shipping?: boolean;
+  is_billing?: boolean;
+  is_active?: boolean;
+}
+
 export interface User {
   id: string;
   name: string;
@@ -110,6 +180,38 @@ export interface User {
   avatar: string;
   joinDate: string;
   addresses: (Address & { isDefault?: boolean })[];
+}
+
+/** Profile data returned by the user update API */
+export interface UserProfile {
+  userid: number;
+  roleid: number;
+  userstatusid: number;
+  firstname: string;
+  lastname: string;
+  email: string;
+  phonenumber: string;
+  addressid: number;
+  profilepicture: string;
+  createdat: string;
+  updatedat: string;
+  lastloginat: string;
+  isverified: boolean;
+  dateofbirth: string;
+  gender: string;
+  accounttype: string;
+}
+
+/** Fields that can be sent to PUT /api/v1/users/:id */
+export interface UpdateProfilePayload {
+  firstname?: string;
+  lastname?: string;
+  email?: string;
+  password?: string;
+  phonenumber?: string;
+  gender?: string;
+  dateofbirth?: string;
+  profilepicture?: File;
 }
 
 export interface Testimonial {

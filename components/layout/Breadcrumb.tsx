@@ -20,7 +20,7 @@ export function Breadcrumb({ items }: BreadcrumbProps) {
 
   return (
     <nav aria-label={t('breadcrumbNav')} className="py-3">
-      <ol className="flex items-center gap-1.5 text-sm text-slate-500 flex-wrap">
+      <ol className="flex items-center gap-1.5 text-sm text-slate-600 flex-wrap">
         <li>
           <Link
             href={buildCountryPath(locale, '/')}
@@ -32,7 +32,7 @@ export function Breadcrumb({ items }: BreadcrumbProps) {
         </li>
         {items.map((item, i) => (
           <li key={i} className="flex items-center gap-1.5">
-            <ChevronRight className="w-3.5 h-3.5 text-slate-300" aria-hidden="true" />
+            <ChevronRight className="w-3.5 h-3.5 text-slate-400" aria-hidden="true" />
             {item.href ? (
               <Link href={item.href} className="hover:text-primary transition-colors">
                 {item.label}

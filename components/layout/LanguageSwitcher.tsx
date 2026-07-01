@@ -2,7 +2,7 @@
 
 import { useLocale, useTranslations } from 'next-intl';
 import { useRouter, usePathname } from 'next/navigation';
-import { getCountryFromLocale, countries, buildCountryPath } from '@/config/countries';
+import { getCountryFromLocale, countries, buildCountryPath, extractPagePath } from '@/config/countries';
 import { Globe, Check } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 
@@ -33,13 +33,7 @@ export function LanguageSwitcher() {
   if (countryConfig.locales.length <= 1) return null;
 
   const switchLocale = (newLocale: string) => {
-    // pathname is the internal rewritten path like /en-CA/products or /fr-CA/deals
-    // Strip the current locale prefix to get the page path
-    const localePrefix = `/${locale}`;
-    const pagePath = pathname.startsWith(localePrefix)
-      ? pathname.slice(localePrefix.length) || '/'
-      : '/';
-
+    const pagePath = extractPagePath(pathname, locale);
     router.push(buildCountryPath(newLocale, pagePath));
     setOpen(false);
   };
@@ -61,7 +55,7 @@ export function LanguageSwitcher() {
 
       {open && (
         <div className="absolute right-0 top-full mt-1 min-w-[180px] bg-white rounded-xl shadow-lg border border-gray-100 p-1 z-50">
-          <p className="px-3 py-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">
+          <p className="px-3 py-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">
             {t('changeLanguage')}
           </p>
           {countryConfig.locales.map((loc) => {

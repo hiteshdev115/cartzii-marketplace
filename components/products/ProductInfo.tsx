@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import { Heart, ShoppingCart, Truck, RotateCcw, Shield } from 'lucide-react';
 import { Product } from '@/types';
@@ -10,56 +10,106 @@ import { Badge } from '@/components/ui/Badge';
 import { QuantitySelector } from '@/components/ui/QuantitySelector';
 import { useCartStore } from '@/stores/cartStore';
 import { useWishlistStore } from '@/stores/wishlistStore';
+import { useAuthStore } from '@/stores/authStore';
+import { useLoginModalStore } from '@/stores/loginModalStore';
 import { cn } from '@/lib/utils';
 import { useHydrated } from '@/hooks/useHydration';
 
 interface ProductInfoProps {
   product: Product;
+  onVariantChange?: (images: string[], price: number, salePrice?: number, discount?: number) => void;
+  onShowReviews?: () => void;
+  onWriteReview?: () => void;
 }
 
-export function ProductInfo({ product }: ProductInfoProps) {
+export function ProductInfo({ product, onVariantChange, onShowReviews, onWriteReview }: ProductInfoProps) {
   const t = useTranslations('ProductDetail');
   const locale = useLocale();
   const addToCart = useCartStore((s) => s.addItem);
   const toggleWishlist = useWishlistStore((s) => s.toggleItem);
-  const isInWishlist = useWishlistStore((s) => s.isInWishlist(product.id));
+  const isInWishlist = useWishlistStore((s) => s.isInWishlist(Number(product.id)));
+  const userId = useAuthStore((s) => s.userId);
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated());
+  const openLoginModal = useLoginModalStore((s) => s.open);
   const hydrated = useHydrated();
   const wishlisted = hydrated && isInWishlist;
+
+  const handleWishlistToggle = () => {
+    if (!isAuthenticated || !userId) {
+      openLoginModal();
+      return;
+    }
+    toggleWishlist(userId, Number(product.id));
+  };
 
   const [selectedColor, setSelectedColor] = useState(product.colors?.[0]?.value);
   const [selectedSize, setSelectedSize] = useState(product.sizes?.[0]);
   const [quantity, setQuantity] = useState(1);
 
+  const findMatchingVariant = useCallback((color?: string, size?: string) => {
+    if (!product.detailVariants?.length) return undefined;
+    // Try exact match (color + size)
+    let match = product.detailVariants.find(
+      (v) => (!color || v.color === color) && (!size || v.size === size),
+    );
+    // Fallback: match by color only
+    if (!match && color) {
+      match = product.detailVariants.find((v) => v.color === color);
+    }
+    return match;
+  }, [product.detailVariants]);
+
+  // Notify parent when variant selection changes
+  useEffect(() => {
+    const variant = findMatchingVariant(selectedColor, selectedSize);
+    if (variant && onVariantChange) {
+      onVariantChange(variant.images, variant.price, variant.salePrice, variant.discount);
+    }
+  }, [selectedColor, selectedSize, findMatchingVariant, onVariantChange]);
+
   const handleAddToCart = () => {
-    addToCart(product, quantity, selectedColor, selectedSize);
+    addToCart(product, quantity, selectedColor, selectedSize, locale);
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 min-w-0">
       {/* Brand & Badges */}
       <div className="flex items-center gap-2">
         <span className="text-sm text-slate-500">{product.brand}</span>
-        {product.isNew && <Badge variant="new">NEW</Badge>}
         {product.onSale && <Badge variant="sale">SALE</Badge>}
       </div>
 
       {/* Title */}
-      <h1 className="text-2xl md:text-3xl font-bold text-slate-900">{product.name}</h1>
+      <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-slate-900 break-words">{product.name}</h1>
 
       {/* Rating */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 flex-wrap">
         <StarRating value={product.rating} size="md" showValue />
-        <span className="text-sm text-slate-500">({product.reviewCount} reviews)</span>
+        <button
+          type="button"
+          onClick={onShowReviews}
+          className="text-sm text-primary hover:underline"
+        >
+          ({product.reviewCount} reviews)
+        </button>
+        <span className="text-slate-300">|</span>
+        <button
+          type="button"
+          onClick={onWriteReview}
+          className="text-sm text-primary hover:underline font-medium"
+        >
+          Write a Review
+        </button>
       </div>
 
       {/* Price */}
-      <div className="flex items-baseline gap-3">
-        <span className="text-3xl font-bold text-primary">
+      <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <span className="text-2xl sm:text-3xl font-bold text-primary">
           {formatPrice(product.salePrice || product.price, locale)}
         </span>
         {product.onSale && product.salePrice && (
           <>
-            <span className="text-lg text-slate-400 line-through">{formatPrice(product.price, locale)}</span>
+            <span className="text-base sm:text-lg text-slate-400 line-through">{formatPrice(product.price, locale)}</span>
             <Badge variant="sale">-{product.discount}%</Badge>
           </>
         )}
@@ -115,15 +165,15 @@ export function ProductInfo({ product }: ProductInfoProps) {
       )}
 
       {/* Quantity & Add to cart */}
-      <div className="flex items-center gap-4">
+      <div className="flex flex-wrap items-center gap-3 sm:gap-4">
         <QuantitySelector value={quantity} onChange={setQuantity} max={product.stockCount} />
-        <button onClick={handleAddToCart} className="btn-primary flex-1 flex items-center justify-center gap-2">
+        <button onClick={handleAddToCart} className="btn-primary flex-1 min-w-[10rem] flex items-center justify-center gap-2">
           <ShoppingCart className="w-5 h-5" />
           {t('addToCart')}
         </button>
         <button
-          onClick={() => toggleWishlist(product)}
-          className={cn('p-3 rounded-xl border transition-colors', wishlisted ? 'border-red-200 bg-red-50' : 'border-gray-200 hover:border-red-200')}
+          onClick={handleWishlistToggle}
+          className={cn('p-3 rounded-xl border transition-colors shrink-0', wishlisted ? 'border-red-200 bg-red-50' : 'border-gray-200 hover:border-red-200')}
           aria-label={wishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
         >
           <Heart className={cn('w-5 h-5', wishlisted ? 'fill-red-500 text-red-500' : 'text-slate-400')} />
@@ -156,7 +206,7 @@ export function ProductInfo({ product }: ProductInfoProps) {
       </div>
 
       {/* SKU */}
-      <p className="text-xs text-slate-400">{t('sku')}: {product.sku}</p>
+      <p className="text-xs text-slate-500">{t('sku')}: {product.sku}</p>
     </div>
   );
 }

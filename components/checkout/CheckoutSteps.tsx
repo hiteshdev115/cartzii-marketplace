@@ -22,7 +22,7 @@ export function CheckoutSteps({ currentStep, steps }: CheckoutStepsProps) {
                     ? 'bg-green-500 text-white'
                     : i === currentStep
                     ? 'bg-primary text-white'
-                    : 'bg-slate-200 text-slate-500'
+                    : 'bg-slate-200 text-slate-600'
                 )}
               >
                 {i < currentStep ? <Check className="w-4 h-4" /> : i + 1}
@@ -30,7 +30,7 @@ export function CheckoutSteps({ currentStep, steps }: CheckoutStepsProps) {
               <span
                 className={cn(
                   'text-sm font-medium hidden sm:block',
-                  i <= currentStep ? 'text-slate-900' : 'text-slate-400'
+                  i <= currentStep ? 'text-slate-900' : 'text-slate-500'
                 )}
               >
                 {step}

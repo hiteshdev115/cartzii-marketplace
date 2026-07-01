@@ -26,25 +26,29 @@ export function CartItem({ item }: CartItemProps) {
       <div className="flex-1 min-w-0">
         <h3 className="font-semibold text-slate-900">{item.product.name}</h3>
         <p className="text-sm text-slate-500">{item.product.brand}</p>
-        {(item.selectedColor || item.selectedSize) && (
-          <p className="text-xs text-slate-400 mt-1">
+        {item.variantAttributes && item.variantAttributes.length > 0 ? (
+          <p className="text-xs text-slate-500 mt-1">
+            {item.variantAttributes.map((a) => `${a.name}: ${a.value}`).join(' · ')}
+          </p>
+        ) : (item.selectedColor || item.selectedSize) ? (
+          <p className="text-xs text-slate-500 mt-1">
             {item.selectedColor && `Color: ${item.selectedColor}`}
             {item.selectedColor && item.selectedSize && ' · '}
             {item.selectedSize && `Size: ${item.selectedSize}`}
           </p>
-        )}
+        ) : null}
         <div className="flex items-center justify-between mt-3">
-          <QuantitySelector value={item.quantity} onChange={(q) => updateQuantity(item.product.id, q)} max={99} />
+          <QuantitySelector value={item.quantity} onChange={(q) => updateQuantity(item.product.id, q, item.selectedColor, item.selectedSize)} max={99} />
           <div className="text-right">
             <p className="text-lg font-bold text-primary">{formatPrice(unitPrice * item.quantity, locale)}</p>
             {item.quantity > 1 && (
-              <p className="text-xs text-slate-400">{formatPrice(unitPrice, locale)} each</p>
+              <p className="text-xs text-slate-500">{formatPrice(unitPrice, locale)} each</p>
             )}
           </div>
         </div>
       </div>
       <button
-        onClick={() => removeItem(item.product.id)}
+        onClick={() => removeItem(item.product.id, item.selectedColor, item.selectedSize)}
         className="self-start p-2 text-slate-400 hover:text-red-500 transition-colors"
         aria-label={`Remove ${item.product.name}`}
       >

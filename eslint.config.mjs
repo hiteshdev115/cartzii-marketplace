@@ -12,6 +12,9 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Deployment artifacts (standalone builds, PM2 configs)
+    "deploy/**",
+    "fresh-deploy/**",
   ]),
 ]);
 
