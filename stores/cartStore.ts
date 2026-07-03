@@ -57,6 +57,11 @@ function mapAPIItemToCartItem(item: CartAPIItem): CartItem {
     isBestSeller: false,
     specifications: {},
     createdAt: item.addedat,
+    // Seller info — required for multi-seller shipping-rate grouping.
+    // Prefer the value on the product object; fall back to the item-level
+    // field if the server surfaces it there instead.
+    sellerId: item.product.sellerid ?? item.sellerid,
+    sellerName: item.product.sellername,
   };
 
   return {
@@ -84,6 +89,8 @@ export interface BackendCartItem {
   price: string;
   countrycode?: string | null;
   currencycode?: string | null;
+  /** Optional seller id surfaced at the cart-item level. */
+  sellerid?: number;
   product: {
     productid: number;
     productname: string;
@@ -91,6 +98,9 @@ export interface BackendCartItem {
     sku?: string;
     shortdescription?: string;
     stockquantity?: number;
+    /** Seller who owns this product. Required for multi-seller shipping. */
+    sellerid?: number;
+    sellername?: string;
     productimages?: Array<{ imageurl: string; isprimary: boolean }>;
   };
   /**
@@ -152,6 +162,8 @@ function mapBackendItemToCartItem(item: BackendCartItem): CartItem {
     isBestSeller: false,
     specifications: {},
     createdAt: new Date().toISOString(),
+    sellerId: item.product.sellerid ?? item.sellerid,
+    sellerName: item.product.sellername,
   };
 
   return {

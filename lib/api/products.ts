@@ -389,6 +389,7 @@ function mapProduct(raw: APIProduct, country: string): Product {
     specifications: {},
     createdAt: raw.createdat,
     detailVariants: buildDetailVariants(activeVariants, country),
+    sellerId: raw.sellerid,
     weight: toNumberOrNull(raw.weight),
     weightUnit: raw.weightunit ?? null,
     length: toNumberOrNull(raw.length),
@@ -486,4 +487,72 @@ export async function fetchProductBySlug(
   } catch {
     return null;
   }
+}
+
+// ---- Product → sellerId lookup --------------------------------------------
+// The `GET /api/v1/cart/:userid` response does NOT include `sellerid` on cart
+// items (see cart response inspection in July 2026). To build the multi-seller
+// shipping payload we resolve product → seller via
+// `GET /api/v1/getProductDetailsByCust/:productid`, which does return
+// `sellerid` on the payload. Results are cached in-memory for the tab session
+// so we only pay one round-trip per unique product.
+
+const productSellerCache = new Map<number, number>();
+const inflightSellerLookups = new Map<number, Promise<number | null>>();
+
+interface APIProductSellerDetail {
+  productid?: number;
+  sellerid?: number;
+  errorCode?: number;
+  message?: string;
+}
+
+/**
+ * Fetch the `sellerid` for a single product. Cached across calls.
+ * Returns `null` if the product is missing or the endpoint fails — callers
+ * should fall back to whatever seller they already have.
+ */
+export async function fetchProductSellerId(productId: number): Promise<number | null> {
+  if (!Number.isFinite(productId)) return null;
+  if (productSellerCache.has(productId)) return productSellerCache.get(productId)!;
+
+  const existing = inflightSellerLookups.get(productId);
+  if (existing) return existing;
+
+  const promise = (async () => {
+    try {
+      const raw = await api.get<APIProductSellerDetail>(
+        `/api/v1/getProductDetailsByCust/${productId}`,
+      );
+      const sellerId =
+        raw && typeof raw.sellerid === 'number' ? raw.sellerid : null;
+      if (sellerId != null) productSellerCache.set(productId, sellerId);
+      return sellerId;
+    } catch {
+      return null;
+    } finally {
+      inflightSellerLookups.delete(productId);
+    }
+  })();
+
+  inflightSellerLookups.set(productId, promise);
+  return promise;
+}
+
+/**
+ * Resolve seller ids for many products in parallel (with the cache above).
+ * Returns a map keyed by productId — entries with no known seller are omitted.
+ */
+export async function fetchProductSellerIds(
+  productIds: readonly number[],
+): Promise<Map<number, number>> {
+  const unique = Array.from(new Set(productIds.filter((id) => Number.isFinite(id))));
+  const results = await Promise.all(
+    unique.map(async (id) => [id, await fetchProductSellerId(id)] as const),
+  );
+  const map = new Map<number, number>();
+  for (const [id, sellerId] of results) {
+    if (sellerId != null) map.set(id, sellerId);
+  }
+  return map;
 }

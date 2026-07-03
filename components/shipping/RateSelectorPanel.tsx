@@ -6,6 +6,7 @@ import { AlertTriangle, Loader2, RefreshCw } from 'lucide-react';
 import { useCartStore } from '@/stores/cartStore';
 import { useCheckoutStore } from '@/stores/checkoutStore';
 import { getRatesForCart } from '@/lib/shippingApi';
+import { fetchProductSellerIds } from '@/lib/api/products';
 import { SHIPPING_ERROR_CODES } from '@/lib/shippingConstants';
 import { SellerRateSelector } from './SellerRateSelector';
 import type { ShippingFormData } from '@/lib/validators';
@@ -32,8 +33,9 @@ const BLOCKING_ERROR_CODES: ReadonlySet<number> = new Set([
   SHIPPING_ERROR_CODES.NO_ORIGIN,
 ]);
 
-// Temporary fallback: treat the whole cart as a single seller until the cart
-// API exposes sellerId on cart items (see TODO: multi-seller in doFetch).
+// Fallback sellerId used only when a cart item is missing seller info (e.g.
+// legacy guest carts populated before `sellerId` was mapped). New product +
+// cart payloads always include the real seller id.
 const DEFAULT_SELLER_ID = 1;
 
 export function RateSelectorPanel({
@@ -53,19 +55,38 @@ export function RateSelectorPanel({
 
     setFetchState({ status: 'loading' });
 
-    // TODO: multi-seller — the Product type currently has no sellerId.
-    // Treat the entire cart as a single seller until the API exposes sellerId
-    // on cart items.
-    const sellerCarts = [
-      {
-        sellerId: DEFAULT_SELLER_ID,
-        items: cartItems.map((ci) => ({
-          productId: Number(ci.product.id),
-          variantId: ci.variantId ?? null,
-          quantity: ci.quantity,
-        })),
-      },
-    ];
+    // The cart endpoint does not currently expose `sellerid`, so any cart
+    // item that arrived from the server has `product.sellerId === undefined`.
+    // Resolve missing seller ids in one parallel batch (cached across calls)
+    // before grouping so multi-seller carts don't collapse into sellerId=1.
+    const missingSellerFor = cartItems
+      .filter((ci) => ci.product.sellerId == null)
+      .map((ci) => Number(ci.product.id))
+      .filter((id) => Number.isFinite(id));
+    const resolved = missingSellerFor.length > 0
+      ? await fetchProductSellerIds(missingSellerFor)
+      : new Map<number, number>();
+
+    // Group cart items by seller so each seller gets their own rate quote.
+    // Items that we still couldn't resolve fall back to DEFAULT_SELLER_ID.
+    const groups = new Map<number, { productId: number; variantId: number | null; quantity: number }[]>();
+    for (const ci of cartItems) {
+      const productId = Number(ci.product.id);
+      const sellerId =
+        ci.product.sellerId ?? resolved.get(productId) ?? DEFAULT_SELLER_ID;
+      const bucket = groups.get(sellerId) ?? [];
+      bucket.push({
+        productId,
+        variantId: ci.variantId ?? null,
+        quantity: ci.quantity,
+      });
+      groups.set(sellerId, bucket);
+    }
+
+    const sellerCarts = Array.from(groups.entries()).map(([sellerId, items]) => ({
+      sellerId,
+      items,
+    }));
 
     const result = await getRatesForCart({
       destination: {

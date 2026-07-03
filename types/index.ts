@@ -29,6 +29,14 @@ export interface Product {
   createdAt: string;
   /** Full variant details – populated on detail page only */
   detailVariants?: DetailVariant[];
+  /**
+   * Seller that owns this product. Required for grouping cart items when
+   * calling `/api/v1/shipping/rates`. Optional here because some legacy
+   * code paths (mock data, search index) don't populate it — the shipping
+   * layer falls back to `1` in that case.
+   */
+  sellerId?: number;
+  sellerName?: string;
   // ---- Optional shipping measurements (from `/getProductBySlug` etc.) ------
   /** Product weight (nullable — only shown when present). */
   weight?: number | null;

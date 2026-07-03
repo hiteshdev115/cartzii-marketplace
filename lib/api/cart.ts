@@ -10,6 +10,10 @@ export interface CartAPIProduct {
   shortdescription: string;
   stockquantity: number;
   status: string;
+  /** Seller who owns this product — used to group cart items when calling
+   *  `/api/v1/shipping/rates`. Optional so old server builds don't break. */
+  sellerid?: number;
+  sellername?: string;
   category: {
     categoryid: number;
     categoryname: string;
@@ -41,6 +45,10 @@ export interface CartAPIItem {
   price: string;
   countrycode: string | null;
   currencycode: string | null;
+  /** Seller ID surfaced at the item level (mirrors `product.sellerid`).
+   *  Present on newer server builds — used as a fallback when reading the
+   *  seller for shipping-rate grouping. */
+  sellerid?: number;
   subtotal?: string;
   isactive?: boolean;
   addedat: string;
