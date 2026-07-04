@@ -139,6 +139,9 @@
   "ProductDetail": {
     "description": "Description",
     "specifications": "Caractéristiques",
+    "noSpecifications": "Aucune caractéristique disponible.",
+    "weight": "Poids",
+    "dimensions": "Dimensions",
     "reviews": "Avis",
     "reviewsCount": "{count} avis",
     "writeReview": "Écrire un Avis",
@@ -547,6 +550,8 @@
     "sellerFallback": "Ce vendeur",
     "notConfiguredTitle": "Livraison temporairement indisponible",
     "notConfiguredMessage": "La livraison est temporairement indisponible. Veuillez réessayer sous peu.",
+    "unsupportedCountryTitle": "Livraison indisponible pour ce pays",
+    "unsupportedCountryMessage": "Nous ne livrons actuellement qu’aux États-Unis et au Canada. Veuillez choisir une destination prise en charge.",
     "ratesErrorTitle": "Impossible d’obtenir les tarifs de livraison",
     "retry": "Réessayer",
     "noOriginError": "Ce vendeur n’est actuellement pas en mesure d’expédier à votre adresse. Supprimez ses articles pour continuer.",

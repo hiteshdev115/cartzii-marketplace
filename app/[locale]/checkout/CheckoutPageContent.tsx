@@ -51,6 +51,9 @@ export function CheckoutPageContent() {
 
   // Pull selected shipping total from checkout store for Stripe amount calculation
   const getTotalShippingCents = useCheckoutStore((s) => s.getTotalShippingCents);
+  // Rate quotes + per-seller selections captured by RateSelectorPanel.
+  const sellerRateQuotes = useCheckoutStore((s) => s.sellerRateQuotes);
+  const selectedRates = useCheckoutStore((s) => s.selectedRates);
 
   // Re-fetch the tax estimate whenever the locked shipping address or the cart
   // subtotal changes. Skipped while the shipping form is still being edited.
@@ -151,6 +154,21 @@ export function CheckoutPageContent() {
         };
       });
 
+      // Build per-seller shipping selections from what the buyer picked in the
+      // rate selector. We only send entries where we have both a provider
+      // shipment id and a chosen rate — sellers with errors are skipped.
+      const shippingSelections = sellerRateQuotes
+        .map((quote) => {
+          const rate = selectedRates[quote.sellerId];
+          if (!rate || !quote.providerShipmentId) return null;
+          return {
+            sellerId: quote.sellerId,
+            providerShipmentId: quote.providerShipmentId,
+            rateId: rate.rateId,
+          };
+        })
+        .filter((s): s is { sellerId: number; providerShipmentId: string; rateId: string } => s !== null);
+
       const order = await placeOrder({
         paymentIntentId: paymentResult.paymentIntentId,
         currency: currency.toUpperCase(),
@@ -168,6 +186,7 @@ export function CheckoutPageContent() {
           countryCode: countryISO,
         },
         items: orderItems,
+        ...(shippingSelections.length > 0 && { shippingSelections }),
         ...(!isAuthenticated && {
           guest: {
             email: shippingData.email,

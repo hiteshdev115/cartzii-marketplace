@@ -29,6 +29,23 @@ export interface Product {
   createdAt: string;
   /** Full variant details – populated on detail page only */
   detailVariants?: DetailVariant[];
+  /**
+   * Seller that owns this product. Required for grouping cart items when
+   * calling `/api/v1/shipping/rates`. Optional for backward compatibility
+   * with legacy persisted carts and fixture data.
+   */
+  sellerId?: number;
+  sellerName?: string | null;
+  // ---- Optional shipping measurements (from `/getProductBySlug` etc.) ------
+  /** Product weight (nullable — only shown when present). */
+  weight?: number | null;
+  /** Weight unit as returned by the API (e.g. `kg`, `lb`). */
+  weightUnit?: string | null;
+  length?: number | null;
+  width?: number | null;
+  height?: number | null;
+  /** Dimension unit as returned by the API (e.g. `cm`, `in`). */
+  dimensionUnit?: string | null;
 }
 
 export interface ProductVariant {
@@ -51,6 +68,13 @@ export interface DetailVariant {
   discount?: number;
   stockCount: number;
   inStock: boolean;
+  // ---- Optional shipping measurements (per-variant override) --------------
+  weight?: number | null;
+  weightUnit?: string | null;
+  length?: number | null;
+  width?: number | null;
+  height?: number | null;
+  dimensionUnit?: string | null;
 }
 
 export interface Category {

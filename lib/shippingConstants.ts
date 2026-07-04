@@ -1,10 +1,27 @@
-/** Shipping error codes returned by the API (/api/v1/shipping/*). */
+/**
+ * Shipping error codes returned by the API (/api/v1/shipping/*).
+ *
+ * Aligned with the multi-seller shipping contract:
+ *   - 1005 / 1006 are top-level (envelope.error) failures for the rates call.
+ *   - 1007 / 1008 are per-seller failures inside `sellerQuotes[].error`.
+ *   - 1052 is emitted by the tracking endpoint (unchanged).
+ *
+ * `NOT_CONFIGURED` is retained as a legacy top-level code the client may still
+ * receive from older API deployments — treated as a blocking system-wide error.
+ */
 export const SHIPPING_ERROR_CODES = {
-  NOT_CONFIGURED: 1047,
-  UNSUPPORTED_COUNTRY: 1048,
-  RATE_FETCH_ERROR: 1049,
-  NO_ORIGIN: 1050,
+  /** Payload missing `sellerCarts` (or aliases). Top-level. */
+  MISSING_SELLER_CARTS: 1005,
+  /** Destination country is not US/CA. Top-level. */
+  UNSUPPORTED_COUNTRY: 1006,
+  /** Seller has no complete origin address. Per-seller. */
+  NO_ORIGIN: 1007,
+  /** Rate provider (EasyPost) returned an error for this seller. Per-seller. */
+  RATE_FETCH_ERROR: 1008,
+  /** Tracking code not found. Emitted by /shipping/tracking/:code. */
   TRACKING_NOT_FOUND: 1052,
+  /** Legacy: EasyPost/shipping provider not configured on the API side. */
+  NOT_CONFIGURED: 1047,
 } as const;
 
 export type ShippingErrorCode = (typeof SHIPPING_ERROR_CODES)[keyof typeof SHIPPING_ERROR_CODES];

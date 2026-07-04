@@ -71,9 +71,12 @@ Phase 3 integrates the shipping API (deployed in Phase 1) into the buyer-facing 
 
 ---
 
-## Multi-seller note
+## Multi-seller support (Phase 4C)
 
-The `Product` type does not currently expose a `sellerId` field from cart API responses. All cart items are therefore grouped under a single seller (`sellerId = 1`) when calling `/api/v1/shipping/rates`. See the `// TODO: multi-seller` comment in `components/shipping/RateSelectorPanel.tsx` for the upgrade path once the cart API exposes seller IDs.
+Multi-seller grouping is fully implemented as of Phase 4C. The `Product` type
+now carries `sellerId` (and optional `sellerName`), and `RateSelectorPanel`
+groups cart items by real `sellerId` before calling `/api/v1/shipping/rates`,
+sending each seller its own `subtotalCents`.
 
 ---
 

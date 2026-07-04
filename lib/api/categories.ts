@@ -207,6 +207,7 @@ export interface CategoryProductVariant {
 /** Product item returned by /categories/slug/{slug}/products */
 export interface CategoryProduct {
   productid: number;
+  sellerid?: number;
   productname: string;
   slug: string;
   shortdescription?: string;
@@ -221,6 +222,9 @@ export interface CategoryProduct {
   averageRating?: number | string | null;
   reviewCount?: number;
   variantCount?: number;
+  seller?: {
+    storename?: string | null;
+  } | null;
 }
 
 export interface CategoryProductsResult {
@@ -266,4 +270,3 @@ export async function fetchCategoryProductsBySlug(
   const data = unwrap<CategoryProductsResult>(res);
   return data;
 }
-

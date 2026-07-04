@@ -30,8 +30,8 @@ interface CheckoutState {
 
   /**
    * True when every seller that returned valid rates has a selected rate.
-   * Sellers with unresolvable errors (1047, 1050) are excluded from this
-   * check (they block checkout via a different path).
+   * Sellers with unresolvable errors (NO_ORIGIN, NOT_CONFIGURED) are excluded
+   * from this check (they block checkout via a different path).
    */
   allRatesSelected: () => boolean;
 }

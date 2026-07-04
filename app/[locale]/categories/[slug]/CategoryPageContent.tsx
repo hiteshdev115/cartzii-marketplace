@@ -124,6 +124,9 @@ function mapToProduct(item: CategoryProduct, countryCode: string, locale: string
     isBestSeller: false,
     specifications: {},
     createdAt: '',
+    // TODO: PR 2B follow-up — API missing sellerid on some category responses.
+    sellerId: item.sellerid ?? 0,
+    sellerName: item.seller?.storename ?? null,
   };
 }
 

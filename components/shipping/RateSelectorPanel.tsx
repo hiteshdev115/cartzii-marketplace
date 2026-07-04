@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { AlertTriangle, Loader2, RefreshCw } from 'lucide-react';
 import { useCartStore } from '@/stores/cartStore';
@@ -9,7 +9,7 @@ import { getRatesForCart } from '@/lib/shippingApi';
 import { SHIPPING_ERROR_CODES } from '@/lib/shippingConstants';
 import { SellerRateSelector } from './SellerRateSelector';
 import type { ShippingFormData } from '@/lib/validators';
-import type { SellerRateQuote, ShippingRate } from '@/lib/shippingApi';
+import type { RatesCartItem, SellerRateQuote, ShippingRate } from '@/lib/shippingApi';
 
 interface RateSelectorPanelProps {
   shippingAddress: ShippingFormData;
@@ -32,10 +32,6 @@ const BLOCKING_ERROR_CODES: ReadonlySet<number> = new Set([
   SHIPPING_ERROR_CODES.NO_ORIGIN,
 ]);
 
-// Temporary fallback: treat the whole cart as a single seller until the cart
-// API exposes sellerId on cart items (see TODO: multi-seller in doFetch).
-const DEFAULT_SELLER_ID = 1;
-
 export function RateSelectorPanel({
   shippingAddress,
   onEligibilityChange,
@@ -48,24 +44,48 @@ export function RateSelectorPanel({
   const [fetchState, setFetchState] = useState<FetchState>({ status: 'idle' });
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  const sellerCarts = useMemo(() => {
+    const groups = new Map<
+      number,
+      { sellerId: number; subtotalCents: number; items: RatesCartItem[] }
+    >();
+
+    for (const ci of cartItems) {
+      const sellerId = Number(ci.product.sellerId);
+      if (!Number.isFinite(sellerId) || sellerId < 1) {
+        if (process.env.NODE_ENV === 'development') {
+          console.warn(
+            '[RateSelectorPanel] skipping cart item with invalid sellerId (must be >= 1):',
+            ci,
+          );
+        }
+        continue;
+      }
+
+      const unitPrice = ci.product.salePrice ?? ci.product.price;
+      const priceCents = Math.round(unitPrice * 100);
+      const itemCents = priceCents * ci.quantity;
+
+      let group = groups.get(sellerId);
+      if (!group) {
+        group = { sellerId, subtotalCents: 0, items: [] };
+        groups.set(sellerId, group);
+      }
+      group.subtotalCents += itemCents;
+      group.items.push({
+        productId: Number(ci.product.id),
+        variantId: ci.variantId ?? null,
+        quantity: ci.quantity,
+      });
+    }
+
+    return Array.from(groups.values());
+  }, [cartItems]);
+
   const doFetch = useCallback(async () => {
-    if (cartItems.length === 0) return;
+    if (sellerCarts.length === 0) return;
 
     setFetchState({ status: 'loading' });
-
-    // TODO: multi-seller — the Product type currently has no sellerId.
-    // Treat the entire cart as a single seller until the API exposes sellerId
-    // on cart items.
-    const sellerCarts = [
-      {
-        sellerId: DEFAULT_SELLER_ID,
-        items: cartItems.map((ci) => ({
-          productId: Number(ci.product.id),
-          variantId: ci.variantId ?? null,
-          quantity: ci.quantity,
-        })),
-      },
-    ];
 
     const result = await getRatesForCart({
       destination: {
@@ -106,7 +126,7 @@ export function RateSelectorPanel({
       (q) => !!q.error || (q.rates && q.rates.length > 0),
     );
     onEligibilityChange?.(!hasBlockingError && allSelected);
-  }, [cartItems, shippingAddress, setSellerRateQuotes, onEligibilityChange]);
+  }, [sellerCarts, shippingAddress, setSellerRateQuotes, onEligibilityChange]);
 
   // Debounced re-fetch when address changes (300 ms)
   useEffect(() => {
@@ -144,7 +164,20 @@ export function RateSelectorPanel({
   }
 
   if (fetchState.status === 'error') {
-    // Global NOT_CONFIGURED banner
+    // Unsupported destination country → hide the rate list entirely.
+    if (fetchState.errorCode === SHIPPING_ERROR_CODES.UNSUPPORTED_COUNTRY) {
+      return (
+        <div className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+          <div>
+            <p className="font-semibold">{t('unsupportedCountryTitle')}</p>
+            <p className="mt-0.5">{t('unsupportedCountryMessage')}</p>
+          </div>
+        </div>
+      );
+    }
+
+    // Global NOT_CONFIGURED banner (legacy top-level error)
     if (fetchState.errorCode === SHIPPING_ERROR_CODES.NOT_CONFIGURED) {
       return (
         <div className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
