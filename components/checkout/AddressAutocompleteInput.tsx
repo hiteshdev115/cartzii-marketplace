@@ -58,7 +58,6 @@ export function AddressAutocompleteInput({
   const token = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN?.trim();
   const searchRef = useRef<SearchBoxRefType>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [fallbackToManual, setFallbackToManual] = useState(false);
   const [suggestionAnnouncement, setSuggestionAnnouncement] = useState('');
 
@@ -95,31 +94,15 @@ export function AddressAutocompleteInput({
     return () => clearTimeout(timer);
   }, [ariaLabel, fallbackToManual, token, t]);
 
-  useEffect(() => {
-    return () => {
-      if (debounceRef.current) {
-        clearTimeout(debounceRef.current);
-      }
-    };
-  }, []);
-
   const handleValueChange = (nextValue: string) => {
     onChange(nextValue);
     if (!token || fallbackToManual) return;
-
-    if (debounceRef.current) {
-      clearTimeout(debounceRef.current);
-    }
 
     const trimmed = nextValue.trim();
     if (!trimmed) {
       setSuggestionAnnouncement('');
       return;
     }
-
-    debounceRef.current = setTimeout(() => {
-      searchRef.current?.search(trimmed);
-    }, 300);
   };
 
   const manualInput = (
@@ -158,10 +141,6 @@ export function AddressAutocompleteInput({
           }
         }}
         onRetrieve={(result: SearchBoxRetrieveResponse) => {
-          if (debounceRef.current) {
-            clearTimeout(debounceRef.current);
-          }
-
           const feature = result?.features?.[0];
           if (!feature) return;
 
