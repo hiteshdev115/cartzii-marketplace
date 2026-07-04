@@ -73,13 +73,32 @@ jobs:
           cd ..
           ls -lh deploy.tar.gz
 
+      - name: Check SSH connectivity
+        run: |
+          echo "=== Testing TCP connectivity to QA server on port 22 ==="
+          for i in 1 2 3; do
+            if nc -z -w 10 "${{ secrets.QA_SSH_HOST }}" 22; then
+              echo "✓ SSH port is reachable (attempt $i)"
+              exit 0
+            fi
+            echo "✗ Attempt $i: port 22 not reachable, retrying in 15s..."
+            sleep 15
+          done
+          echo "ERROR: Cannot reach ${{ secrets.QA_SSH_HOST }}:22 after 3 attempts."
+          echo "Ensure the server firewall allows inbound connections from GitHub Actions runner IPs."
+          echo "GitHub IP ranges: https://api.github.com/meta (actions key)"
+          exit 1
+
       - name: Stop app and clean target
         uses: appleboy/ssh-action@v1.2.2
         with:
           host: ${{ secrets.QA_SSH_HOST }}
           username: ${{ secrets.QA_SSH_USERNAME }}
           password: ${{ secrets.QA_SSH_PASSWORD }}
+          key: ${{ secrets.QA_SSH_KEY }}
           port: 22
+          timeout: 60s
+          command_timeout: 10m
           script: |
             export NVM_DIR="$HOME/.nvm"
             [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
@@ -109,12 +128,14 @@ jobs:
             ls -la ${{ env.APP_DIR }}
 
       - name: Upload deployment archive
-        uses: appleboy/scp-action@v0.1.7
+        uses: appleboy/scp-action@v1.0.0
         with:
           host: ${{ secrets.QA_SSH_HOST }}
           username: ${{ secrets.QA_SSH_USERNAME }}
           password: ${{ secrets.QA_SSH_PASSWORD }}
+          key: ${{ secrets.QA_SSH_KEY }}
           port: 22
+          timeout: 60s
           source: "deploy.tar.gz"
           target: "/tmp"
 
@@ -124,7 +145,10 @@ jobs:
           host: ${{ secrets.QA_SSH_HOST }}
           username: ${{ secrets.QA_SSH_USERNAME }}
           password: ${{ secrets.QA_SSH_PASSWORD }}
+          key: ${{ secrets.QA_SSH_KEY }}
           port: 22
+          timeout: 60s
+          command_timeout: 10m
           script: |
             export NVM_DIR="$HOME/.nvm"
             [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
