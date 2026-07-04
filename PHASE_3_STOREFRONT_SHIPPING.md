@@ -113,3 +113,25 @@ sending each seller its own `subtotalCents`.
    - `POST /place-order` unchanged — backend independently verifies threshold + charges accordingly
 
 **Silent-fail UX:** Threshold API failure = no banners shown, no toast, no broken layout. Checkout still works normally (uses `freeShippingApplied` from `/shipping/rates` directly).
+
+## Phase 4D: Address Autocomplete with Portal-Scoped Country Restriction — COMPLETE
+
+**Buyer-facing features:**
+- `ShippingForm` uses Mapbox Search Box for typeahead address suggestions
+- Suggestions are country-scoped by locale: `/ca` → Canada only, `/us` → USA only
+- Selecting a suggestion auto-fills address line 1, city, state/province, postal code, and country
+- Client-side validation blocks "Continue to Payment" if country ≠ portal expected country
+- Postal code format validated on blur (Canadian A1A 1A1, US 12345[-6789])
+
+**Fallback behavior:**
+- Missing Mapbox public access token → renders plain manual-entry input
+- Mapbox API error → renders plain manual-entry input, no error toast
+- Buyer types manually without selecting → country field remains empty until they select from dropdown OR the server-side validation (see api-server PR) rejects the mismatch
+
+**Server-side defense in depth:**
+- `POST /place-order` and `POST /shipping/rates` hard-block portal/country mismatch (separate PR in `cartzii-api-server`)
+
+**Cost:**
+- Free tier: ~200,000 requests/month (Mapbox 2026)
+- Typical usage per checkout: 5-8 API calls (debounced to 300ms, session token active)
+- Expected monthly volume at current scale: well under free tier
