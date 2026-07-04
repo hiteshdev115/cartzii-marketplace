@@ -76,6 +76,9 @@ export function SearchContent() {
       isBestSeller: false,
       specifications: {},
       createdAt: '',
+      // TODO: PR 2B follow-up — API missing sellerid on some search responses.
+      sellerId: item.sellerid ?? 0,
+      sellerName: item.seller?.storename ?? null,
     };
     addToCart(product, 1, undefined, undefined, locale);
   };

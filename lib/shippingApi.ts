@@ -30,6 +30,7 @@ export interface RatesCartItem {
 export interface SellerCart {
   sellerId: number;
   items: RatesCartItem[];
+  subtotalCents?: number;
 }
 
 export interface RatesRequest {
