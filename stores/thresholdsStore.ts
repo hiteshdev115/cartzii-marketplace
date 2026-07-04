@@ -11,10 +11,14 @@ interface ThresholdsState {
    */
   lastFetchedKey: string;
 
+  /** Key of the fetch currently in-flight (if any), to prevent duplicate requests. */
+  fetchingKey: string;
+
   /**
    * Fetch thresholds for the given seller IDs.
    * Only makes a network request when the sorted set of IDs differs from the
-   * last fetched set. Silently ignores failures (empty map = no banners shown).
+   * last fetched set and no fetch for that set is already in-flight.
+   * Silently ignores failures (empty map = no banners shown).
    */
   fetchThresholds: (sellerIds: number[]) => Promise<void>;
 }
@@ -22,6 +26,7 @@ interface ThresholdsState {
 export const useThresholdsStore = create<ThresholdsState>()((set, get) => ({
   thresholds: new Map(),
   lastFetchedKey: '',
+  fetchingKey: '',
 
   fetchThresholds: async (sellerIds: number[]) => {
     if (sellerIds.length === 0) return;
@@ -31,10 +36,17 @@ export const useThresholdsStore = create<ThresholdsState>()((set, get) => ({
       .sort((a, b) => a - b)
       .join(',');
 
-    if (key === get().lastFetchedKey) return;
+    const state = get();
+    if (key === state.lastFetchedKey || key === state.fetchingKey) return;
+
+    set({ fetchingKey: key });
 
     const result = await getSellerShippingThresholds(sellerIds);
 
-    set({ thresholds: result, lastFetchedKey: key });
+    set((s) => {
+      // Only commit if this fetch is still the most recent one.
+      if (s.fetchingKey !== key) return {};
+      return { thresholds: result, lastFetchedKey: key, fetchingKey: '' };
+    });
   },
 }));

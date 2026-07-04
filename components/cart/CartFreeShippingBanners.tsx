@@ -1,14 +1,16 @@
 'use client';
 
 import { useEffect, useMemo } from 'react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { useCartStore } from '@/stores/cartStore';
 import { useThresholdsStore } from '@/stores/thresholdsStore';
+import { formatPrice } from '@/lib/utils';
 
 export function CartFreeShippingBanners() {
   const cartItems = useCartStore((s) => s.items);
   const { thresholds, fetchThresholds } = useThresholdsStore();
   const t = useTranslations('Cart');
+  const locale = useLocale();
 
   // Group cart items by sellerId and compute per-seller subtotal in cents.
   // Uses the same unit-price logic as RateSelectorPanel: salePrice ?? price.
@@ -97,7 +99,7 @@ export function CartFreeShippingBanners() {
             <span aria-hidden="true">⚡</span>
             <span>
               {t('freeShippingProgress', {
-                amount: `$${(b.remainingCents / 100).toFixed(2)}`,
+                amount: formatPrice(b.remainingCents / 100, locale),
                 storeName: b.storeName,
               })}
             </span>
