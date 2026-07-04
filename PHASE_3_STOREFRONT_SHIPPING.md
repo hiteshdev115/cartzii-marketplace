@@ -89,3 +89,27 @@ sending each seller its own `subtotalCents`.
 - ✅ No existing types renamed or removed (only additive additions)
 - ✅ `next-intl` middleware / i18n routing config untouched
 - ✅ Auth header pattern mirrors `POST /api/v1/orders/place-order`
+
+
+## Phase 4C: Free Shipping UX (marketplace) — COMPLETE
+
+**Buyer-facing features:**
+1. **Cart page:** Per-seller banners driven by `POST /api/v1/sellers/shipping-thresholds`
+   - 🎉 "Free shipping unlocked from {storeName}!" when seller subtotal >= threshold
+   - ⚡ "Add {remaining} more from {storeName} for free shipping!" when 0 < subtotal < threshold
+   - No banner when threshold is null (unconfigured seller)
+   - Instant 🎉 banner when threshold is 0 (unconditional free shipping seller)
+
+2. **Checkout page:** Per-seller free-shipping visuals in `SellerRateSelector`
+   - Green "🎉 Free shipping applied" banner above rate cards for eligible sellers
+   - Rate prices rendered as ~~$X.XX~~ **FREE** (strike-through + green FREE label)
+   - Accessible: `aria-label="Was $6.42, now free"` on each strike-through
+   - Rate selection behavior unchanged — cheapest still auto-selected, buyer can still change
+
+3. **Financial correctness:**
+   - `checkoutStore.getTotalShippingCents()` returns 0 for free-shipping sellers
+   - `OrderSummary.tsx` shipping line reflects free-shipping-adjusted total
+   - Stripe PaymentIntent `amount` excludes shipping cost for free-shipping sellers
+   - `POST /place-order` unchanged — backend independently verifies threshold + charges accordingly
+
+**Silent-fail UX:** Threshold API failure = no banners shown, no toast, no broken layout. Checkout still works normally (uses `freeShippingApplied` from `/shipping/rates` directly).
