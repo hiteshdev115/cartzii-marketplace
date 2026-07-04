@@ -53,6 +53,8 @@ export interface SellerRateQuote {
   providerShipmentId?: string;
   rates: ShippingRate[];
   error?: { code: number; message: string };
+  /** True when the buyer's subtotal meets the seller's free-shipping threshold. */
+  freeShippingApplied?: boolean;
 }
 
 export interface RatesData {

@@ -209,7 +209,9 @@
     "continueAsGuest": "Continue as Guest",
     "guestCheckoutDesc": "No account needed. Just fill in your details at checkout.",
     "signInToCheckout": "Sign In to Checkout",
-    "signInCheckoutDesc": "Save order history and enjoy a faster checkout experience."
+    "signInCheckoutDesc": "Save order history and enjoy a faster checkout experience.",
+    "freeShippingUnlocked": "🎉 Free shipping unlocked from {storeName}!",
+    "freeShippingProgress": "Add {amount} more from {storeName} for free shipping!"
   },
   "Checkout": {
     "title": "Checkout",
@@ -555,7 +557,10 @@
     "ratesErrorTitle": "Could not get shipping rates",
     "retry": "Retry",
     "noOriginError": "This seller is not currently able to fulfill your address. Remove their items to continue.",
-    "rateFetchError": "Couldn't retrieve shipping rates for this seller."
+    "rateFetchError": "Couldn't retrieve shipping rates for this seller.",
+    "freeShippingApplied": "🎉 Free shipping applied",
+    "free": "FREE",
+    "freeShippingAriaLabel": "Was {originalPrice}, now free"
   },
   "Tracking": {
     "pageTitle": "Track Your Order",

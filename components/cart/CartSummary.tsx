@@ -10,6 +10,7 @@ import { formatPrice } from '@/lib/utils';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { GuestCheckoutModal } from '@/components/checkout/GuestCheckoutModal';
+import { CartFreeShippingBanners } from './CartFreeShippingBanners';
 
 export function CartSummary() {
   const t = useTranslations('Cart');
@@ -22,9 +23,8 @@ export function CartSummary() {
   const [showCheckoutModal, setShowCheckoutModal] = useState(false);
   const [promoCode, setPromoCode] = useState('');
 
-  const shipping = subtotal >= 50 ? 0 : 9.99;
   // Tax is calculated server-side at checkout based on the shipping address.
-  const total = subtotal + shipping;
+  const total = subtotal;
 
   return (
     <div className="bg-slate-50 rounded-2xl p-4 sm:p-6 sticky top-20 md:top-24">
@@ -52,22 +52,20 @@ export function CartSummary() {
         </div>
         <div className="flex justify-between">
           <span className="text-slate-600">{t('shipping')}</span>
-          <span className="font-medium">{shipping === 0 ? t('free') : formatPrice(shipping, locale)}</span>
+          <span className="text-xs text-slate-500">{t('shippingCalculated')}</span>
         </div>
         <div className="flex justify-between">
           <span className="text-slate-600">{t('tax')}</span>
           <span className="text-xs text-slate-500">{t('shippingCalculated')}</span>
         </div>
-        {subtotal < 50 && (
-          <p className="text-xs text-green-600 bg-green-50 p-2 rounded-lg">
-            Add {formatPrice(50 - subtotal, locale)} more for free shipping!
-          </p>
-        )}
         <div className="border-t pt-3 flex justify-between">
           <span className="font-semibold text-slate-900">{t('total')}</span>
           <span className="text-xl font-bold text-primary">{formatPrice(total, locale)}</span>
         </div>
       </div>
+
+      {/* Per-seller free-shipping banners — shown when threshold data is available */}
+      <CartFreeShippingBanners />
 
       <button
         onClick={() => {
