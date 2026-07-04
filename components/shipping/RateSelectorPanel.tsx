@@ -54,7 +54,10 @@ export function RateSelectorPanel({
       const sellerId = Number(ci.product.sellerId);
       if (!Number.isFinite(sellerId) || sellerId < 1) {
         if (process.env.NODE_ENV === 'development') {
-          console.warn('[RateSelectorPanel] skipping cart item with invalid sellerId:', ci);
+          console.warn(
+            '[RateSelectorPanel] skipping cart item with invalid sellerId (must be >= 1):',
+            ci,
+          );
         }
         continue;
       }
