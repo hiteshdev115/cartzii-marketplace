@@ -77,7 +77,7 @@ jobs:
         run: |
           echo "=== Testing TCP connectivity to QA server on port 22 ==="
           for i in 1 2 3; do
-            if nc -z -w 10 "${{ secrets.QA_SSH_HOST }}" 22; then
+            if timeout 10 bash -c "cat < /dev/null > /dev/tcp/${{ secrets.QA_SSH_HOST }}/22" 2>/dev/null; then
               echo "✓ SSH port is reachable (attempt $i)"
               exit 0
             fi
@@ -94,8 +94,9 @@ jobs:
         with:
           host: ${{ secrets.QA_SSH_HOST }}
           username: ${{ secrets.QA_SSH_USERNAME }}
-          password: ${{ secrets.QA_SSH_PASSWORD }}
+          # key takes priority when set; password is used as fallback if QA_SSH_KEY is not configured
           key: ${{ secrets.QA_SSH_KEY }}
+          password: ${{ secrets.QA_SSH_PASSWORD }}
           port: 22
           timeout: 60s
           command_timeout: 10m
@@ -132,8 +133,9 @@ jobs:
         with:
           host: ${{ secrets.QA_SSH_HOST }}
           username: ${{ secrets.QA_SSH_USERNAME }}
-          password: ${{ secrets.QA_SSH_PASSWORD }}
+          # key takes priority when set; password is used as fallback if QA_SSH_KEY is not configured
           key: ${{ secrets.QA_SSH_KEY }}
+          password: ${{ secrets.QA_SSH_PASSWORD }}
           port: 22
           timeout: 60s
           source: "deploy.tar.gz"
@@ -144,8 +146,9 @@ jobs:
         with:
           host: ${{ secrets.QA_SSH_HOST }}
           username: ${{ secrets.QA_SSH_USERNAME }}
-          password: ${{ secrets.QA_SSH_PASSWORD }}
+          # key takes priority when set; password is used as fallback if QA_SSH_KEY is not configured
           key: ${{ secrets.QA_SSH_KEY }}
+          password: ${{ secrets.QA_SSH_PASSWORD }}
           port: 22
           timeout: 60s
           command_timeout: 10m
