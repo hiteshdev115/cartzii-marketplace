@@ -17,9 +17,10 @@ import { AlertCircle, Plus } from 'lucide-react';
 import { useHydrated } from '@/hooks/useHydration';
 import { useAuthStore } from '@/stores/authStore';
 import { useCheckoutStore } from '@/stores/checkoutStore';
+import { AddressAutocompleteInput } from '@/components/checkout/AddressAutocompleteInput';
 import { fetchUserAddresses, createAddress } from '@/lib/api/addresses';
 import { fetchStatesByCountry } from '@/lib/api';
-import { getCountryFromLocale } from '@/config/countries';
+import { validatePostalCode } from '@/lib/validation/address';
 import type { ApiAddress } from '@/types';
 
 interface ShippingFormProps {
@@ -30,8 +31,13 @@ interface ShippingFormProps {
 export function ShippingForm({ onSubmit, defaultValues }: ShippingFormProps) {
   const t = useTranslations('Checkout');
   const locale = useLocale();
-  const portalCountry = getCountryFromLocale(locale); // "ca" | "us"
-  const portalCountryISO = portalCountry === 'ca' ? 'CA' : 'US';
+  const normalizedLocale = locale.toLowerCase();
+  const portalCountryISO =
+    normalizedLocale === 'ca' || normalizedLocale.endsWith('-ca')
+      ? 'CA'
+      : normalizedLocale === 'us' || normalizedLocale.endsWith('-us')
+      ? 'US'
+      : null;
   const hydrated = useHydrated();
 
   // Persist address + clear stale rates whenever a new address is confirmed
@@ -70,6 +76,8 @@ export function ShippingForm({ onSubmit, defaultValues }: ShippingFormProps) {
   const [guestCountryError, setGuestCountryError] = useState<string | null>(null);
   const [newAddrCountryError, setNewAddrCountryError] = useState<string | null>(null);
   const [savedAddrConflictError, setSavedAddrConflictError] = useState<string | null>(null);
+  const [guestPostalFormatError, setGuestPostalFormatError] = useState<string | null>(null);
+  const [newAddrPostalFormatError, setNewAddrPostalFormatError] = useState<string | null>(null);
 
   // Static country options — CA and US only
   const COUNTRY_OPTIONS = [
@@ -80,8 +88,13 @@ export function ShippingForm({ onSubmit, defaultValues }: ShippingFormProps) {
 
   // Returns conflict message if selected country doesn't match portal
   const getConflictError = (selectedISO: string): string | null => {
-    if (portalCountry === 'ca' && selectedISO !== 'CA') return t('countryConflictCA');
-    if (portalCountry === 'us' && selectedISO !== 'US') return t('countryConflictUS');
+    if (!portalCountryISO) return null;
+    if (selectedISO !== portalCountryISO) {
+      return t('addressCountryMismatch', {
+        selected: selectedISO || '—',
+        expected: portalCountryISO,
+      });
+    }
     return null;
   };
 
@@ -94,18 +107,40 @@ export function ShippingForm({ onSubmit, defaultValues }: ShippingFormProps) {
     formState: { errors },
   } = useForm<ShippingFormData>({
     resolver: zodResolver(shippingSchema),
-    defaultValues: { ...defaultValues, country: defaultValues?.country ?? portalCountryISO },
+    defaultValues: { ...defaultValues, country: defaultValues?.country ?? '' },
   });
 
   const guestWatchedCountry = watch('country');
+  const guestWatchedAddress = watch('address');
 
   // New address form (for logged-in users)
   const newAddressForm = useForm<CheckoutAddressFormData>({
     resolver: zodResolver(checkoutAddressSchema),
-    defaultValues: { country: portalCountryISO },
+    defaultValues: { country: '' },
   });
 
   const newAddrWatchedCountry = newAddressForm.watch('country');
+  const newAddrWatchedStreet = newAddressForm.watch('street');
+
+  const selectedSavedAddress =
+    selectedAddressId && selectedAddressId !== 'new'
+      ? savedAddresses.find((a) => a.id === selectedAddressId)
+      : null;
+
+  const isGuestCountryValid = !getConflictError(guestWatchedCountry || '');
+  const isNewAddressCountryValid = !getConflictError(newAddrWatchedCountry || '');
+  const isSavedSelectionCountryValid =
+    selectedAddressId === null
+      ? false
+      : selectedAddressId === 'new'
+      ? isNewAddressCountryValid
+      : !getConflictError(selectedSavedAddress?.country || '');
+
+  useEffect(() => {
+    if (!portalCountryISO && process.env.NODE_ENV !== 'production') {
+      console.warn(`[ShippingForm] Unknown locale "${locale}" — skipping country conflict enforcement.`);
+    }
+  }, [locale, portalCountryISO]);
 
   useEffect(() => {
     if (!hydrated) return;
@@ -140,14 +175,20 @@ export function ShippingForm({ onSubmit, defaultValues }: ShippingFormProps) {
     const country = guestWatchedCountry;
     if (!country) return;
     setGuestLoadingProvinces(true);
-    setValue('state', '');
+    setGuestCountryError(null);
+    setGuestPostalFormatError(null);
     fetchStatesByCountry(country)
-      .then((states) =>
+      .then((states) => {
         setGuestProvinces([
           { value: '', label: t('selectProvince') },
           ...states.map((s) => ({ value: s.isoCode, label: s.name })),
-        ])
-      )
+        ]);
+        const currentState = watch('state');
+        const validStateCodes = new Set(states.map((s) => s.isoCode));
+        if (currentState && !validStateCodes.has(currentState)) {
+          setValue('state', '', { shouldValidate: true, shouldDirty: true });
+        }
+      })
       .catch(() => setGuestProvinces([]))
       .finally(() => setGuestLoadingProvinces(false));
   }, [guestWatchedCountry]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -157,14 +198,20 @@ export function ShippingForm({ onSubmit, defaultValues }: ShippingFormProps) {
     const country = newAddrWatchedCountry;
     if (!country) return;
     setNewAddrLoadingProvinces(true);
-    newAddressForm.setValue('state', '');
+    setNewAddrCountryError(null);
+    setNewAddrPostalFormatError(null);
     fetchStatesByCountry(country)
-      .then((states) =>
+      .then((states) => {
         setNewAddrProvinces([
           { value: '', label: t('selectProvince') },
           ...states.map((s) => ({ value: s.isoCode, label: s.name })),
-        ])
-      )
+        ]);
+        const currentState = newAddressForm.getValues('state');
+        const validStateCodes = new Set(states.map((s) => s.isoCode));
+        if (currentState && !validStateCodes.has(currentState)) {
+          newAddressForm.setValue('state', '', { shouldValidate: true, shouldDirty: true });
+        }
+      })
       .catch(() => setNewAddrProvinces([]))
       .finally(() => setNewAddrLoadingProvinces(false));
   }, [newAddrWatchedCountry]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -176,6 +223,13 @@ export function ShippingForm({ onSubmit, defaultValues }: ShippingFormProps) {
       return;
     }
     setNewAddrCountryError(null);
+    if (formData.country === 'CA' || formData.country === 'US') {
+      if (!validatePostalCode(formData.postal_code, formData.country)) {
+        setNewAddrPostalFormatError(t('postalCodeInvalidFormat'));
+        return;
+      }
+    }
+    setNewAddrPostalFormatError(null);
     setIsSavingAddress(true);
     setSaveError(null);
 
@@ -246,15 +300,82 @@ export function ShippingForm({ onSubmit, defaultValues }: ShippingFormProps) {
     handleConfirmedAddress(mappedData);
   };
 
+  const validateGuestPostalOnBlur = (postalCode: string) => {
+    if (guestWatchedCountry === 'CA' || guestWatchedCountry === 'US') {
+      if (!validatePostalCode(postalCode, guestWatchedCountry)) {
+        setGuestPostalFormatError(t('postalCodeInvalidFormat'));
+        return;
+      }
+    }
+    setGuestPostalFormatError(null);
+  };
+
+  const validateNewAddressPostalOnBlur = (postalCode: string) => {
+    if (newAddrWatchedCountry === 'CA' || newAddrWatchedCountry === 'US') {
+      if (!validatePostalCode(postalCode, newAddrWatchedCountry)) {
+        setNewAddrPostalFormatError(t('postalCodeInvalidFormat'));
+        return;
+      }
+    }
+    setNewAddrPostalFormatError(null);
+  };
+
+  const handleGuestSubmit = (data: ShippingFormData) => {
+    const conflict = getConflictError(data.country);
+    if (conflict) {
+      setGuestCountryError(conflict);
+      return;
+    }
+    if (data.country === 'CA' || data.country === 'US') {
+      if (!validatePostalCode(data.zipCode, data.country)) {
+        setGuestPostalFormatError(t('postalCodeInvalidFormat'));
+        return;
+      }
+    }
+    setGuestCountryError(null);
+    setGuestPostalFormatError(null);
+    handleConfirmedAddress(data);
+  };
+
   // New address form fields (shared between "use new address" and "no saved addresses" flows)
   const newAddressFields = (
     <div className="space-y-4">
-      <Input
-        label={t('streetAddressLabel')}
-        placeholder={t('streetAddressPlaceholder')}
-        {...newAddressForm.register('street')}
-        error={newAddressForm.formState.errors.street?.message}
-      />
+      <div className="w-full">
+        <label htmlFor="new-address-line-1" className="label">
+          {t('streetAddressLabel')}
+        </label>
+        <AddressAutocompleteInput
+          value={newAddrWatchedStreet || ''}
+          onChange={(nextValue) =>
+            newAddressForm.setValue('street', nextValue, { shouldValidate: true, shouldDirty: true })
+          }
+          onSelect={(structured) => {
+            newAddressForm.setValue('street', structured.addressLine1, { shouldValidate: true, shouldDirty: true });
+            newAddressForm.setValue('city', structured.city, { shouldValidate: true, shouldDirty: true });
+            newAddressForm.setValue('state', structured.stateOrProvince, { shouldValidate: true, shouldDirty: true });
+            newAddressForm.setValue('postal_code', structured.postalCode, { shouldValidate: true, shouldDirty: true });
+            newAddressForm.setValue('country', structured.country, { shouldValidate: true, shouldDirty: true });
+            setNewAddrCountryError(null);
+            setNewAddrPostalFormatError(null);
+          }}
+          onCountryMismatch={(selected, expected) =>
+            setNewAddrCountryError(t('addressCountryMismatch', { selected, expected }))
+          }
+          placeholder={t('addressLine1Placeholder')}
+          ariaLabel={t('addressLine1AriaLabel')}
+          disabled={isSavingAddress}
+          className={`input ${
+            newAddressForm.formState.errors.street?.message
+              ? 'border-red-500 focus:ring-red-300 focus:border-red-500'
+              : ''
+          }`}
+        />
+        {newAddressForm.formState.errors.street?.message && (
+          <p className="error-text" role="alert">
+            {newAddressForm.formState.errors.street?.message}
+          </p>
+        )}
+      </div>
       <Input
         label={t('cityLabel')}
         placeholder={t('cityPlaceholder')}
@@ -285,8 +406,10 @@ export function ShippingForm({ onSubmit, defaultValues }: ShippingFormProps) {
       <Input
         label={t('postalCodeLabel')}
         placeholder={t('postalCodePlaceholder')}
-        {...newAddressForm.register('postal_code')}
-        error={newAddressForm.formState.errors.postal_code?.message}
+        {...newAddressForm.register('postal_code', {
+          onBlur: (event) => validateNewAddressPostalOnBlur(event.target.value),
+        })}
+        error={newAddressForm.formState.errors.postal_code?.message || newAddrPostalFormatError || undefined}
       />
       {newAddrCountryError && (
         <div className="flex items-center gap-2 text-red-600 text-sm">
@@ -318,7 +441,7 @@ export function ShippingForm({ onSubmit, defaultValues }: ShippingFormProps) {
           <AlertCircle className="w-5 h-5 text-amber-600 mt-0.5 shrink-0" />
           <p className="text-sm text-amber-700">{t('fetchAddressError')}</p>
         </div>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <form onSubmit={handleSubmit(handleGuestSubmit)} className="space-y-4">
           <h2 className="text-xl font-semibold mb-4">{t('shippingAddress')}</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Input label={t('firstName')} {...register('firstName')} error={errors.firstName?.message} />
@@ -326,11 +449,45 @@ export function ShippingForm({ onSubmit, defaultValues }: ShippingFormProps) {
           </div>
           <Input label={t('email')} type="email" {...register('email')} error={errors.email?.message} />
           <Input label={t('phone')} type="tel" {...register('phone')} error={errors.phone?.message} />
-          <Input label={t('address')} {...register('address')} error={errors.address?.message} />
+          <div className="w-full">
+            <label htmlFor="guest-address-line-1" className="label">
+              {t('address')}
+            </label>
+            <AddressAutocompleteInput
+              value={guestWatchedAddress || ''}
+              onChange={(nextValue) => setValue('address', nextValue, { shouldValidate: true, shouldDirty: true })}
+              onSelect={(structured) => {
+                setValue('address', structured.addressLine1, { shouldValidate: true, shouldDirty: true });
+                setValue('city', structured.city, { shouldValidate: true, shouldDirty: true });
+                setValue('state', structured.stateOrProvince, { shouldValidate: true, shouldDirty: true });
+                setValue('zipCode', structured.postalCode, { shouldValidate: true, shouldDirty: true });
+                setValue('country', structured.country, { shouldValidate: true, shouldDirty: true });
+                setGuestCountryError(null);
+                setGuestPostalFormatError(null);
+              }}
+              onCountryMismatch={(selected, expected) =>
+                setGuestCountryError(t('addressCountryMismatch', { selected, expected }))
+              }
+              placeholder={t('addressLine1Placeholder')}
+              ariaLabel={t('addressLine1AriaLabel')}
+              className={`input ${errors.address?.message ? 'border-red-500 focus:ring-red-300 focus:border-red-500' : ''}`}
+            />
+            {errors.address?.message && (
+              <p className="error-text" role="alert">
+                {errors.address?.message}
+              </p>
+            )}
+          </div>
           <Input label={t('apartment')} {...register('addressLine2')} />
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Input label={t('city')} {...register('city')} error={errors.city?.message} />
-            <Input label={t('zipCode')} {...register('zipCode')} error={errors.zipCode?.message} />
+            <Input
+              label={t('zipCode')}
+              {...register('zipCode', {
+                onBlur: (event) => validateGuestPostalOnBlur(event.target.value),
+              })}
+              error={errors.zipCode?.message || guestPostalFormatError || undefined}
+            />
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Select
@@ -359,7 +516,7 @@ export function ShippingForm({ onSubmit, defaultValues }: ShippingFormProps) {
               <span>{guestCountryError}</span>
             </div>
           )}
-          <Button type="submit" className="w-full mt-4">
+          <Button type="submit" className="w-full mt-4" disabled={!isGuestCountryValid || !!guestPostalFormatError}>
             {t('continueToPayment')}
           </Button>
         </form>
@@ -463,7 +620,12 @@ export function ShippingForm({ onSubmit, defaultValues }: ShippingFormProps) {
         <Button
           type="button"
           isLoading={isSavingAddress}
-          disabled={selectedAddressId === null || isSavingAddress}
+          disabled={
+            selectedAddressId === null ||
+            isSavingAddress ||
+            !isSavedSelectionCountryValid ||
+            (selectedAddressId === 'new' && !!newAddrPostalFormatError)
+          }
           onClick={handleContinueToPayment}
           className="w-full mt-6"
         >
@@ -485,7 +647,7 @@ export function ShippingForm({ onSubmit, defaultValues }: ShippingFormProps) {
         <Button
           type="button"
           isLoading={isSavingAddress}
-          disabled={isSavingAddress}
+          disabled={isSavingAddress || !isNewAddressCountryValid || !!newAddrPostalFormatError}
           onClick={newAddressForm.handleSubmit(handleSaveNewAddressAndContinue)}
           className="w-full mt-4"
         >
@@ -502,16 +664,6 @@ export function ShippingForm({ onSubmit, defaultValues }: ShippingFormProps) {
   }
 
   // ── Guest (not logged in) form ───────────────────────────────────────────
-  const handleGuestSubmit = (data: ShippingFormData) => {
-    const conflict = getConflictError(data.country);
-    if (conflict) {
-      setGuestCountryError(conflict);
-      return;
-    }
-    setGuestCountryError(null);
-    handleConfirmedAddress(data);
-  };
-
   return (
     <form onSubmit={handleSubmit(handleGuestSubmit)} className="space-y-4">
       <h2 className="text-xl font-semibold mb-4">{t('shippingAddress')}</h2>
@@ -521,11 +673,45 @@ export function ShippingForm({ onSubmit, defaultValues }: ShippingFormProps) {
       </div>
       <Input label={t('email')} type="email" {...register('email')} error={errors.email?.message} />
       <Input label={t('phone')} type="tel" {...register('phone')} error={errors.phone?.message} />
-      <Input label={t('address')} {...register('address')} error={errors.address?.message} />
+      <div className="w-full">
+        <label htmlFor="guest-address-line-1" className="label">
+          {t('address')}
+        </label>
+        <AddressAutocompleteInput
+          value={guestWatchedAddress || ''}
+          onChange={(nextValue) => setValue('address', nextValue, { shouldValidate: true, shouldDirty: true })}
+          onSelect={(structured) => {
+            setValue('address', structured.addressLine1, { shouldValidate: true, shouldDirty: true });
+            setValue('city', structured.city, { shouldValidate: true, shouldDirty: true });
+            setValue('state', structured.stateOrProvince, { shouldValidate: true, shouldDirty: true });
+            setValue('zipCode', structured.postalCode, { shouldValidate: true, shouldDirty: true });
+            setValue('country', structured.country, { shouldValidate: true, shouldDirty: true });
+            setGuestCountryError(null);
+            setGuestPostalFormatError(null);
+          }}
+          onCountryMismatch={(selected, expected) =>
+            setGuestCountryError(t('addressCountryMismatch', { selected, expected }))
+          }
+          placeholder={t('addressLine1Placeholder')}
+          ariaLabel={t('addressLine1AriaLabel')}
+          className={`input ${errors.address?.message ? 'border-red-500 focus:ring-red-300 focus:border-red-500' : ''}`}
+        />
+        {errors.address?.message && (
+          <p className="error-text" role="alert">
+            {errors.address?.message}
+          </p>
+        )}
+      </div>
       <Input label={t('apartment')} {...register('addressLine2')} />
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Input label={t('city')} {...register('city')} error={errors.city?.message} />
-        <Input label={t('zipCode')} {...register('zipCode')} error={errors.zipCode?.message} />
+        <Input
+          label={t('zipCode')}
+          {...register('zipCode', {
+            onBlur: (event) => validateGuestPostalOnBlur(event.target.value),
+          })}
+          error={errors.zipCode?.message || guestPostalFormatError || undefined}
+        />
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Select
@@ -554,7 +740,7 @@ export function ShippingForm({ onSubmit, defaultValues }: ShippingFormProps) {
           <span>{guestCountryError}</span>
         </div>
       )}
-      <Button type="submit" className="w-full mt-4">
+      <Button type="submit" className="w-full mt-4" disabled={!isGuestCountryValid || !!guestPostalFormatError}>
         {t('continueToPayment')}
       </Button>
     </form>
