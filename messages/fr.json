@@ -209,7 +209,9 @@
     "continueAsGuest": "Continuer en tant qu'invité",
     "guestCheckoutDesc": "Aucun compte requis. Remplissez simplement vos coordonnées.",
     "signInToCheckout": "Se connecter pour payer",
-    "signInCheckoutDesc": "Sauvegardez vos commandes et bénéficiez d'une caisse plus rapide."
+    "signInCheckoutDesc": "Sauvegardez vos commandes et bénéficiez d'une caisse plus rapide.",
+    "freeShippingUnlocked": "🎉 Livraison gratuite débloquée chez {storeName} !",
+    "freeShippingProgress": "Ajoutez {amount} de plus chez {storeName} pour la livraison gratuite !"
   },
   "Checkout": {
     "title": "Paiement",
@@ -555,7 +557,10 @@
     "ratesErrorTitle": "Impossible d’obtenir les tarifs de livraison",
     "retry": "Réessayer",
     "noOriginError": "Ce vendeur n’est actuellement pas en mesure d’expédier à votre adresse. Supprimez ses articles pour continuer.",
-    "rateFetchError": "Impossible de récupérer les tarifs de livraison pour ce vendeur."
+    "rateFetchError": "Impossible de récupérer les tarifs de livraison pour ce vendeur.",
+    "freeShippingApplied": "🎉 Livraison gratuite appliquée",
+    "free": "GRATUIT",
+    "freeShippingAriaLabel": "Était {originalPrice}, maintenant gratuit"
   },
   "Tracking": {
     "pageTitle": "Suivre votre commande",

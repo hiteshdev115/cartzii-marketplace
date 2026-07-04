@@ -68,11 +68,14 @@ export const useCheckoutStore = create<CheckoutState>()(
         set({ shippingAddress: null, sellerRateQuotes: [], selectedRates: {} }),
 
       getTotalShippingCents: () => {
-        const { selectedRates } = get();
-        return Object.values(selectedRates).reduce(
-          (sum, r) => sum + Math.round(r.rate * 100),
-          0,
-        );
+        const state = get();
+        return Object.entries(state.selectedRates).reduce((sum, [sellerIdStr, r]) => {
+          if (!r) return sum;
+          const sellerId = Number(sellerIdStr);
+          const quote = state.sellerRateQuotes.find((q) => q.sellerId === sellerId);
+          if (quote?.freeShippingApplied) return sum; // zero out for free-shipping sellers
+          return sum + Math.round(r.rate * 100);
+        }, 0);
       },
 
       allRatesSelected: () => {

@@ -71,9 +71,19 @@ export function SellerRateSelector({
 
   // ---- Sorted rates (cheapest first) --------------------------------------
   const sorted = [...quote.rates].sort((a, b) => a.rate - b.rate);
+  const isFreeShipping = quote.freeShippingApplied === true;
 
   return (
     <div className="space-y-2">
+      {isFreeShipping && (
+        <div
+          className="flex items-center gap-2 px-3 py-2 rounded-md bg-green-50 border border-green-200 text-green-900 text-sm mb-2"
+          role="status"
+        >
+          <span aria-hidden="true">🎉</span>
+          <span>{t('freeShippingApplied')}</span>
+        </div>
+      )}
       {sorted.map((rate) => {
         const isSelected = rate.rateId === selectedRateId;
         const isFree = rate.rate === 0;
@@ -110,14 +120,26 @@ export function SellerRateSelector({
                   )}
                 </div>
               </div>
-              <span
-                className={cn(
-                  'shrink-0 text-sm font-semibold',
-                  isFree ? 'text-emerald-600' : 'text-slate-900',
-                )}
-              >
-                {isFree ? t('freeShipping') : formatPrice(rate.rate, locale)}
-              </span>
+              {isFreeShipping ? (
+                <span
+                  className="shrink-0 text-sm font-semibold"
+                  aria-label={t('freeShippingAriaLabel', {
+                    originalPrice: formatPrice(rate.rate, locale),
+                  })}
+                >
+                  <s className="text-gray-400 mr-2">{formatPrice(rate.rate, locale)}</s>
+                  <span className="text-green-700">{t('free')}</span>
+                </span>
+              ) : (
+                <span
+                  className={cn(
+                    'shrink-0 text-sm font-semibold',
+                    isFree ? 'text-emerald-600' : 'text-slate-900',
+                  )}
+                >
+                  {isFree ? t('freeShipping') : formatPrice(rate.rate, locale)}
+                </span>
+              )}
             </div>
           </label>
         );
