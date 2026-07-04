@@ -31,12 +31,11 @@ export interface Product {
   detailVariants?: DetailVariant[];
   /**
    * Seller that owns this product. Required for grouping cart items when
-   * calling `/api/v1/shipping/rates`. Optional here because some legacy
-   * code paths (mock data, search index) don't populate it — the shipping
-   * layer falls back to `1` in that case.
+   * calling `/api/v1/shipping/rates`. Optional for backward compatibility
+   * with legacy persisted carts and fixture data.
    */
   sellerId?: number;
-  sellerName?: string;
+  sellerName?: string | null;
   // ---- Optional shipping measurements (from `/getProductBySlug` etc.) ------
   /** Product weight (nullable — only shown when present). */
   weight?: number | null;

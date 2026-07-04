@@ -4,6 +4,7 @@ import { api } from './client';
 
 export interface SearchProductResult {
   productid: number;
+  sellerid?: number;
   productname: string;
   slug: string;
   shortdescription: string;
@@ -19,6 +20,9 @@ export interface SearchProductResult {
     discountprice: string | null;
     discount: string | null;
     currencycode: string;
+  } | null;
+  seller?: {
+    storename?: string | null;
   } | null;
 }
 
