@@ -173,7 +173,6 @@ export function AddressAutocompleteInput({
           onSelect(structured);
         }}
         onClear={() => setSuggestionAnnouncement('')}
-        interceptSearch={() => ''}
         options={expectedCountry ? { country: expectedCountry, language } : { language }}
         placeholder={placeholder || t('addressLine1Placeholder')}
         theme={{
