@@ -138,6 +138,7 @@ interface APIProduct {
   productattributes?: APIProductAttribute[];
   category?: APICategory;
   seller?: APISeller | null;
+  storename?: string | null;
   // Optional shipping measurements exposed by all product read endpoints.
   weight?: number | string | null;
   weightunit?: string | null;
@@ -395,7 +396,7 @@ function mapProduct(raw: APIProduct, country: string): Product {
     createdAt: raw.createdat,
     detailVariants: buildDetailVariants(activeVariants, country),
     sellerId: raw.sellerid,
-    sellerName: raw.seller?.storename ?? null,
+    sellerName: raw.seller?.storename ?? raw.storename ?? null,
     weight: toNumberOrNull(raw.weight),
     weightUnit: raw.weightunit ?? null,
     length: toNumberOrNull(raw.length),

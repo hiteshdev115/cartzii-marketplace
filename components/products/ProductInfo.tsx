@@ -116,6 +116,11 @@ export function ProductInfo({ product, onVariantChange, onShowReviews, onWriteRe
       {/* Title */}
       <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-slate-900 break-words">{product.name}</h1>
 
+      {/* Store name */}
+      {product.sellerName && (
+        <p className="text-sm text-primary">{product.sellerName}</p>
+      )}
+
       {/* Rating */}
       <div className="flex items-center gap-2 flex-wrap">
         <StarRating value={product.rating} size="md" showValue />
