@@ -8,6 +8,8 @@
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL || 'https://staging-api.cartzii.com';
 
+const GUEST_TOKEN = process.env.NEXT_PUBLIC_GUEST_API_TOKEN || '';
+
 function getAuthToken(): string | null {
   if (typeof window === 'undefined') return null;
   try {
@@ -32,8 +34,7 @@ export interface SellerThreshold {
  * Returns a Map from sellerId -> SellerThreshold, or an empty Map on any
  * network/auth/parse failure (silent-fail UX).
  *
- * Guest buyers (no auth token) silently receive an empty Map since the
- * thresholds endpoint requires authentication.
+ * Works for both authenticated and guest buyers (uses guest token fallback).
  */
 export async function getSellerShippingThresholds(
   sellerIds: number[],
@@ -41,21 +42,53 @@ export async function getSellerShippingThresholds(
   if (sellerIds.length === 0) return new Map();
 
   const token = getAuthToken();
-  if (!token) return new Map();
+
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  if (GUEST_TOKEN) {
+    headers['x-guest-token'] = GUEST_TOKEN;
+  }
 
   try {
     const res = await fetch(`${API_BASE_URL}/api/v1/sellers/shipping-thresholds`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: 'Bearer ' + token,
-      },
+      headers,
       body: JSON.stringify({ sellerIds }),
     });
     if (!res.ok) return new Map();
-    const data = (await res.json()) as { thresholds?: SellerThreshold[] };
+    const json = (await res.json()) as {
+      data?: {
+        thresholds?: Record<
+          string,
+          { freeShippingThresholdCents: number | null; storeName: string | null }
+        >;
+      };
+      thresholds?: SellerThreshold[];
+    };
+
     const map = new Map<number, SellerThreshold>();
-    for (const th of data.thresholds ?? []) {
+
+    // Handle object-keyed format: { data: { thresholds: { "1": {...}, "2": {...} } } }
+    if (json.data?.thresholds && typeof json.data.thresholds === 'object' && !Array.isArray(json.data.thresholds)) {
+      for (const [key, val] of Object.entries(json.data.thresholds)) {
+        const sellerId = Number(key);
+        if (!Number.isFinite(sellerId)) continue;
+        map.set(sellerId, {
+          sellerId,
+          freeShippingThresholdCents: val.freeShippingThresholdCents ?? null,
+          storeName: val.storeName || `Seller #${sellerId}`,
+        });
+      }
+      return map;
+    }
+
+    // Fallback: array format { thresholds: [{ sellerId, ... }] }
+    for (const th of json.thresholds ?? []) {
       map.set(th.sellerId, th);
     }
     return map;
