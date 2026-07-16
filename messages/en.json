@@ -565,7 +565,9 @@
     "rateFetchError": "Couldn't retrieve shipping rates for this seller.",
     "freeShippingApplied": "🎉 Free shipping applied",
     "free": "FREE",
-    "freeShippingAriaLabel": "Was {originalPrice}, now free"
+    "freeShippingAriaLabel": "Was {originalPrice}, now free",
+    "freeShippingProgress": "Add {amount} more from {storeName} to get free shipping!",
+    "freeShippingUnlocked": "🎉 You qualify for free shipping from {storeName}!"
   },
   "Tracking": {
     "pageTitle": "Track Your Order",
