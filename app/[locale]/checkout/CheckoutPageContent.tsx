@@ -220,19 +220,19 @@ export function CheckoutPageContent() {
       data-order-number={placedOrder?.orderNumber ?? ''}
       data-order-id={placedOrder?.orderId ?? ''}
     >
-      <div className="max-w-5xl mx-auto px-4 sm:px-6">
-        <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-4 sm:mb-6 lg:mb-8">
+      <div className="max-w-5xl mx-auto px-3 sm:px-6">
+        <h1 className="text-lg sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-3 sm:mb-6 lg:mb-8">
           {t('title')}
         </h1>
 
-        <div className="grid md:grid-cols-3 gap-4 md:gap-6 lg:gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4 md:gap-6 lg:gap-8">
           {/* ---- Left column ---- */}
-          <div className="md:col-span-2 space-y-4 order-2 md:order-1">
-            <section className="bg-white rounded-xl p-4 sm:p-5 shadow-sm border border-slate-200 space-y-4">
-              <div className="flex items-center justify-between gap-3">
-                <div>
+          <div className="md:col-span-2 space-y-3 sm:space-y-4 order-2 md:order-1">
+            <section className="bg-white rounded-xl p-3 sm:p-5 shadow-sm border border-slate-200 space-y-3 sm:space-y-4">
+              <div className="flex items-center justify-between gap-2">
+                <div className="min-w-0">
                   <h2 className="text-sm font-semibold text-slate-800">{t('shippingAddress')}</h2>
-                  <p className="text-xs text-slate-500 mt-0.5">{t('continueToPayment')}</p>
+                  <p className="text-xs text-slate-500 mt-0.5 truncate">{t('continueToPayment')}</p>
                 </div>
                 {shippingData && !editingShipping && !paymentComplete && (
                   <button
@@ -256,7 +256,7 @@ export function CheckoutPageContent() {
 
             {/* Shipping rate selection — appears after address is locked */}
             {shippingData && !editingShipping && !paymentComplete && (
-              <section className="bg-white rounded-xl p-4 sm:p-5 shadow-sm border border-slate-200">
+              <section className="bg-white rounded-xl p-3 sm:p-5 shadow-sm border border-slate-200">
                 <RateSelectorPanel
                   shippingAddress={shippingData}
                   onEligibilityChange={setRatesEligible}
@@ -265,7 +265,7 @@ export function CheckoutPageContent() {
             )}
 
             {/* Saved cards */}
-            <section className="bg-white rounded-xl p-4 shadow-sm">
+            <section className="bg-white rounded-xl p-3 sm:p-4 shadow-sm">
               <h2 className="text-sm font-semibold text-gray-700 mb-3">
                 {t('savedPaymentMethods')}
               </h2>

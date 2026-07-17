@@ -164,6 +164,19 @@ export function RateSelectorPanel({
     onEligibilityChange?.(!hasBlockingError && allChosen);
   }, [selectedRates, fetchState, onEligibilityChange]);
 
+  // Group cart items by sellerId for displaying in each seller section
+  const itemsBySeller = useMemo(() => {
+    const groups = new Map<number, typeof cartItems>();
+    for (const ci of cartItems) {
+      const sellerId = Number(ci.product.sellerId);
+      if (!Number.isFinite(sellerId) || sellerId < 1) continue;
+      const group = groups.get(sellerId) || [];
+      group.push(ci);
+      groups.set(sellerId, group);
+    }
+    return groups;
+  }, [cartItems]);
+
   // ---- Render -------------------------------------------------------------
 
   if (fetchState.status === 'idle' || fetchState.status === 'loading') {
@@ -239,14 +252,13 @@ export function RateSelectorPanel({
           subtotalCents < thresholdCents;
 
         const remainingCents = showProgressBanner ? thresholdCents - subtotalCents : 0;
+        const sellerItems = itemsBySeller.get(quote.sellerId) || [];
 
         return (
           <div key={quote.sellerId}>
-            {quotes.length > 1 && (
-              <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-slate-500">
-                {t('sellerLabel', { id: quote.sellerId })}
-              </p>
-            )}
+            <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-slate-500">
+              {storeName}
+            </p>
             {showProgressBanner && (
               <div
                 className="flex items-center gap-2 px-3 py-2 rounded-md bg-blue-50 border border-blue-200 text-blue-900 text-sm mb-2"
@@ -263,8 +275,10 @@ export function RateSelectorPanel({
             )}
             <SellerRateSelector
               quote={quote}
+              sellerName={storeName}
               selectedRateId={selectedRates[quote.sellerId]?.rateId ?? null}
               onSelectRate={(rate: ShippingRate) => setSelectedRate(quote.sellerId, rate)}
+              items={sellerItems}
             />
           </div>
         );
