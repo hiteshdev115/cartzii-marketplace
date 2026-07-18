@@ -10,7 +10,7 @@ export default function BlockedPage() {
       <div className="max-w-md w-full text-center space-y-6">
         <div className="flex justify-center">
           <Image
-            src="/assets/cartzii-logo-wt-bg.png"
+            src="/assets/cartzii-logo.png"
             alt="Cartzii"
             width={180}
             height={48}
