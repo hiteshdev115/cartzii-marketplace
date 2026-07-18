@@ -147,6 +147,13 @@ export interface PlaceOrderShippingSelection {
 export interface PlaceOrderPayload {
   /** Stripe PaymentIntent id returned by Stripe after the card is confirmed. */
   paymentIntentId: string;
+  /**
+   * Which storefront portal the order was placed from ('us' or 'ca').
+   * Derived from the URL locale, not sniffed from headers — used by the
+   * backend for portal/country validation and for building portal-correct
+   * links (e.g. the OTP login link) in transactional emails.
+   */
+  portal: 'us' | 'ca';
   currency: string;
   countryCode: string;
   shippingAddress: PlaceOrderShippingAddress;

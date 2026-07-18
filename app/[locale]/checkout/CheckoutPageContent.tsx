@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
-import { buildCountryPath, getCountryConfig } from '@/config/countries';
+import { buildCountryPath, getCountryConfig, getCountryFromLocale } from '@/config/countries';
 import { useCartStore } from '@/stores/cartStore';
 import { useAuthStore } from '@/stores/authStore';
 import { PaymentForm, type PaymentSubmitResult } from '@/components/checkout/PaymentForm';
@@ -48,6 +48,10 @@ export function CheckoutPageContent() {
   const [paymentComplete, setPaymentComplete] = useState(false);
   const [placedOrder, setPlacedOrder] = useState<{ orderNumber: string; orderId: number } | null>(null);
   const [taxState, setTaxState] = useState<TaxState>({ status: 'pending' });
+
+  // Reactive guest-checkout flag — reused pattern from AuthGuard/Header.
+  const authToken = useAuthStore((s) => s.token);
+  const isGuestCheckout = !authToken;
 
   // Pull selected shipping total from checkout store for Stripe amount calculation
   const getTotalShippingCents = useCheckoutStore((s) => s.getTotalShippingCents);
@@ -171,6 +175,7 @@ export function CheckoutPageContent() {
 
       const order = await placeOrder({
         paymentIntentId: paymentResult.paymentIntentId,
+        portal: getCountryFromLocale(locale) as 'us' | 'ca',
         currency: currency.toUpperCase(),
         countryCode: countryISO,
         shippingAddress: {
@@ -199,7 +204,8 @@ export function CheckoutPageContent() {
 
       setPlacedOrder(order);
       await useCartStore.getState().clearCart();
-      router.push(buildCountryPath(locale, `/order-confirmation/${order.orderNumber}`));
+      const confirmationQuery = order.accountCreated ? '?newAccount=1' : '';
+      router.push(buildCountryPath(locale, `/order-confirmation/${order.orderNumber}${confirmationQuery}`));
     } catch (cause) {
       let message = t('orderPlacementFailed');
       if (cause instanceof ApiError) {
@@ -289,6 +295,13 @@ export function CheckoutPageContent() {
                   );
                 }}
               />
+            )}
+
+            {/* Silent-signup transparency note — guest checkout only */}
+            {isGuestCheckout && shippingData && !editingShipping && !paymentComplete && (
+              <p className="text-xs text-slate-500 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2">
+                {t('silentSignupNote')}
+              </p>
             )}
 
             {/* Stripe card form */}

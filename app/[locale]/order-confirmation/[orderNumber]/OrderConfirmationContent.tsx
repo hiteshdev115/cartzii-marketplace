@@ -3,8 +3,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import Image from 'next/image';
 import { useLocale, useTranslations } from 'next-intl';
-import { useRouter } from 'next/navigation';
-import { CheckCircle2, Printer, RefreshCw } from 'lucide-react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { CheckCircle2, Mail, Printer, RefreshCw } from 'lucide-react';
 import { buildCountryPath } from '@/config/countries';
 import { getOrderByNumber } from '@/lib/api/orders';
 import type { OrderConfirmation } from '@/types/order';
@@ -58,6 +58,8 @@ export function OrderConfirmationContent({ orderNumber }: OrderConfirmationConte
   const tCart = useTranslations('Cart');
   const locale = useLocale();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const isNewAccount = searchParams.get('newAccount') === '1';
 
   const [order, setOrder] = useState<OrderConfirmation | null>(null);
   const [loading, setLoading] = useState(true);
@@ -169,6 +171,18 @@ export function OrderConfirmationContent({ orderNumber }: OrderConfirmationConte
             {order.estimatedDelivery && <p>{t('estimatedDelivery')}: {formatDateOnly(order.estimatedDelivery, locale)}</p>}
           </div>
         </section>
+
+        {isNewAccount && (
+          <section className="rounded-2xl border border-indigo-200 bg-indigo-50 p-5 flex items-start gap-3 shadow-sm">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-indigo-600 shadow-sm">
+              <Mail className="h-5 w-5" />
+            </div>
+            <div className="text-sm text-indigo-900">
+              <p className="font-semibold">{t('accountCreatedTitle')}</p>
+              <p className="mt-0.5 text-indigo-800/80">{t('accountCreatedBody')}</p>
+            </div>
+          </section>
+        )}
 
         <section className="order-invoice overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-md">
           <div className="flex flex-col gap-2 border-b border-slate-200 p-5 sm:p-6">

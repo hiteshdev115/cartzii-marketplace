@@ -145,6 +145,11 @@ export function LoginForm() {
             </label>
             <Link href={buildCountryPath(locale, '/auth/forgot-password')} className="text-sm text-primary hover:underline">{t('forgotPassword')}</Link>
           </div>
+          <p className="text-sm">
+            <Link href={buildCountryPath(locale, '/auth/otp-login')} className="text-primary hover:underline">
+              {t('loginWithCodeInstead')}
+            </Link>
+          </p>
           <Button type="submit" className="w-full flex items-center justify-center gap-2" disabled={isSubmitting || isRestoringCart}>
             {isRestoringCart ? (
               <>
