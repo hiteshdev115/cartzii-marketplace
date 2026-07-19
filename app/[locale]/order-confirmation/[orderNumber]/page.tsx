@@ -4,7 +4,7 @@ import { OrderConfirmationContent } from './OrderConfirmationContent';
 export async function generateMetadata({ params }: { params: Promise<{ locale: string; orderNumber: string }> }) {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: 'Checkout' });
-  return { title: `${t('orderConfirmed')} - Cartzii` };
+  return { title: `${t('orderConfirmed')} - Cartziio` };
 }
 
 export default async function OrderConfirmationPage({ params }: { params: Promise<{ locale: string; orderNumber: string }> }) {

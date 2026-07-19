@@ -4,7 +4,7 @@ import { LoginForm } from './LoginForm';
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: 'Auth' });
-  return { title: `${t('login')} - Cartzii` };
+  return { title: `${t('login')} - Cartziio` };
 }
 
 export default function LoginPage() {

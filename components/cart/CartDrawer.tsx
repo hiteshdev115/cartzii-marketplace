@@ -88,7 +88,11 @@ export function CartDrawer() {
                   key={item.cartId ?? `${item.product.id}-${item.selectedColor}-${item.selectedSize}`}
                   className="flex gap-2.5 p-2.5 bg-slate-50 rounded-xl"
                 >
-                  <div className="relative w-14 h-14 rounded-lg overflow-hidden shrink-0 bg-slate-100">
+                  <Link
+                    href={buildCountryPath(locale, `/products/${item.product.slug}`)}
+                    onClick={closeDrawer}
+                    className="relative w-14 h-14 rounded-lg overflow-hidden shrink-0 bg-slate-100"
+                  >
                     <Image
                       src={item.product.images[0]}
                       alt={item.product.name}
@@ -96,11 +100,13 @@ export function CartDrawer() {
                       className="object-cover"
                       sizes="56px"
                     />
-                  </div>
+                  </Link>
                   <div className="flex-1 min-w-0">
-                    <h3 className="text-xs font-semibold text-slate-900 truncate leading-snug">
-                      {item.product.name}
-                    </h3>
+                    <Link href={buildCountryPath(locale, `/products/${item.product.slug}`)} onClick={closeDrawer}>
+                      <h3 className="text-xs font-semibold text-slate-900 truncate leading-snug hover:text-primary transition-colors">
+                        {item.product.name}
+                      </h3>
+                    </Link>
                     {item.variantAttributes && item.variantAttributes.length > 0 ? (
                       <p className="text-[10px] text-slate-400 mt-0.5 truncate">
                         {item.variantAttributes.map((a) => `${a.name}: ${a.value}`).join(' · ')}

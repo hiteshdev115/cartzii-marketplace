@@ -413,7 +413,7 @@ export function DollarStreetPageClient() {
                 Want more great deals?
               </h2>
               <p className="text-white/80 text-base mb-6">
-                Explore thousands more products across all price ranges on Cartzii.
+                Explore thousands more products across all price ranges on Cartziio.
               </p>
               <Link
                 href={buildCountryPath(locale, '/deals')}

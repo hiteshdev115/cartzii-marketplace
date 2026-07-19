@@ -5,8 +5,8 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Cartzii Marketplace",
-  description: "Discover products you'll love on Cartzii Marketplace",
+  title: "Cartziio Marketplace",
+  description: "Discover products you'll love on Cartziio Marketplace",
   icons: { icon: "/cartzii-fevicon.png" },
 };
 

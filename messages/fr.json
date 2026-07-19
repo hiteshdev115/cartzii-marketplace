@@ -1,12 +1,12 @@
 {
   "Metadata": {
-    "title": "Cartzii — Découvrez des Produits que Vous Allez Adorer",
+    "title": "Cartziio — Découvrez des Produits que Vous Allez Adorer",
     "description": "Découvrez des milliers de produits sélectionnés par des vendeurs de confiance. Livraison rapide, retours faciles et offres exclusives.",
     "keywords": "achats en ligne, marketplace, électronique, mode, maison, offres",
-    "homeTitle": "Accueil — Cartzii Marketplace",
+    "homeTitle": "Accueil — Cartziio Marketplace",
     "homeDescription": "Découvrez des milliers de produits sélectionnés par des vendeurs de confiance. Livraison rapide, retours faciles et offres exclusives.",
-    "productsTitle": "Tous les Produits — Cartzii Marketplace",
-    "productsDescription": "Parcourez tous les produits sur Cartzii Marketplace. Trouvez les meilleures offres en électronique, mode, maison et plus encore."
+    "productsTitle": "Tous les Produits — Cartziio Marketplace",
+    "productsDescription": "Parcourez tous les produits sur Cartziio Marketplace. Trouvez les meilleures offres en électronique, mode, maison et plus encore."
   },
   "Common": {
     "loading": "Chargement...",
@@ -86,7 +86,7 @@
     "emailPlaceholder": "Entrez votre adresse e-mail",
     "subscribe": "S'abonner",
     "subscribedSuccess": "Merci de votre abonnement !",
-    "whyChooseUs": "Pourquoi Choisir Cartzii ?",
+    "whyChooseUs": "Pourquoi Choisir Cartziio ?",
     "benefit1Title": "Livraison Rapide",
     "benefit1Desc": "Livraison gratuite pour les commandes de plus de 50 $ avec livraison en 2 jours.",
     "benefit2Title": "Paiements Sécurisés",
@@ -98,7 +98,7 @@
   },
   "Products": {
     "allProducts": "Tous les Produits",
-    "metaDescription": "Parcourez tous les produits sur Cartzii Marketplace. Trouvez les meilleures offres en électronique, mode, maison et plus encore.",
+    "metaDescription": "Parcourez tous les produits sur Cartziio Marketplace. Trouvez les meilleures offres en électronique, mode, maison et plus encore.",
     "filters": "Filtres",
     "clearFilters": "Tout Effacer",
     "applyFilters": "Appliquer les Filtres",
@@ -326,10 +326,10 @@
   "Auth": {
     "loginTitle": "Bon Retour",
     "welcomeBack": "Bon Retour",
-    "loginSubtitle": "Connectez-vous à votre compte Cartzii",
+    "loginSubtitle": "Connectez-vous à votre compte Cartziio",
     "registerTitle": "Créer un Compte",
     "createAccount": "Créer un Compte",
-    "registerSubtitle": "Rejoignez Cartzii et commencez vos achats",
+    "registerSubtitle": "Rejoignez Cartziio et commencez vos achats",
     "loggingIn": "Connexion en cours...",
     "restoringCart": "Restauration de votre panier...",
     "creating": "Création du compte...",
@@ -522,7 +522,7 @@
     "cookiePolicy": "Politique de Cookies",
     "followUs": "Suivez-nous",
     "paymentMethods": "Nous Acceptons",
-    "copyright": "© {year} Cartzii. Tous droits réservés.",
+    "copyright": "© {year} Cartziio. Tous droits réservés.",
     "madeWith": "Fait avec ❤️ pour les acheteurs du monde entier"
   },
   "Accessibility": {

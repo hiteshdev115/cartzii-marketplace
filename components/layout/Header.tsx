@@ -171,7 +171,7 @@ export function Header() {
             <div className="flex items-center justify-between h-12">
               <MobileNav />
               <Link href={buildCountryPath(locale, '/')} className="absolute left-1/2 -translate-x-1/2">
-                <Image src="/assets/cartzii-logo.png" alt="Cartzii" width={120} height={34} className="object-contain" priority />
+                <Image src="/assets/cartzii-logo.png" alt="Cartziio" width={120} height={34} className="object-contain" priority />
               </Link>
               <div className="flex items-center gap-0.5">
                 <Link
@@ -237,7 +237,7 @@ export function Header() {
             {/* Desktop Row 1: Logo | Search | Icons */}
             <div className="flex items-center h-16 gap-4">
               <Link href={buildCountryPath(locale, '/')} className="flex items-center shrink-0">
-                <Image src="/assets/cartzii-logo.png" alt="Cartzii" width={144} height={41} className="object-contain" priority />
+                <Image src="/assets/cartzii-logo.png" alt="Cartziio" width={144} height={41} className="object-contain" priority />
               </Link>
 
               {/* Search bar — grows to fill space */}

@@ -39,16 +39,16 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
     locale,
   );
   return {
-    title: 'Handicraft — Artisan & Handmade | Cartzii',
+    title: 'Handicraft — Artisan & Handmade | Cartziio',
     description:
-      'Explore handmade, artisan, and craft categories on Cartzii. Discover knitting, pottery, woodwork, jewelry making, sewing, and more. Shop unique handcrafted products or find supplies for your next project.',
+      'Explore handmade, artisan, and craft categories on Cartziio. Discover knitting, pottery, woodwork, jewelry making, sewing, and more. Shop unique handcrafted products or find supplies for your next project.',
     keywords: [
       'handicraft', 'handmade', 'artisan', 'crafts', 'DIY', 'knitting', 'pottery',
       'sewing', 'jewelry making', 'woodwork', 'crochet', 'embroidery',
     ],
     alternates,
     openGraph: {
-      title: 'Handicraft — Artisan & Handmade | Cartzii',
+      title: 'Handicraft — Artisan & Handmade | Cartziio',
       description: 'Shop handcrafted and artisan products across all craft categories.',
       type: 'website',
     },
