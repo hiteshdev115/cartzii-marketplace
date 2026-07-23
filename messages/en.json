@@ -387,6 +387,7 @@
     "recentOrders": "Recent Orders",
     "wishlistSummary": "Your Wishlist",
     "orders": "Order History",
+    "returns": "Returns",
     "reviews": "My Reviews",
     "wishlist": "Wishlist",
     "settings": "Account Settings",
@@ -470,6 +471,32 @@
     "invalidEmail": "Please enter a valid email address",
     "phoneError": "Phone number must be 10–15 characters",
     "genderError": "Gender must be male, female, or other"
+  },
+  "Returns": {
+    "requestReturn": "Request Return",
+    "requestReturnTitle": "Request a Return",
+    "reasonLabel": "Reason for return",
+    "selectReasonPlaceholder": "Select a reason",
+    "selectReasonError": "Please select a reason",
+    "noteLabel": "Additional details (optional)",
+    "notePlaceholder": "Tell us more about the issue",
+    "submitRequest": "Submit Request",
+    "submitting": "Submitting…",
+    "requestSuccess": "Your return request has been submitted. The seller will review it shortly.",
+    "requestError": "Failed to submit return request",
+    "close": "Close",
+    "noReturns": "You haven't requested any returns yet.",
+    "returnNumber": "Return #{id}",
+    "sellerNoteLabel": "Seller note",
+    "viewLabel": "View Return Label",
+    "status": {
+      "requested": "Requested",
+      "approved": "Approved",
+      "rejected": "Rejected",
+      "labelSent": "Label Sent",
+      "received": "Received",
+      "refunded": "Refunded"
+    }
   },
   "Search": {
     "title": "Search Results",

@@ -387,6 +387,7 @@
     "recentOrders": "Commandes Récentes",
     "wishlistSummary": "Votre Liste de Souhaits",
     "orders": "Historique des Commandes",
+    "returns": "Retours",
     "reviews": "Mes Avis",
     "wishlist": "Liste de Souhaits",
     "settings": "Paramètres du Compte",
@@ -470,6 +471,32 @@
     "invalidEmail": "Veuillez entrer une adresse e-mail valide",
     "phoneError": "Le numéro doit comporter entre 10 et 15 caractères",
     "genderError": "Le genre doit être homme, femme ou autre"
+  },
+  "Returns": {
+    "requestReturn": "Demander un retour",
+    "requestReturnTitle": "Demander un retour",
+    "reasonLabel": "Motif du retour",
+    "selectReasonPlaceholder": "Sélectionnez un motif",
+    "selectReasonError": "Veuillez sélectionner un motif",
+    "noteLabel": "Détails supplémentaires (facultatif)",
+    "notePlaceholder": "Donnez-nous plus de détails sur le problème",
+    "submitRequest": "Envoyer la demande",
+    "submitting": "Envoi en cours…",
+    "requestSuccess": "Votre demande de retour a été envoyée. Le vendeur l'examinera sous peu.",
+    "requestError": "Échec de l'envoi de la demande de retour",
+    "close": "Fermer",
+    "noReturns": "Vous n'avez encore demandé aucun retour.",
+    "returnNumber": "Retour n°{id}",
+    "sellerNoteLabel": "Note du vendeur",
+    "viewLabel": "Voir l'étiquette de retour",
+    "status": {
+      "requested": "Demandé",
+      "approved": "Approuvé",
+      "rejected": "Refusé",
+      "labelSent": "Étiquette envoyée",
+      "received": "Reçu",
+      "refunded": "Remboursé"
+    }
   },
   "Search": {
     "title": "Résultats de Recherche",

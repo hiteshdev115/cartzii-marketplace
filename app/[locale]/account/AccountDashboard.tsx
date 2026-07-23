@@ -8,7 +8,7 @@ import { buildCountryPath } from '@/config/countries';
 import { mockOrders } from '@/lib/mockData';
 import { Breadcrumb } from '@/components/layout/Breadcrumb';
 import { formatPrice, formatDate } from '@/lib/utils';
-import { Package, Heart, MapPin, Settings, ShoppingBag, ArrowRight } from 'lucide-react';
+import { Package, Heart, MapPin, Settings, ShoppingBag, ArrowRight, RotateCcw } from 'lucide-react';
 import { useAuthStore } from '@/stores/authStore';
 import { fetchUserProfile } from '@/lib/api';
 import type { UserProfile } from '@/types';
@@ -50,6 +50,7 @@ export function AccountDashboard() {
 
   const quickLinks = [
     { icon: Package, label: t('orders'), href: '/account/orders', count: mockOrders.length },
+    { icon: RotateCcw, label: t('returns'), href: '/account/returns' },
     { icon: Heart, label: t('wishlist'), href: '/account/wishlist' },
     { icon: MapPin, label: t('addresses'), href: '/account/settings' },
     { icon: Settings, label: t('settings'), href: '/account/settings' },

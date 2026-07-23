@@ -18,6 +18,14 @@ export interface OrderItem {
   sellerName?: string;
   /** Present on order history items returned by `/orders/my-orders`. */
   orderItemId?: number;
+  /** Server-computed — never derive this client-side. True once the item has
+   *  been delivered, is within the 30-day return window, and has no active
+   *  (non-rejected) return request already open. */
+  returnEligible?: boolean;
+  /** ISO timestamp — when the return window closes for this item. */
+  returnWindowExpiresAt?: string | null;
+  /** The most recent return request's statusid for this item, if any. */
+  existingReturnStatusId?: number | null;
   variantInfo?: string;
   currencyCode: string;
 }
