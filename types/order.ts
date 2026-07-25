@@ -116,6 +116,7 @@ export interface OrderConfirmation {
   paymentMethod: string;
   stripePaymentId: string;
   estimatedDelivery?: string;
+  shipments?: OrderShipmentSummary[];
 }
 
 /** Shape of the `shippingAddress` block sent to `POST /api/v1/orders/place-order`. */
@@ -247,6 +248,22 @@ export interface OrderHistoryRow {
   items: OrderItem[];
   /** Tracking code for the shipment, if one has been created. */
   trackingNumber?: string | null;
+  /**
+   * Real per-seller shipment/tracking info (a multi-seller order can have
+   * one shipment per seller). Server-computed — use this to decide whether
+   * to show a "Track Order" link, not the legacy `trackingNumber` above.
+   */
+  shipments?: OrderShipmentSummary[];
+}
+
+export interface OrderShipmentSummary {
+  sellerId: number | null;
+  sellerName: string | null;
+  trackingCode: string | null;
+  currentStatus: string | null;
+  carrier: string | null;
+  estimatedDeliveryDate: string | null;
+  actualDeliveryDate: string | null;
 }
 
 export interface OrderHistoryPagination {

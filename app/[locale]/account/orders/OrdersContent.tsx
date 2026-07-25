@@ -1,13 +1,13 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useTranslations, useLocale } from 'next-intl';
 import { Package, RefreshCw } from 'lucide-react';
 import { Breadcrumb } from '@/components/layout/Breadcrumb';
 import { buildCountryPath } from '@/config/countries';
-import { fetchMyOrders } from '@/lib/api/orders';
+import { fetchMyOrders, subscribeToOrderUpdates } from '@/lib/api/orders';
 import { RequestReturnModal } from '@/components/returns/RequestReturnModal';
 import type {
   OrderHistoryPagination,
@@ -90,6 +90,28 @@ export function OrdersContent() {
   useEffect(() => {
     void load(page);
   }, [load, page]);
+
+  // Live refresh — when a webhook pings that one of this customer's orders
+  // changed, silently re-fetch the current page if that order is visible.
+  // Refs (not state) so the SSE subscription — opened once — always sees
+  // the latest orders/page without needing to be re-subscribed.
+  const ordersRef = useRef<OrderHistoryRow[]>([]);
+  const pageRef = useRef(1);
+  useEffect(() => {
+    ordersRef.current = orders;
+  }, [orders]);
+  useEffect(() => {
+    pageRef.current = page;
+  }, [page]);
+
+  useEffect(() => {
+    const unsubscribe = subscribeToOrderUpdates((ping) => {
+      if (ordersRef.current.some((o) => o.orderId === ping.orderId)) {
+        void load(pageRef.current);
+      }
+    });
+    return unsubscribe;
+  }, [load]);
 
   return (
     <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -256,15 +278,20 @@ function OrderCard({ order, locale, tCart, tCheckout, tAccount, onRequestReturn 
         <span>
           {order.itemCount} {order.itemCount === 1 ? tCart('item') : tCheckout('items')}
         </span>
-        <div className="flex items-center gap-3">
-          {order.trackingNumber && (
-            <Link
-              href={buildCountryPath(locale, `/track/${encodeURIComponent(order.trackingNumber)}`)}
-              className="font-medium text-primary hover:underline"
-            >
-              {tCheckout('trackOrder')}
-            </Link>
-          )}
+        <div className="flex flex-wrap items-center gap-3">
+          {(order.shipments ?? [])
+            .filter((s) => s.trackingCode)
+            .map((s) => (
+              <Link
+                key={s.trackingCode}
+                href={buildCountryPath(locale, `/track/${encodeURIComponent(s.trackingCode as string)}`)}
+                className="font-medium text-primary hover:underline"
+              >
+                {order.shipments && order.shipments.length > 1 && s.sellerName
+                  ? `${tCheckout('trackOrder')} · ${s.sellerName}`
+                  : tCheckout('trackOrder')}
+              </Link>
+            ))}
           <Link
             href={buildCountryPath(locale, `/order-confirmation/${order.orderNumber}`)}
             className="font-medium text-blue-600 hover:underline"

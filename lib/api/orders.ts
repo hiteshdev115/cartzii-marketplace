@@ -7,6 +7,8 @@ import type {
   TaxEstimate,
 } from '@/types/order';
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://staging-api.cartzii.com';
+
 interface ApiEnvelope<T> {
   success?: boolean | number;
   data?: T;
@@ -101,4 +103,77 @@ export async function fetchMyOrders(
     },
   );
   return unwrap(res);
+}
+
+interface OrdersStreamTicket {
+  token: string;
+}
+
+async function requestOrdersStreamToken(): Promise<string> {
+  const res = await api.post<ApiEnvelope<OrdersStreamTicket>>(
+    '/api/v1/orders/stream-token',
+    undefined,
+    { skipGuestToken: true },
+  );
+  const { token } = unwrap(res);
+  return token;
+}
+
+export interface OrderUpdatePing {
+  orderId: number;
+  orderNumber?: string;
+}
+
+/**
+ * Subscribes to live "one of your orders changed" pings. Browsers'
+ * EventSource can't send an Authorization header, so this first exchanges
+ * the customer's normal session for a short-lived, single-purpose ticket
+ * (via `requestOrdersStreamToken`) before opening the stream — the ticket
+ * only proves identity at connection time and expires quickly, so it's
+ * never treated as a general bearer token. On a dropped connection this
+ * reconnects with a fresh ticket rather than relying on EventSource's
+ * native retry, since the old ticket may have expired by then.
+ *
+ * Returns an unsubscribe function for the caller's effect cleanup.
+ */
+export function subscribeToOrderUpdates(onUpdate: (ping: OrderUpdatePing) => void): () => void {
+  let source: EventSource | null = null;
+  let stopped = false;
+  let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+
+  async function connect() {
+    if (stopped) return;
+
+    let token: string;
+    try {
+      token = await requestOrdersStreamToken();
+    } catch {
+      return; // not logged in, or the request failed — order history still works via the normal fetch
+    }
+    if (stopped) return;
+
+    source = new EventSource(`${API_BASE_URL}/api/v1/orders/stream?token=${encodeURIComponent(token)}`);
+    source.onmessage = (event) => {
+      try {
+        onUpdate(JSON.parse(event.data) as OrderUpdatePing);
+      } catch {
+        // malformed event — ignore
+      }
+    };
+    source.onerror = () => {
+      source?.close();
+      source = null;
+      if (!stopped) {
+        reconnectTimer = setTimeout(connect, 3000);
+      }
+    };
+  }
+
+  void connect();
+
+  return () => {
+    stopped = true;
+    if (reconnectTimer) clearTimeout(reconnectTimer);
+    source?.close();
+  };
 }

@@ -9,6 +9,8 @@
 
 import { api } from './api/client';
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://staging-api.cartzii.com';
+
 // ---- Request / response types ---------------------------------------------
 
 export interface RatesDestination {
@@ -189,4 +191,29 @@ export async function getTracking(trackingCode: string): Promise<TrackingResult>
       anyErr?.body?.message ?? (err instanceof Error ? err.message : 'Tracking information not found');
     return { ok: false, errorCode, message };
   }
+}
+
+/**
+ * Subscribes to live tracking updates via Server-Sent Events — the same
+ * public endpoint/security model as `getTracking` above (the tracking code
+ * itself is the capability, no auth needed). Each event carries the full
+ * updated `TrackingData`, so the caller can replace its state directly with
+ * no extra fetch. Returns an unsubscribe function for the caller's effect
+ * cleanup.
+ */
+export function subscribeToTracking(
+  trackingCode: string,
+  onUpdate: (data: TrackingData) => void,
+): () => void {
+  const source = new EventSource(
+    `${API_BASE_URL}/api/v1/shipping/tracking/${encodeURIComponent(trackingCode)}/stream`,
+  );
+  source.onmessage = (event) => {
+    try {
+      onUpdate(JSON.parse(event.data) as TrackingData);
+    } catch {
+      // malformed event — ignore, next update will self-correct
+    }
+  };
+  return () => source.close();
 }
