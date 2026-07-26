@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useLocale, useTranslations } from 'next-intl';
 import { ArrowLeft, Loader2, Package } from 'lucide-react';
 import { buildCountryPath } from '@/config/countries';
-import { getTracking } from '@/lib/shippingApi';
+import { getTracking, subscribeToTracking } from '@/lib/shippingApi';
 import { StatusBadge } from '@/components/shipping/StatusBadge';
 import { TrackingTimeline } from '@/components/shipping/TrackingTimeline';
 import { getCarrierDisplay } from '@/lib/shippingConstants';
@@ -56,6 +56,18 @@ function TrackingDetailContent({ trackingCode }: { trackingCode: string }) {
       cancelled = true;
     };
   }, [trackingCode, t]);
+
+  // Live updates — the initial fetch above still runs so the page has
+  // something to show immediately; this just keeps it fresh afterward
+  // without the customer needing to reload.
+  useEffect(() => {
+    const unsubscribe = subscribeToTracking(trackingCode, (data) => {
+      setTracking(data);
+      setError(null);
+      setLoading(false);
+    });
+    return unsubscribe;
+  }, [trackingCode]);
 
   const backHref = buildCountryPath(locale, '/track');
 

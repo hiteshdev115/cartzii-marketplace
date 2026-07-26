@@ -638,7 +638,7 @@ export const testimonials: Testimonial[] = [
     author: 'Jennifer L.',
     avatar: 'https://placehold.co/48x48/c2410c/ffffff.png?text=JL',
     rating: 5,
-    quote: 'Cartzii has become my go-to marketplace. The product quality is always excellent and shipping is incredibly fast. Highly recommend!',
+    quote: 'Cartziio has become my go-to marketplace. The product quality is always excellent and shipping is incredibly fast. Highly recommend!',
     location: 'New York, USA',
   },
   {
@@ -646,7 +646,7 @@ export const testimonials: Testimonial[] = [
     author: 'David C.',
     avatar: 'https://placehold.co/48x48/2563eb/ffffff.png?text=DC',
     rating: 5,
-    quote: 'I love the variety of products available on Cartzii. Found some unique items that I couldn\'t find anywhere else. Customer support is also top-notch.',
+    quote: 'I love the variety of products available on Cartziio. Found some unique items that I couldn\'t find anywhere else. Customer support is also top-notch.',
     location: 'Toronto, Canada',
   },
   {

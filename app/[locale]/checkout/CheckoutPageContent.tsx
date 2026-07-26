@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
-import { buildCountryPath, getCountryConfig } from '@/config/countries';
+import { buildCountryPath, getCountryConfig, getCountryFromLocale } from '@/config/countries';
 import { useCartStore } from '@/stores/cartStore';
 import { useAuthStore } from '@/stores/authStore';
 import { PaymentForm, type PaymentSubmitResult } from '@/components/checkout/PaymentForm';
@@ -48,6 +48,10 @@ export function CheckoutPageContent() {
   const [paymentComplete, setPaymentComplete] = useState(false);
   const [placedOrder, setPlacedOrder] = useState<{ orderNumber: string; orderId: number } | null>(null);
   const [taxState, setTaxState] = useState<TaxState>({ status: 'pending' });
+
+  // Reactive guest-checkout flag — reused pattern from AuthGuard/Header.
+  const authToken = useAuthStore((s) => s.token);
+  const isGuestCheckout = !authToken;
 
   // Pull selected shipping total from checkout store for Stripe amount calculation
   const getTotalShippingCents = useCheckoutStore((s) => s.getTotalShippingCents);
@@ -171,6 +175,7 @@ export function CheckoutPageContent() {
 
       const order = await placeOrder({
         paymentIntentId: paymentResult.paymentIntentId,
+        portal: getCountryFromLocale(locale) as 'us' | 'ca',
         currency: currency.toUpperCase(),
         countryCode: countryISO,
         shippingAddress: {
@@ -199,7 +204,8 @@ export function CheckoutPageContent() {
 
       setPlacedOrder(order);
       await useCartStore.getState().clearCart();
-      router.push(buildCountryPath(locale, `/order-confirmation/${order.orderNumber}`));
+      const confirmationQuery = order.accountCreated ? '?newAccount=1' : '';
+      router.push(buildCountryPath(locale, `/order-confirmation/${order.orderNumber}${confirmationQuery}`));
     } catch (cause) {
       let message = t('orderPlacementFailed');
       if (cause instanceof ApiError) {
@@ -220,19 +226,19 @@ export function CheckoutPageContent() {
       data-order-number={placedOrder?.orderNumber ?? ''}
       data-order-id={placedOrder?.orderId ?? ''}
     >
-      <div className="max-w-5xl mx-auto px-4 sm:px-6">
-        <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-4 sm:mb-6 lg:mb-8">
+      <div className="max-w-5xl mx-auto px-3 sm:px-6">
+        <h1 className="text-lg sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-3 sm:mb-6 lg:mb-8">
           {t('title')}
         </h1>
 
-        <div className="grid md:grid-cols-3 gap-4 md:gap-6 lg:gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4 md:gap-6 lg:gap-8">
           {/* ---- Left column ---- */}
-          <div className="md:col-span-2 space-y-4 order-2 md:order-1">
-            <section className="bg-white rounded-xl p-4 sm:p-5 shadow-sm border border-slate-200 space-y-4">
-              <div className="flex items-center justify-between gap-3">
-                <div>
+          <div className="md:col-span-2 space-y-3 sm:space-y-4 order-2 md:order-1">
+            <section className="bg-white rounded-xl p-3 sm:p-5 shadow-sm border border-slate-200 space-y-3 sm:space-y-4">
+              <div className="flex items-center justify-between gap-2">
+                <div className="min-w-0">
                   <h2 className="text-sm font-semibold text-slate-800">{t('shippingAddress')}</h2>
-                  <p className="text-xs text-slate-500 mt-0.5">{t('continueToPayment')}</p>
+                  <p className="text-xs text-slate-500 mt-0.5 truncate">{t('continueToPayment')}</p>
                 </div>
                 {shippingData && !editingShipping && !paymentComplete && (
                   <button
@@ -256,7 +262,7 @@ export function CheckoutPageContent() {
 
             {/* Shipping rate selection — appears after address is locked */}
             {shippingData && !editingShipping && !paymentComplete && (
-              <section className="bg-white rounded-xl p-4 sm:p-5 shadow-sm border border-slate-200">
+              <section className="bg-white rounded-xl p-3 sm:p-5 shadow-sm border border-slate-200">
                 <RateSelectorPanel
                   shippingAddress={shippingData}
                   onEligibilityChange={setRatesEligible}
@@ -265,7 +271,7 @@ export function CheckoutPageContent() {
             )}
 
             {/* Saved cards */}
-            <section className="bg-white rounded-xl p-4 shadow-sm">
+            <section className="bg-white rounded-xl p-3 sm:p-4 shadow-sm">
               <h2 className="text-sm font-semibold text-gray-700 mb-3">
                 {t('savedPaymentMethods')}
               </h2>
@@ -289,6 +295,13 @@ export function CheckoutPageContent() {
                   );
                 }}
               />
+            )}
+
+            {/* Silent-signup transparency note — guest checkout only */}
+            {isGuestCheckout && shippingData && !editingShipping && !paymentComplete && (
+              <p className="text-xs text-slate-500 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2">
+                {t('silentSignupNote')}
+              </p>
             )}
 
             {/* Stripe card form */}

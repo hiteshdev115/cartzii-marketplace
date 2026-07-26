@@ -18,6 +18,14 @@ export interface OrderItem {
   sellerName?: string;
   /** Present on order history items returned by `/orders/my-orders`. */
   orderItemId?: number;
+  /** Server-computed — never derive this client-side. True once the item has
+   *  been delivered, is within the 30-day return window, and has no active
+   *  (non-rejected) return request already open. */
+  returnEligible?: boolean;
+  /** ISO timestamp — when the return window closes for this item. */
+  returnWindowExpiresAt?: string | null;
+  /** The most recent return request's statusid for this item, if any. */
+  existingReturnStatusId?: number | null;
   variantInfo?: string;
   currencyCode: string;
 }
@@ -108,6 +116,7 @@ export interface OrderConfirmation {
   paymentMethod: string;
   stripePaymentId: string;
   estimatedDelivery?: string;
+  shipments?: OrderShipmentSummary[];
 }
 
 /** Shape of the `shippingAddress` block sent to `POST /api/v1/orders/place-order`. */
@@ -147,6 +156,13 @@ export interface PlaceOrderShippingSelection {
 export interface PlaceOrderPayload {
   /** Stripe PaymentIntent id returned by Stripe after the card is confirmed. */
   paymentIntentId: string;
+  /**
+   * Which storefront portal the order was placed from ('us' or 'ca').
+   * Derived from the URL locale, not sniffed from headers — used by the
+   * backend for portal/country validation and for building portal-correct
+   * links (e.g. the OTP login link) in transactional emails.
+   */
+  portal: 'us' | 'ca';
   currency: string;
   countryCode: string;
   shippingAddress: PlaceOrderShippingAddress;
@@ -232,6 +248,22 @@ export interface OrderHistoryRow {
   items: OrderItem[];
   /** Tracking code for the shipment, if one has been created. */
   trackingNumber?: string | null;
+  /**
+   * Real per-seller shipment/tracking info (a multi-seller order can have
+   * one shipment per seller). Server-computed — use this to decide whether
+   * to show a "Track Order" link, not the legacy `trackingNumber` above.
+   */
+  shipments?: OrderShipmentSummary[];
+}
+
+export interface OrderShipmentSummary {
+  sellerId: number | null;
+  sellerName: string | null;
+  trackingCode: string | null;
+  currentStatus: string | null;
+  carrier: string | null;
+  estimatedDeliveryDate: string | null;
+  actualDeliveryDate: string | null;
 }
 
 export interface OrderHistoryPagination {

@@ -6,7 +6,7 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: 'Deals' });
   const alternates = generateAlternates(process.env.NEXT_PUBLIC_BASE_URL || 'https://cartzii.com', '/deals', locale);
-  return { title: `${t('title')} - Cartzii`, alternates };
+  return { title: `${t('title')} - Cartziio`, alternates };
 }
 
 export default function DealsPage() {

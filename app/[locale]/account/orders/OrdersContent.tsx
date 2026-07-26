@@ -1,13 +1,14 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useTranslations, useLocale } from 'next-intl';
 import { Package, RefreshCw } from 'lucide-react';
 import { Breadcrumb } from '@/components/layout/Breadcrumb';
 import { buildCountryPath } from '@/config/countries';
-import { fetchMyOrders } from '@/lib/api/orders';
+import { fetchMyOrders, subscribeToOrderUpdates } from '@/lib/api/orders';
+import { RequestReturnModal } from '@/components/returns/RequestReturnModal';
 import type {
   OrderHistoryPagination,
   OrderHistoryRow,
@@ -70,6 +71,7 @@ export function OrdersContent() {
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [returnModalItem, setReturnModalItem] = useState<OrderItem | null>(null);
 
   const load = useCallback(async (targetPage: number) => {
     setLoading(true);
@@ -88,6 +90,28 @@ export function OrdersContent() {
   useEffect(() => {
     void load(page);
   }, [load, page]);
+
+  // Live refresh — when a webhook pings that one of this customer's orders
+  // changed, silently re-fetch the current page if that order is visible.
+  // Refs (not state) so the SSE subscription — opened once — always sees
+  // the latest orders/page without needing to be re-subscribed.
+  const ordersRef = useRef<OrderHistoryRow[]>([]);
+  const pageRef = useRef(1);
+  useEffect(() => {
+    ordersRef.current = orders;
+  }, [orders]);
+  useEffect(() => {
+    pageRef.current = page;
+  }, [page]);
+
+  useEffect(() => {
+    const unsubscribe = subscribeToOrderUpdates((ping) => {
+      if (ordersRef.current.some((o) => o.orderId === ping.orderId)) {
+        void load(pageRef.current);
+      }
+    });
+    return unsubscribe;
+  }, [load]);
 
   return (
     <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -137,6 +161,7 @@ export function OrdersContent() {
               tCart={tCart}
               tCheckout={tCheckout}
               tAccount={t}
+              onRequestReturn={setReturnModalItem}
             />
           ))}
 
@@ -165,6 +190,17 @@ export function OrdersContent() {
           )}
         </div>
       )}
+
+      <RequestReturnModal
+        isOpen={returnModalItem != null}
+        onClose={() => setReturnModalItem(null)}
+        onSuccess={() => {
+          setReturnModalItem(null);
+          void load(page);
+        }}
+        orderItemId={returnModalItem?.orderItemId ?? 0}
+        productName={returnModalItem?.productName ?? ''}
+      />
     </main>
   );
 }
@@ -175,9 +211,10 @@ interface OrderCardProps {
   tCart: (key: string) => string;
   tCheckout: (key: string) => string;
   tAccount: (key: string) => string;
+  onRequestReturn: (item: OrderItem) => void;
 }
 
-function OrderCard({ order, locale, tCart, tCheckout, tAccount }: OrderCardProps) {
+function OrderCard({ order, locale, tCart, tCheckout, tAccount, onRequestReturn }: OrderCardProps) {
   const statusKey = order.orderStatusId ? ORDER_STATUS_KEY[order.orderStatusId] : undefined;
   const statusLabel = statusKey ? tAccount(`orderStatus.${statusKey}`) : undefined;
   const sellerGroups =
@@ -225,12 +262,13 @@ function OrderCard({ order, locale, tCart, tCheckout, tAccount }: OrderCardProps
               locale={locale}
               tCart={tCart}
               tCheckout={tCheckout}
+              onRequestReturn={onRequestReturn}
             />
           ))
         ) : (
           <div className="p-4 space-y-3">
             {order.items.map((item) => (
-              <ItemRow key={item.productId} item={item} locale={locale} />
+              <ItemRow key={item.productId} item={item} locale={locale} onRequestReturn={onRequestReturn} />
             ))}
           </div>
         )}
@@ -240,15 +278,20 @@ function OrderCard({ order, locale, tCart, tCheckout, tAccount }: OrderCardProps
         <span>
           {order.itemCount} {order.itemCount === 1 ? tCart('item') : tCheckout('items')}
         </span>
-        <div className="flex items-center gap-3">
-          {order.trackingNumber && (
-            <Link
-              href={buildCountryPath(locale, `/track/${encodeURIComponent(order.trackingNumber)}`)}
-              className="font-medium text-primary hover:underline"
-            >
-              {tCheckout('trackOrder')}
-            </Link>
-          )}
+        <div className="flex flex-wrap items-center gap-3">
+          {(order.shipments ?? [])
+            .filter((s) => s.trackingCode)
+            .map((s) => (
+              <Link
+                key={s.trackingCode}
+                href={buildCountryPath(locale, `/track/${encodeURIComponent(s.trackingCode as string)}`)}
+                className="font-medium text-primary hover:underline"
+              >
+                {order.shipments && order.shipments.length > 1 && s.sellerName
+                  ? `${tCheckout('trackOrder')} · ${s.sellerName}`
+                  : tCheckout('trackOrder')}
+              </Link>
+            ))}
           <Link
             href={buildCountryPath(locale, `/order-confirmation/${order.orderNumber}`)}
             className="font-medium text-blue-600 hover:underline"
@@ -268,9 +311,10 @@ interface SellerBlockProps {
   locale: string;
   tCart: (key: string) => string;
   tCheckout: (key: string) => string;
+  onRequestReturn: (item: OrderItem) => void;
 }
 
-function SellerBlock({ seller, flatItems, currency, locale, tCart, tCheckout }: SellerBlockProps) {
+function SellerBlock({ seller, flatItems, currency, locale, tCart, tCheckout, onRequestReturn }: SellerBlockProps) {
   return (
     <div className="p-4">
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
@@ -289,7 +333,14 @@ function SellerBlock({ seller, flatItems, currency, locale, tCart, tCheckout }: 
         {(seller.items ?? []).map((item) => {
           const flat = flatItems.find((i) => i.productId === item.productId);
           const merged: OrderItem = { ...flat, ...item };
-          return <ItemRow key={`${seller.sellerId}-${merged.productId}`} item={merged} locale={locale} />;
+          return (
+            <ItemRow
+              key={`${seller.sellerId}-${merged.productId}`}
+              item={merged}
+              locale={locale}
+              onRequestReturn={onRequestReturn}
+            />
+          );
         })}
       </div>
 
@@ -317,7 +368,16 @@ function SellerBlock({ seller, flatItems, currency, locale, tCart, tCheckout }: 
   );
 }
 
-function ItemRow({ item, locale }: { item: OrderItem; locale: string }) {
+function ItemRow({
+  item,
+  locale,
+  onRequestReturn,
+}: {
+  item: OrderItem;
+  locale: string;
+  onRequestReturn: (item: OrderItem) => void;
+}) {
+  const t = useTranslations('Returns');
   const lineTotal = typeof item.finalPrice === 'number' ? item.finalPrice : item.totalPrice;
   const [imgSrc, setImgSrc] = useState(resolveImageUrl(item.imageUrl));
   return (
@@ -339,6 +399,15 @@ function ItemRow({ item, locale }: { item: OrderItem; locale: string }) {
           Qty: {item.quantity}
           {item.variantInfo ? ` · ${item.variantInfo}` : ''}
         </p>
+        {item.returnEligible && item.orderItemId != null && (
+          <button
+            type="button"
+            onClick={() => onRequestReturn(item)}
+            className="mt-1 text-xs font-medium text-primary hover:underline"
+          >
+            {t('requestReturn')}
+          </button>
+        )}
       </div>
       <p className="text-sm font-semibold text-slate-900 whitespace-nowrap">
         {formatCurrency(centsToAmount(lineTotal), item.currencyCode, locale)}

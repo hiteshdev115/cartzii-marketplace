@@ -91,7 +91,7 @@ export function OrderSummary({ taxState = { status: 'pending' } }: OrderSummaryP
       <button
         type="button"
         onClick={() => setExpanded((v) => !v)}
-        className="w-full flex items-center justify-between p-4 md:hidden"
+        className="w-full flex items-center justify-between p-3 sm:p-4 md:hidden"
         aria-expanded={expanded}
       >
         <span className="text-sm font-semibold text-slate-800">
@@ -106,21 +106,21 @@ export function OrderSummary({ taxState = { status: 'pending' } }: OrderSummaryP
 
       {/* Content: always visible on md+, collapsible on mobile */}
       <div className={cn('md:block', expanded ? 'block' : 'hidden')}>
-        <div className="p-4 pt-0 md:p-6">
+        <div className="p-3 pt-0 sm:p-4 sm:pt-0 md:p-6">
           {/* Desktop heading */}
           <h2 className="hidden md:block text-lg font-semibold mb-4">{t('orderSummary')}</h2>
 
-          <ul className="space-y-3 mb-4">
+          <ul className="space-y-2.5 sm:space-y-3 mb-4">
             {items.map((item) => (
-              <li key={item.cartId ?? `${item.product.id}-${item.selectedColor}-${item.selectedSize}`} className="flex gap-3 items-center">
-                <div className="relative w-12 h-12 sm:w-14 sm:h-14 rounded-lg overflow-hidden shrink-0">
+              <li key={item.cartId ?? `${item.product.id}-${item.selectedColor}-${item.selectedSize}`} className="flex gap-2.5 sm:gap-3 items-center">
+                <div className="relative w-10 h-10 sm:w-14 sm:h-14 rounded-lg overflow-hidden shrink-0">
                   <Image src={item.product.images[0]} alt={item.product.name} fill className="object-cover" sizes="56px" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">{item.product.name}</p>
+                  <p className="text-xs sm:text-sm font-medium truncate">{item.product.name}</p>
                   <p className="text-xs text-slate-500">Qty: {item.quantity}</p>
                 </div>
-                <p className="text-sm font-semibold shrink-0 whitespace-nowrap">{formatPrice((item.product.salePrice || item.product.price) * item.quantity, locale)}</p>
+                <p className="text-xs sm:text-sm font-semibold shrink-0 whitespace-nowrap">{formatPrice((item.product.salePrice || item.product.price) * item.quantity, locale)}</p>
               </li>
             ))}
           </ul>
