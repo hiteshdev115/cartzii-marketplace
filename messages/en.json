@@ -416,14 +416,6 @@
     "updateProfile": "Update Profile",
     "profileUpdated": "Profile updated successfully!",
     "passwordChanged": "Password changed successfully!",
-    "orderStatus": {
-      "pending": "Pending",
-      "processing": "Processing",
-      "shipped": "Shipped",
-      "delivered": "Delivered",
-      "cancelled": "Cancelled",
-      "returned": "Returned"
-    },
     "noOrders": "You haven't placed any orders yet.",
     "refresh": "Refresh",
     "viewDetails": "View details",

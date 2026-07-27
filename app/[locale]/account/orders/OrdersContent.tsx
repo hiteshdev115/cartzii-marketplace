@@ -9,6 +9,7 @@ import { Breadcrumb } from '@/components/layout/Breadcrumb';
 import { buildCountryPath } from '@/config/countries';
 import { fetchMyOrders, subscribeToOrderUpdates } from '@/lib/api/orders';
 import { RequestReturnModal } from '@/components/returns/RequestReturnModal';
+import { getOrderStatusBadge } from '@/lib/shippingConstants';
 import type {
   OrderHistoryPagination,
   OrderHistoryRow,
@@ -48,15 +49,6 @@ function formatDateTime(value: string, locale: string): string {
   if (Number.isNaN(d.getTime())) return value;
   return new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeStyle: 'short' }).format(d);
 }
-
-const ORDER_STATUS_KEY: Record<number, string> = {
-  1: 'pending',
-  2: 'processing',
-  3: 'shipped',
-  4: 'delivered',
-  5: 'cancelled',
-  6: 'returned',
-};
 
 const PAGE_SIZE = 20;
 
@@ -216,8 +208,7 @@ interface OrderCardProps {
 
 function OrderCard({ order, locale, tCart, tCheckout, tAccount, onRequestReturn }: OrderCardProps) {
   const tReturns = useTranslations('Returns');
-  const statusKey = order.orderStatusId ? ORDER_STATUS_KEY[order.orderStatusId] : undefined;
-  const statusLabel = statusKey ? tAccount(`orderStatus.${statusKey}`) : undefined;
+  const statusBadge = getOrderStatusBadge(order.shipments);
   const sellerGroups =
     order.sellerBreakdown && order.sellerBreakdown.length > 0 ? order.sellerBreakdown : null;
   const eligibleReturnItems = order.items.filter(
@@ -241,11 +232,9 @@ function OrderCard({ order, locale, tCart, tCheckout, tAccount, onRequestReturn 
             {formatCurrency(centsToAmount(order.totalAmount), order.currency, locale)}
           </p>
           <div className="mt-1 flex items-center justify-end gap-2 text-xs">
-            {statusLabel && (
-              <span className="rounded-full bg-blue-100 px-2 py-0.5 text-blue-700">
-                {statusLabel}
-              </span>
-            )}
+            <span className={`rounded-full px-2 py-0.5 ${statusBadge.className}`}>
+              {statusBadge.label}
+            </span>
             {order.paymentStatus && (
               <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-emerald-700">
                 {order.paymentStatus}

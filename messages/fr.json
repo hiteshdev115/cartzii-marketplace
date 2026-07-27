@@ -416,14 +416,6 @@
     "updateProfile": "Mettre à Jour le Profil",
     "profileUpdated": "Profil mis à jour avec succès !",
     "passwordChanged": "Mot de passe changé avec succès !",
-    "orderStatus": {
-      "pending": "En Attente",
-      "processing": "En Traitement",
-      "shipped": "Expédié",
-      "delivered": "Livré",
-      "cancelled": "Annulé",
-      "returned": "Retourné"
-    },
     "noOrders": "Vous n'avez pas encore passé de commande.",
     "refresh": "Actualiser",
     "viewDetails": "Voir les détails",
