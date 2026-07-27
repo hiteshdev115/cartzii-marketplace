@@ -227,20 +227,15 @@ function OrderCard({ order, locale, tCart, tCheckout, tAccount, onRequestReturn 
           </Link>
           <p className="text-xs text-slate-500">{formatDateTime(order.orderDate, locale)}</p>
         </div>
-        <div className="text-right">
-          <p className="text-base font-bold text-slate-900">
-            {formatCurrency(centsToAmount(order.totalAmount), order.currency, locale)}
-          </p>
-          <div className="mt-1 flex items-center justify-end gap-2 text-xs">
-            <span className={`rounded-full px-2 py-0.5 ${statusBadge.className}`}>
-              {statusBadge.label}
+        <div className="flex items-center gap-2 text-xs">
+          <span className={`rounded-full px-2 py-0.5 ${statusBadge.className}`}>
+            {statusBadge.label}
+          </span>
+          {order.paymentStatus && (
+            <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-emerald-700">
+              {order.paymentStatus}
             </span>
-            {order.paymentStatus && (
-              <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-emerald-700">
-                {order.paymentStatus}
-              </span>
-            )}
-          </div>
+          )}
         </div>
       </div>
 
