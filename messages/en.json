@@ -39,6 +39,7 @@
     "signIn": "Sign In",
     "signOut": "Sign Out",
     "orders": "Orders",
+    "trackOrder": "Track Order",
     "reviews": "Reviews",
     "accountSettings": "Account Settings",
     "menu": "Menu"
@@ -621,6 +622,7 @@
     "errorTitle": "Could not retrieve tracking information",
     "tryAnotherCode": "Try a different code",
     "backToLookup": "Back to tracking lookup",
+    "backToOrders": "Back to order history",
     "orderNumber": "Order",
     "carrier": "Carrier",
     "trackingCode": "Tracking Code",

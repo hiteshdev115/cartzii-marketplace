@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import { ArrowLeft, Loader2, Package } from 'lucide-react';
 import { buildCountryPath } from '@/config/countries';
@@ -28,6 +29,8 @@ function formatDate(iso?: string | null): string {
 function TrackingDetailContent({ trackingCode }: { trackingCode: string }) {
   const t = useTranslations('Tracking');
   const locale = useLocale();
+  const searchParams = useSearchParams();
+  const cameFromOrders = searchParams.get('from') === 'orders';
 
   const [tracking, setTracking] = useState<TrackingData | null>(null);
   const [error, setError] = useState<{ message: string; notFound?: boolean } | null>(null);
@@ -69,7 +72,10 @@ function TrackingDetailContent({ trackingCode }: { trackingCode: string }) {
     return unsubscribe;
   }, [trackingCode]);
 
-  const backHref = buildCountryPath(locale, '/track');
+  const backHref = cameFromOrders
+    ? buildCountryPath(locale, '/account/orders')
+    : buildCountryPath(locale, '/track');
+  const backLabel = cameFromOrders ? t('backToOrders') : t('backToLookup');
 
   if (loading) {
     return (
@@ -108,7 +114,7 @@ function TrackingDetailContent({ trackingCode }: { trackingCode: string }) {
         className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-600 hover:text-slate-900"
       >
         <ArrowLeft className="h-4 w-4" />
-        {t('backToLookup')}
+        {backLabel}
       </Link>
 
       {/* Header card */}

@@ -39,6 +39,7 @@
     "signIn": "Se Connecter",
     "signOut": "Se Déconnecter",
     "orders": "Commandes",
+    "trackOrder": "Suivre la Commande",
     "reviews": "Avis",
     "accountSettings": "Paramètres du Compte",
     "menu": "Menu"
@@ -621,6 +622,7 @@
     "errorTitle": "Impossible de récupérer les informations de suivi",
     "tryAnotherCode": "Essayer un autre code",
     "backToLookup": "Retour à la recherche de suivi",
+    "backToOrders": "Retour à l'historique des commandes",
     "orderNumber": "Commande",
     "carrier": "Transporteur",
     "trackingCode": "Code de suivi",

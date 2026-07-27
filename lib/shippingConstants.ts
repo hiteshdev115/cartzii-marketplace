@@ -43,7 +43,7 @@ export const STATUS_BADGE_MAP: Record<
   { label: string; className: string }
 > = {
   label_created: {
-    label: 'Label Created',
+    label: 'Processing',
     className: 'bg-slate-100 text-slate-700',
   },
   pre_transit: {

@@ -215,10 +215,14 @@ interface OrderCardProps {
 }
 
 function OrderCard({ order, locale, tCart, tCheckout, tAccount, onRequestReturn }: OrderCardProps) {
+  const tReturns = useTranslations('Returns');
   const statusKey = order.orderStatusId ? ORDER_STATUS_KEY[order.orderStatusId] : undefined;
   const statusLabel = statusKey ? tAccount(`orderStatus.${statusKey}`) : undefined;
   const sellerGroups =
     order.sellerBreakdown && order.sellerBreakdown.length > 0 ? order.sellerBreakdown : null;
+  const eligibleReturnItems = order.items.filter(
+    (item) => item.returnEligible && item.orderItemId != null,
+  );
 
   return (
     <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
@@ -262,13 +266,12 @@ function OrderCard({ order, locale, tCart, tCheckout, tAccount, onRequestReturn 
               locale={locale}
               tCart={tCart}
               tCheckout={tCheckout}
-              onRequestReturn={onRequestReturn}
             />
           ))
         ) : (
           <div className="p-4 space-y-3">
             {order.items.map((item) => (
-              <ItemRow key={item.productId} item={item} locale={locale} onRequestReturn={onRequestReturn} />
+              <ItemRow key={item.productId} item={item} locale={locale} />
             ))}
           </div>
         )}
@@ -278,23 +281,35 @@ function OrderCard({ order, locale, tCart, tCheckout, tAccount, onRequestReturn 
         <span>
           {order.itemCount} {order.itemCount === 1 ? tCart('item') : tCheckout('items')}
         </span>
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2">
           {(order.shipments ?? [])
             .filter((s) => s.trackingCode)
             .map((s) => (
               <Link
                 key={s.trackingCode}
-                href={buildCountryPath(locale, `/track/${encodeURIComponent(s.trackingCode as string)}`)}
-                className="font-medium text-primary hover:underline"
+                href={`${buildCountryPath(locale, `/track/${encodeURIComponent(s.trackingCode as string)}`)}?from=orders`}
+                className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-white hover:bg-primary/90 transition-colors"
               >
                 {order.shipments && order.shipments.length > 1 && s.sellerName
                   ? `${tCheckout('trackOrder')} · ${s.sellerName}`
                   : tCheckout('trackOrder')}
               </Link>
             ))}
+          {eligibleReturnItems.map((item) => (
+            <button
+              key={item.orderItemId}
+              type="button"
+              onClick={() => onRequestReturn(item)}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-primary/40 bg-white px-3 py-1.5 text-xs font-medium text-primary hover:bg-primary/5 transition-colors"
+            >
+              {eligibleReturnItems.length > 1
+                ? `${tReturns('requestReturn')} · ${item.productName}`
+                : tReturns('requestReturn')}
+            </button>
+          ))}
           <Link
             href={buildCountryPath(locale, `/order-confirmation/${order.orderNumber}`)}
-            className="font-medium text-blue-600 hover:underline"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors"
           >
             {tAccount('viewDetails')}
           </Link>
@@ -311,10 +326,9 @@ interface SellerBlockProps {
   locale: string;
   tCart: (key: string) => string;
   tCheckout: (key: string) => string;
-  onRequestReturn: (item: OrderItem) => void;
 }
 
-function SellerBlock({ seller, flatItems, currency, locale, tCart, tCheckout, onRequestReturn }: SellerBlockProps) {
+function SellerBlock({ seller, flatItems, currency, locale, tCart, tCheckout }: SellerBlockProps) {
   return (
     <div className="p-4">
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
@@ -338,7 +352,6 @@ function SellerBlock({ seller, flatItems, currency, locale, tCart, tCheckout, on
               key={`${seller.sellerId}-${merged.productId}`}
               item={merged}
               locale={locale}
-              onRequestReturn={onRequestReturn}
             />
           );
         })}
@@ -371,13 +384,10 @@ function SellerBlock({ seller, flatItems, currency, locale, tCart, tCheckout, on
 function ItemRow({
   item,
   locale,
-  onRequestReturn,
 }: {
   item: OrderItem;
   locale: string;
-  onRequestReturn: (item: OrderItem) => void;
 }) {
-  const t = useTranslations('Returns');
   const lineTotal = typeof item.finalPrice === 'number' ? item.finalPrice : item.totalPrice;
   const [imgSrc, setImgSrc] = useState(resolveImageUrl(item.imageUrl));
   return (
@@ -399,15 +409,6 @@ function ItemRow({
           Qty: {item.quantity}
           {item.variantInfo ? ` · ${item.variantInfo}` : ''}
         </p>
-        {item.returnEligible && item.orderItemId != null && (
-          <button
-            type="button"
-            onClick={() => onRequestReturn(item)}
-            className="mt-1 text-xs font-medium text-primary hover:underline"
-          >
-            {t('requestReturn')}
-          </button>
-        )}
       </div>
       <p className="text-sm font-semibold text-slate-900 whitespace-nowrap">
         {formatCurrency(centsToAmount(lineTotal), item.currencyCode, locale)}

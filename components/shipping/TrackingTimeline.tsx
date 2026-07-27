@@ -2,7 +2,12 @@
 
 import { CheckCircle2, Circle } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { STATUS_BADGE_MAP, type ShipmentStatus } from '@/lib/shippingConstants';
 import type { TrackingEvent } from '@/lib/shippingApi';
+
+function eventStatusLabel(status: string): string {
+  return STATUS_BADGE_MAP[status as ShipmentStatus]?.label ?? status.replace(/_/g, ' ');
+}
 
 interface TrackingTimelineProps {
   events: TrackingEvent[];
@@ -40,17 +45,17 @@ export function TrackingTimeline({ events, currentStatus }: TrackingTimelineProp
               <span
                 className={cn(
                   'flex h-7 w-7 items-center justify-center rounded-full border-2',
-                  isFirst
-                    ? 'border-primary bg-primary text-white'
-                    : isDone
-                      ? 'border-emerald-400 bg-emerald-50 text-emerald-600'
+                  isDone
+                    ? 'border-emerald-400 bg-emerald-50 text-emerald-600'
+                    : isFirst
+                      ? 'border-primary bg-primary text-white'
                       : 'border-slate-300 bg-white text-slate-400',
                 )}
               >
-                {isFirst ? (
-                  <Circle className="h-3.5 w-3.5 fill-white" />
-                ) : isDone ? (
+                {isDone ? (
                   <CheckCircle2 className="h-3.5 w-3.5" />
+                ) : isFirst ? (
+                  <Circle className="h-3.5 w-3.5 fill-white" />
                 ) : (
                   <Circle className="h-3.5 w-3.5" />
                 )}
@@ -63,7 +68,7 @@ export function TrackingTimeline({ events, currentStatus }: TrackingTimelineProp
             {/* Content */}
             <div className="flex-1 pt-0.5">
               <p className="text-sm font-medium text-slate-900 capitalize">
-                {event.status.replace(/_/g, ' ')}
+                {eventStatusLabel(event.status)}
               </p>
               <p className="text-sm text-slate-600">{event.description}</p>
               {event.location && (
