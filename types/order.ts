@@ -123,6 +123,8 @@ export interface OrderConfirmation {
   stripePaymentId: string;
   estimatedDelivery?: string;
   shipments?: OrderShipmentSummary[];
+  /** Server-computed — true only while the order hasn't shipped yet. */
+  cancelEligible?: boolean;
 }
 
 /** Shape of the `shippingAddress` block sent to `POST /api/v1/orders/place-order`. */
@@ -247,6 +249,8 @@ export interface OrderHistoryRow {
   paymentStatusId?: number;
   paymentStatus?: string;
   stripePaymentId?: string;
+  /** Server-computed — true only while the order hasn't shipped yet. */
+  cancelEligible?: boolean;
   shippingAddress?: OrderHistoryShippingAddress;
   itemCount: number;
   sellerCount?: number;

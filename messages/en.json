@@ -465,6 +465,17 @@
     "phoneError": "Phone number must be 10–15 characters",
     "genderError": "Gender must be male, female, or other"
   },
+  "Orders": {
+    "cancelOrder": "Cancel Order",
+    "cancelOrderTitle": "Cancel this order?",
+    "cancelOrderConfirm": "Are you sure you want to cancel order {orderNumber}? You'll be refunded in full since it hasn't shipped yet.",
+    "keepOrder": "Keep Order",
+    "confirmCancel": "Yes, Cancel Order",
+    "cancelling": "Cancelling…",
+    "cancelError": "Failed to cancel order",
+    "cancelSuccess": "Your order has been cancelled and refunded.",
+    "close": "Close"
+  },
   "Returns": {
     "requestReturn": "Request Return",
     "requestReturnTitle": "Request a Return",

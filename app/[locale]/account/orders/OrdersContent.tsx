@@ -9,6 +9,7 @@ import { Breadcrumb } from '@/components/layout/Breadcrumb';
 import { buildCountryPath } from '@/config/countries';
 import { fetchMyOrders, subscribeToOrderUpdates } from '@/lib/api/orders';
 import { RequestReturnModal } from '@/components/returns/RequestReturnModal';
+import { CancelOrderModal } from '@/components/orders/CancelOrderModal';
 import { getOrderStatusBadge } from '@/lib/shippingConstants';
 import { getReturnStage } from '@/lib/returnConstants';
 import type {
@@ -65,6 +66,7 @@ export function OrdersContent() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [returnModalItem, setReturnModalItem] = useState<OrderItem | null>(null);
+  const [cancelOrderNumber, setCancelOrderNumber] = useState<string | null>(null);
 
   const load = useCallback(async (targetPage: number) => {
     setLoading(true);
@@ -155,6 +157,7 @@ export function OrdersContent() {
               tCheckout={tCheckout}
               tAccount={t}
               onRequestReturn={setReturnModalItem}
+              onCancelOrder={setCancelOrderNumber}
             />
           ))}
 
@@ -194,6 +197,16 @@ export function OrdersContent() {
         orderItemId={returnModalItem?.orderItemId ?? 0}
         productName={returnModalItem?.productName ?? ''}
       />
+
+      <CancelOrderModal
+        isOpen={cancelOrderNumber != null}
+        onClose={() => setCancelOrderNumber(null)}
+        onSuccess={() => {
+          setCancelOrderNumber(null);
+          void load(page);
+        }}
+        orderNumber={cancelOrderNumber ?? ''}
+      />
     </main>
   );
 }
@@ -205,10 +218,12 @@ interface OrderCardProps {
   tCheckout: (key: string) => string;
   tAccount: (key: string) => string;
   onRequestReturn: (item: OrderItem) => void;
+  onCancelOrder: (orderNumber: string) => void;
 }
 
-function OrderCard({ order, locale, tCart, tCheckout, tAccount, onRequestReturn }: OrderCardProps) {
+function OrderCard({ order, locale, tCart, tCheckout, tAccount, onRequestReturn, onCancelOrder }: OrderCardProps) {
   const tReturns = useTranslations('Returns');
+  const tOrders = useTranslations('Orders');
   const statusBadge = getOrderStatusBadge(order.shipments);
   const sellerGroups =
     order.sellerBreakdown && order.sellerBreakdown.length > 0 ? order.sellerBreakdown : null;
@@ -314,6 +329,15 @@ function OrderCard({ order, locale, tCart, tCheckout, tAccount, onRequestReturn 
           >
             {tAccount('viewDetails')}
           </Link>
+          {order.cancelEligible && (
+            <button
+              type="button"
+              onClick={() => onCancelOrder(order.orderNumber)}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-rose-200 bg-white px-3 py-1.5 text-xs font-medium text-rose-600 hover:bg-rose-50 transition-colors"
+            >
+              {tOrders('cancelOrder')}
+            </button>
+          )}
         </div>
       </div>
     </div>

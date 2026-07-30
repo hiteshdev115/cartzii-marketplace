@@ -465,6 +465,17 @@
     "phoneError": "Le numéro doit comporter entre 10 et 15 caractères",
     "genderError": "Le genre doit être homme, femme ou autre"
   },
+  "Orders": {
+    "cancelOrder": "Annuler la commande",
+    "cancelOrderTitle": "Annuler cette commande ?",
+    "cancelOrderConfirm": "Voulez-vous vraiment annuler la commande {orderNumber} ? Vous serez remboursé intégralement puisqu'elle n'a pas encore été expédiée.",
+    "keepOrder": "Garder la commande",
+    "confirmCancel": "Oui, annuler la commande",
+    "cancelling": "Annulation…",
+    "cancelError": "Échec de l'annulation de la commande",
+    "cancelSuccess": "Votre commande a été annulée et remboursée.",
+    "close": "Fermer"
+  },
   "Returns": {
     "requestReturn": "Demander un retour",
     "requestReturnTitle": "Demander un retour",
