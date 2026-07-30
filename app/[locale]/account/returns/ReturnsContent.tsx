@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { useTranslations, useLocale } from 'next-intl';
 import { Package, RefreshCw, ExternalLink } from 'lucide-react';
 import { Breadcrumb } from '@/components/layout/Breadcrumb';
@@ -112,7 +113,12 @@ export function ReturnsContent() {
               <div key={ret.returnId} className="rounded-2xl border border-slate-200 bg-white p-4">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
-                    <p className="text-sm font-semibold text-slate-900">{t('returnNumber', { id: ret.returnId })}</p>
+                    <Link
+                      href={buildCountryPath(locale, `/account/returns/${ret.returnId}`)}
+                      className="text-sm font-semibold text-slate-900 hover:underline"
+                    >
+                      {t('returnNumber', { id: ret.returnId })}
+                    </Link>
                     <p className="text-xs text-slate-500">{ret.reason}</p>
                     <p className="text-xs text-slate-400 mt-1">{formatDate(ret.requestedAt, locale)}</p>
                   </div>

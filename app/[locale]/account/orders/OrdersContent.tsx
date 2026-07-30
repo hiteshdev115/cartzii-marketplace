@@ -10,6 +10,7 @@ import { buildCountryPath } from '@/config/countries';
 import { fetchMyOrders, subscribeToOrderUpdates } from '@/lib/api/orders';
 import { RequestReturnModal } from '@/components/returns/RequestReturnModal';
 import { getOrderStatusBadge } from '@/lib/shippingConstants';
+import { getReturnStage } from '@/lib/returnConstants';
 import type {
   OrderHistoryPagination,
   OrderHistoryRow,
@@ -214,6 +215,9 @@ function OrderCard({ order, locale, tCart, tCheckout, tAccount, onRequestReturn 
   const eligibleReturnItems = order.items.filter(
     (item) => item.returnEligible && item.orderItemId != null,
   );
+  const activeReturnItems = order.items.filter(
+    (item) => item.existingReturnId != null,
+  );
 
   return (
     <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
@@ -279,6 +283,19 @@ function OrderCard({ order, locale, tCart, tCheckout, tAccount, onRequestReturn 
                   : tCheckout('trackOrder')}
               </Link>
             ))}
+          {activeReturnItems.map((item) => {
+            const stage = getReturnStage(item.existingReturnStatusId, item.existingReturnShipmentStatus);
+            const label = `${tReturns('returnButtonPrefix')}: ${tReturns(`stage.${stage.key}`)}`;
+            return (
+              <Link
+                key={`return-${item.existingReturnId}`}
+                href={buildCountryPath(locale, `/account/returns/${item.existingReturnId}`)}
+                className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${stage.className}`}
+              >
+                {activeReturnItems.length > 1 ? `${label} · ${item.productName}` : label}
+              </Link>
+            );
+          })}
           {eligibleReturnItems.map((item) => (
             <button
               key={item.orderItemId}

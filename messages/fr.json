@@ -489,7 +489,21 @@
       "labelSent": "Étiquette envoyée",
       "received": "Reçu",
       "refunded": "Remboursé"
-    }
+    },
+    "stage": {
+      "started": "Retour démarré",
+      "dropoff": "Dépôt effectué",
+      "refundInitiated": "Remboursement initié",
+      "refunded": "Remboursé",
+      "rejected": "Retour refusé"
+    },
+    "returnButtonPrefix": "Retour",
+    "trackPackage": "Suivre le colis",
+    "requestedOn": "Demandé le",
+    "refundAmountLabel": "Montant du remboursement",
+    "orderLabel": "Commande",
+    "returnDetailTitle": "Retour n°{id}",
+    "rejectionNoticeTitle": "Ce retour a été refusé"
   },
   "Search": {
     "title": "Résultats de Recherche",
@@ -615,6 +629,7 @@
     "tryAnotherCode": "Essayer un autre code",
     "backToLookup": "Retour à la recherche de suivi",
     "backToOrders": "Retour à l'historique des commandes",
+    "backToReturn": "Retour aux détails du retour",
     "orderNumber": "Commande",
     "carrier": "Transporteur",
     "trackingCode": "Code de suivi",

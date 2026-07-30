@@ -31,6 +31,7 @@ function TrackingDetailContent({ trackingCode }: { trackingCode: string }) {
   const locale = useLocale();
   const searchParams = useSearchParams();
   const cameFromOrders = searchParams.get('from') === 'orders';
+  const returnId = searchParams.get('from') === 'return' ? searchParams.get('returnId') : null;
 
   const [tracking, setTracking] = useState<TrackingData | null>(null);
   const [error, setError] = useState<{ message: string; notFound?: boolean } | null>(null);
@@ -72,10 +73,12 @@ function TrackingDetailContent({ trackingCode }: { trackingCode: string }) {
     return unsubscribe;
   }, [trackingCode]);
 
-  const backHref = cameFromOrders
-    ? buildCountryPath(locale, '/account/orders')
-    : buildCountryPath(locale, '/track');
-  const backLabel = cameFromOrders ? t('backToOrders') : t('backToLookup');
+  const backHref = returnId
+    ? buildCountryPath(locale, `/account/returns/${returnId}`)
+    : cameFromOrders
+      ? buildCountryPath(locale, '/account/orders')
+      : buildCountryPath(locale, '/track');
+  const backLabel = returnId ? t('backToReturn') : cameFromOrders ? t('backToOrders') : t('backToLookup');
 
   if (loading) {
     return (

@@ -489,7 +489,21 @@
       "labelSent": "Label Sent",
       "received": "Received",
       "refunded": "Refunded"
-    }
+    },
+    "stage": {
+      "started": "Return Started",
+      "dropoff": "Drop Off",
+      "refundInitiated": "Refund Initiated",
+      "refunded": "Refunded",
+      "rejected": "Return Rejected"
+    },
+    "returnButtonPrefix": "Return",
+    "trackPackage": "Track Package",
+    "requestedOn": "Requested on",
+    "refundAmountLabel": "Refund Amount",
+    "orderLabel": "Order",
+    "returnDetailTitle": "Return #{id}",
+    "rejectionNoticeTitle": "This return was rejected"
   },
   "Search": {
     "title": "Search Results",
@@ -615,6 +629,7 @@
     "tryAnotherCode": "Try a different code",
     "backToLookup": "Back to tracking lookup",
     "backToOrders": "Back to order history",
+    "backToReturn": "Back to return details",
     "orderNumber": "Order",
     "carrier": "Carrier",
     "trackingCode": "Tracking Code",

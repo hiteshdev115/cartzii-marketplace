@@ -24,8 +24,14 @@ export interface OrderItem {
   returnEligible?: boolean;
   /** ISO timestamp — when the return window closes for this item. */
   returnWindowExpiresAt?: string | null;
+  /** The most recent return request's id for this item, if any — use this to
+   *  link to `/account/returns/{id}` for the status/tracking detail view. */
+  existingReturnId?: number | null;
   /** The most recent return request's statusid for this item, if any. */
   existingReturnStatusId?: number | null;
+  /** The most recent return's shipment tracking status (e.g. "in_transit"),
+   *  once a return label has been generated and the carrier has scanned it. */
+  existingReturnShipmentStatus?: string | null;
   variantInfo?: string;
   currencyCode: string;
 }
