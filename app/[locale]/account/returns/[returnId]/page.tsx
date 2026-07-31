@@ -4,7 +4,8 @@ import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useLocale, useTranslations } from 'next-intl';
-import { ArrowLeft, Check, ExternalLink, Loader2, Package, XCircle } from 'lucide-react';
+import { QRCodeSVG } from 'qrcode.react';
+import { ArrowLeft, Check, Download, ExternalLink, Loader2, Package, XCircle } from 'lucide-react';
 import { buildCountryPath } from '@/config/countries';
 import { getReturnById, type ReturnRequest } from '@/lib/api/returns';
 import { subscribeToOrderUpdates } from '@/lib/api/orders';
@@ -204,6 +205,45 @@ function ReturnDetailContent({ returnId }: { returnId: number }) {
           </ol>
         )}
       </div>
+
+      {/* Shipping label — QR code + printable download, whichever the customer prefers */}
+      {ret.labelUrl && (
+        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <h2 className="text-base font-semibold text-slate-900">{t('shippingLabelTitle')}</h2>
+          <p className="mt-1 text-sm text-slate-500">{t('shippingLabelHelp')}</p>
+
+          <div className="mt-5 flex flex-col items-center gap-6 sm:flex-row sm:items-start">
+            <div className="flex flex-col items-center gap-2 shrink-0">
+              <div className="rounded-xl border border-slate-200 bg-white p-3">
+                <QRCodeSVG
+                  value={ret.labelUrl}
+                  size={148}
+                  level="M"
+                  marginSize={0}
+                  title={t('shippingLabelTitle')}
+                />
+              </div>
+              <p className="max-w-[180px] text-center text-xs text-slate-500">{t('qrHelp')}</p>
+            </div>
+
+            <div className="hidden self-stretch w-px bg-slate-200 sm:block" aria-hidden="true" />
+            <div className="w-full h-px bg-slate-200 sm:hidden" aria-hidden="true" />
+
+            <div className="flex w-full flex-1 flex-col items-center gap-3 sm:items-start">
+              <p className="text-sm text-slate-600 text-center sm:text-left">{t('printHelp')}</p>
+              <a
+                href={ret.labelUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-primary/90 sm:w-auto"
+              >
+                <Download className="h-4 w-4" />
+                {t('downloadLabel')}
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
 
       {ret.trackingCode && (
         <Link

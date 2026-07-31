@@ -514,7 +514,12 @@
     "refundAmountLabel": "Montant du remboursement",
     "orderLabel": "Commande",
     "returnDetailTitle": "Retour n°{id}",
-    "rejectionNoticeTitle": "Ce retour a été refusé"
+    "rejectionNoticeTitle": "Ce retour a été refusé",
+    "shippingLabelTitle": "Étiquette d'expédition",
+    "shippingLabelHelp": "Retournez votre article avec l'une des options ci-dessous — une seule suffit.",
+    "qrHelp": "Montrez ce code QR au comptoir d'expédition — le personnel peut le scanner et imprimer l'étiquette pour vous.",
+    "printHelp": "Vous préférez l'imprimer vous-même ? Téléchargez l'étiquette et joignez-la à votre colis.",
+    "downloadLabel": "Télécharger / Imprimer l'étiquette"
   },
   "Search": {
     "title": "Résultats de Recherche",

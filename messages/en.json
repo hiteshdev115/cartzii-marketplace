@@ -514,7 +514,12 @@
     "refundAmountLabel": "Refund Amount",
     "orderLabel": "Order",
     "returnDetailTitle": "Return #{id}",
-    "rejectionNoticeTitle": "This return was rejected"
+    "rejectionNoticeTitle": "This return was rejected",
+    "shippingLabelTitle": "Shipping Label",
+    "shippingLabelHelp": "Return your item using either option below — you only need one.",
+    "qrHelp": "Show this QR code at the shipping counter — staff can scan and print the label for you.",
+    "printHelp": "Prefer to print it yourself? Download the label and attach it to your package.",
+    "downloadLabel": "Download / Print Label"
   },
   "Search": {
     "title": "Search Results",
