@@ -35,6 +35,8 @@ export interface ReturnRequest {
   customerNote: string | null;
   sellerNote: string | null;
   refundAmount: number;
+  /** The item's currency (CAD for /ca/ orders, USD for /us/) — never assume USD. */
+  currency: string;
   requestedAt: string;
   approvedAt: string | null;
   refundedAt: string | null;

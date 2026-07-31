@@ -8,8 +8,8 @@ import { Breadcrumb } from '@/components/layout/Breadcrumb';
 import { buildCountryPath } from '@/config/countries';
 import { getMyReturns, type ReturnRequest, type ReturnsPagination } from '@/lib/api/returns';
 
-function formatCurrency(cents: number, locale: string): string {
-  return new Intl.NumberFormat(locale, { style: 'currency', currency: 'USD' }).format(cents / 100);
+function formatCurrency(cents: number, currency: string, locale: string): string {
+  return new Intl.NumberFormat(locale, { style: 'currency', currency: (currency || 'USD').toUpperCase() }).format(cents / 100);
 }
 
 function formatDate(value: string, locale: string): string {
@@ -127,7 +127,7 @@ export function ReturnsContent() {
                       {t(`status.${statusKey}`)}
                     </span>
                     <p className="text-sm font-bold text-slate-900 mt-1">
-                      {formatCurrency(ret.refundAmount, locale)}
+                      {formatCurrency(ret.refundAmount, ret.currency, locale)}
                     </p>
                   </div>
                 </div>

@@ -22,8 +22,8 @@ function resolveImageUrl(input?: string | null): string {
   return `${IMAGE_CDN_URL}/${input}`;
 }
 
-function formatCurrency(cents: number, locale: string): string {
-  return new Intl.NumberFormat(locale, { style: 'currency', currency: 'USD' }).format(cents / 100);
+function formatCurrency(cents: number, currency: string, locale: string): string {
+  return new Intl.NumberFormat(locale, { style: 'currency', currency: (currency || 'USD').toUpperCase() }).format(cents / 100);
 }
 
 function formatDate(value: string, locale: string): string {
@@ -151,7 +151,7 @@ function ReturnDetailContent({ returnId }: { returnId: number }) {
           </div>
           <div className="text-right shrink-0">
             <p className="text-xs text-slate-500">{t('refundAmountLabel')}</p>
-            <p className="text-sm font-bold text-slate-900">{formatCurrency(ret.refundAmount, locale)}</p>
+            <p className="text-sm font-bold text-slate-900">{formatCurrency(ret.refundAmount, ret.currency, locale)}</p>
           </div>
         </div>
       </div>
