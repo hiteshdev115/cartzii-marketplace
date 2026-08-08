@@ -159,6 +159,15 @@ export interface PlaceOrderShippingSelection {
   sellerId: number;
   providerShipmentId: string;
   rateId: string;
+  /**
+   * What this seller's shipping added to the charge, in cents — 0 when their
+   * free-shipping threshold was met.
+   *
+   * Used only to SPLIT the shipping total across sellers for their ledgers. The
+   * server derives the total independently from the captured Stripe amount and
+   * rejects a split that doesn't sum to it, so this cannot inflate the order.
+   */
+  amountCents?: number;
 }
 
 export interface PlaceOrderPayload {

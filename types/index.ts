@@ -46,6 +46,22 @@ export interface Product {
   height?: number | null;
   /** Dimension unit as returned by the API (e.g. `cm`, `in`). */
   dimensionUnit?: string | null;
+  /**
+   * Return & exchange terms for this product, resolved server-side from the
+   * seller's own window falling back to the Cartzii platform default.
+   *
+   * Optional because legacy persisted carts and fixture data predate it — the
+   * UI must hide the badge rather than render "undefined days".
+   */
+  returnPolicy?: ProductReturnPolicy;
+}
+
+/** Resolved return terms as returned by the product detail API. */
+export interface ProductReturnPolicy {
+  returnWindowDays: number;
+  exchangeAllowed: boolean;
+  /** Pre-formatted by the API so every surface shows identical wording. */
+  summary: string;
 }
 
 export interface ProductVariant {

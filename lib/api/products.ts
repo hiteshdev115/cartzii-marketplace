@@ -112,6 +112,11 @@ interface APISeller {
 interface APIProduct {
   productid: number;
   sellerid: number;
+  returnPolicy?: {
+    returnWindowDays: number;
+    exchangeAllowed: boolean;
+    summary: string;
+  };
   categoryid: number;
   sku: string;
   slug: string;
@@ -397,6 +402,9 @@ function mapProduct(raw: APIProduct, country: string): Product {
     detailVariants: buildDetailVariants(activeVariants, country),
     sellerId: raw.sellerid,
     sellerName: raw.seller?.storename ?? raw.storename ?? null,
+    // Resolved server-side (seller window → platform default). Left undefined
+    // when the API predates it, so the badge hides rather than showing NaN.
+    returnPolicy: raw.returnPolicy,
     weight: toNumberOrNull(raw.weight),
     weightUnit: raw.weightunit ?? null,
     length: toNumberOrNull(raw.length),
