@@ -8,6 +8,7 @@ import { CheckCircle2, Mail, Printer, RefreshCw } from 'lucide-react';
 import { buildCountryPath } from '@/config/countries';
 import { getOrderByNumber } from '@/lib/api/orders';
 import type { OrderConfirmation } from '@/types/order';
+import { safeCurrencyCode } from '@/lib/utils';
 
 interface OrderConfirmationContentProps {
   orderNumber: string;
@@ -32,7 +33,7 @@ function centsToAmount(cents: number): number {
 function formatCurrency(amount: number, currency: string, locale: string): string {
   return new Intl.NumberFormat(locale, {
     style: 'currency',
-    currency: currency.toUpperCase(),
+    currency: safeCurrencyCode(currency),
   }).format(amount);
 }
 

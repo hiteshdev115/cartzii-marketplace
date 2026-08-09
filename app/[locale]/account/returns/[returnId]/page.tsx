@@ -10,7 +10,7 @@ import { buildCountryPath } from '@/config/countries';
 import { getReturnById, type ReturnRequest } from '@/lib/api/returns';
 import { subscribeToOrderUpdates } from '@/lib/api/orders';
 import { getReturnStage, type ReturnStageKey } from '@/lib/returnConstants';
-import { cn } from '@/lib/utils';
+import { cn, safeCurrencyCode } from '@/lib/utils';
 
 const IMAGE_CDN_URL =
   process.env.NEXT_PUBLIC_IMAGE_CDN_URL ||
@@ -24,7 +24,7 @@ function resolveImageUrl(input?: string | null): string {
 }
 
 function formatCurrency(cents: number, currency: string, locale: string): string {
-  return new Intl.NumberFormat(locale, { style: 'currency', currency: (currency || 'USD').toUpperCase() }).format(cents / 100);
+  return new Intl.NumberFormat(locale, { style: 'currency', currency: safeCurrencyCode(currency) }).format(cents / 100);
 }
 
 function formatDate(value: string, locale: string): string {

@@ -18,6 +18,7 @@ import type {
   OrderItem,
   OrderSellerBreakdown,
 } from '@/types/order';
+import { safeCurrencyCode } from '@/lib/utils';
 
 // Match the products / cart image-resolution conventions, with safe fallbacks:
 //   - bare filenames (e.g. "1774217621199-ubuji.jpg")  →  prefixed with the CDN base
@@ -42,7 +43,7 @@ function centsToAmount(cents: number): number {
 function formatCurrency(amount: number, currency: string, locale: string): string {
   return new Intl.NumberFormat(locale, {
     style: 'currency',
-    currency: (currency || 'USD').toUpperCase(),
+    currency: safeCurrencyCode(currency),
   }).format(amount);
 }
 

@@ -7,9 +7,10 @@ import { Package, RefreshCw, ExternalLink } from 'lucide-react';
 import { Breadcrumb } from '@/components/layout/Breadcrumb';
 import { buildCountryPath } from '@/config/countries';
 import { getMyReturns, type ReturnRequest, type ReturnsPagination } from '@/lib/api/returns';
+import { safeCurrencyCode } from '@/lib/utils';
 
 function formatCurrency(cents: number, currency: string, locale: string): string {
-  return new Intl.NumberFormat(locale, { style: 'currency', currency: (currency || 'USD').toUpperCase() }).format(cents / 100);
+  return new Intl.NumberFormat(locale, { style: 'currency', currency: safeCurrencyCode(currency) }).format(cents / 100);
 }
 
 function formatDate(value: string, locale: string): string {
