@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter, usePathname } from 'next/navigation';
-import { Search, ShoppingCart, Heart, User, LogOut, Package, Star, Settings } from 'lucide-react';
+import { Search, ShoppingCart, Heart, User, LogOut, Package, Star, Settings, Truck } from 'lucide-react';
 import { useTranslations, useLocale } from 'next-intl';
 import { buildCountryPath } from '@/config/countries';
 import { useCartStore } from '@/stores/cartStore';
@@ -28,6 +28,9 @@ export function Header() {
   const [searchFocused, setSearchFocused] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
+  // Separate ref for the mobile header's copy of the same menu — the two are
+  // rendered at different breakpoints, so one ref cannot cover both.
+  const mobileUserMenuRef = useRef<HTMLDivElement>(null);
   const searchDesktopRef = useRef<HTMLDivElement>(null);
   const searchMobileRef = useRef<HTMLDivElement>(null);
   const hydrated = useHydrated();
@@ -115,7 +118,12 @@ export function Header() {
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
+      // Must clear BOTH refs: checking only the desktop one closed the menu on
+      // the very click that opened it on mobile.
+      const insideUserMenu =
+        (userMenuRef.current?.contains(e.target as Node)) ||
+        (mobileUserMenuRef.current?.contains(e.target as Node));
+      if (!insideUserMenu) {
         setUserMenuOpen(false);
       }
       const insideSearch =
@@ -153,6 +161,72 @@ export function Header() {
     setSearchQuery('');
   };
 
+  // One definition for both breakpoints. The mobile header used to render a
+  // bare <Link href="/account"> here, so phone users had no way to sign out —
+  // duplicating this markup instead would guarantee the two drift apart again.
+  const userMenuPanel = (
+    <div className="absolute right-0 top-full pt-1 z-50">
+                      <div className="w-48 bg-white rounded-xl border border-gray-100 shadow-lg py-2">
+                        {isLoggedIn ? (
+                          <>
+                            {userDisplayName && (
+                              <>
+                                <div className="px-4 py-2 text-sm font-medium text-slate-900 truncate">
+                                  {userDisplayName}
+                                </div>
+                                <div className="border-t border-gray-100 my-1" />
+                              </>
+                            )}
+                            <Link
+                              href={buildCountryPath(locale, '/account/orders')}
+                              className="flex items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 hover:text-primary transition-colors"
+                              onClick={() => setUserMenuOpen(false)}
+                            >
+                              <Package className="w-4 h-4" /> {t('orders')}
+                            </Link>
+                            <Link
+                              href={buildCountryPath(locale, '/track')}
+                              className="flex items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 hover:text-primary transition-colors"
+                              onClick={() => setUserMenuOpen(false)}
+                            >
+                              <Truck className="w-4 h-4" /> {t('trackOrder')}
+                            </Link>
+                            <Link
+                              href={buildCountryPath(locale, '/account/reviews')}
+                              className="flex items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 hover:text-primary transition-colors"
+                              onClick={() => setUserMenuOpen(false)}
+                            >
+                              <Star className="w-4 h-4" /> {t('reviews')}
+                            </Link>
+                            <Link
+                              href={buildCountryPath(locale, '/account/settings')}
+                              className="flex items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 hover:text-primary transition-colors"
+                              onClick={() => setUserMenuOpen(false)}
+                            >
+                              <Settings className="w-4 h-4" /> {t('accountSettings')}
+                            </Link>
+                            <div className="border-t border-gray-100 my-1" />
+                            <button
+                              type="button"
+                              onClick={handleSignOut}
+                              className="flex items-center gap-2 w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                            >
+                              <LogOut className="w-4 h-4" /> {t('signOut')}
+                            </button>
+                          </>
+                        ) : (
+                          <Link
+                            href={buildCountryPath(locale, '/auth/login')}
+                            className="flex items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 hover:text-primary transition-colors"
+                            onClick={() => setUserMenuOpen(false)}
+                          >
+                            <User className="w-4 h-4" /> {t('signIn')}
+                          </Link>
+                        )}
+                      </div>
+                    </div>
+  );
+
   return (
     <header role="banner">
       <AnnouncementBar />
@@ -186,13 +260,19 @@ export function Header() {
                     </span>
                   )}
                 </Link>
-                <Link
-                  href={buildCountryPath(locale, '/account')}
-                  className="relative p-2 hover:bg-slate-100 rounded-lg"
-                  aria-label={t('account')}
-                >
-                  <User className="w-5 h-5 text-slate-600" />
-                </Link>
+                <div className="relative" ref={mobileUserMenuRef}>
+                  <button
+                    type="button"
+                    className="relative p-2 hover:bg-slate-100 rounded-lg"
+                    aria-label={t('account')}
+                    aria-haspopup="true"
+                    aria-expanded={userMenuOpen}
+                    onClick={() => setUserMenuOpen(!userMenuOpen)}
+                  >
+                    <User className="w-5 h-5 text-slate-600" />
+                  </button>
+                  {userMenuOpen && userMenuPanel}
+                </div>
                 <button
                   type="button"
                   onClick={handleCartIconClick}
@@ -311,61 +391,7 @@ export function Header() {
                   >
                     <User className="w-5 h-5 text-slate-600" />
                   </button>
-                  {userMenuOpen && (
-                    <div className="absolute right-0 top-full pt-1 z-50">
-                      <div className="w-48 bg-white rounded-xl border border-gray-100 shadow-lg py-2">
-                        {isLoggedIn ? (
-                          <>
-                            {userDisplayName && (
-                              <>
-                                <div className="px-4 py-2 text-sm font-medium text-slate-900 truncate">
-                                  {userDisplayName}
-                                </div>
-                                <div className="border-t border-gray-100 my-1" />
-                              </>
-                            )}
-                            <Link
-                              href={buildCountryPath(locale, '/account/orders')}
-                              className="flex items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 hover:text-primary transition-colors"
-                              onClick={() => setUserMenuOpen(false)}
-                            >
-                              <Package className="w-4 h-4" /> {t('orders')}
-                            </Link>
-                            <Link
-                              href={buildCountryPath(locale, '/account/reviews')}
-                              className="flex items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 hover:text-primary transition-colors"
-                              onClick={() => setUserMenuOpen(false)}
-                            >
-                              <Star className="w-4 h-4" /> {t('reviews')}
-                            </Link>
-                            <Link
-                              href={buildCountryPath(locale, '/account/settings')}
-                              className="flex items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 hover:text-primary transition-colors"
-                              onClick={() => setUserMenuOpen(false)}
-                            >
-                              <Settings className="w-4 h-4" /> {t('accountSettings')}
-                            </Link>
-                            <div className="border-t border-gray-100 my-1" />
-                            <button
-                              type="button"
-                              onClick={handleSignOut}
-                              className="flex items-center gap-2 w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
-                            >
-                              <LogOut className="w-4 h-4" /> {t('signOut')}
-                            </button>
-                          </>
-                        ) : (
-                          <Link
-                            href={buildCountryPath(locale, '/auth/login')}
-                            className="flex items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 hover:text-primary transition-colors"
-                            onClick={() => setUserMenuOpen(false)}
-                          >
-                            <User className="w-4 h-4" /> {t('signIn')}
-                          </Link>
-                        )}
-                      </div>
-                    </div>
-                  )}
+                  {userMenuOpen && userMenuPanel}
                 </div>
               </div>
             </div>

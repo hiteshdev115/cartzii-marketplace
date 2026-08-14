@@ -54,6 +54,20 @@ export async function getOrderByNumber(orderNumber: string): Promise<OrderConfir
   return unwrap(res);
 }
 
+export interface CancelOrderResult {
+  orderId: number;
+  refunded: boolean;
+}
+
+export async function cancelOrder(orderNumber: string): Promise<CancelOrderResult> {
+  const res = await api.post<ApiEnvelope<CancelOrderResult>>(
+    `/api/v1/orders/${encodeURIComponent(orderNumber)}/cancel`,
+    undefined,
+    { skipGuestToken: true },
+  );
+  return unwrap(res);
+}
+
 export interface TaxEstimateParams {
   countryCode: string;
   stateCode: string;

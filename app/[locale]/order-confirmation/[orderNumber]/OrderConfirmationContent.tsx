@@ -8,6 +8,7 @@ import { CheckCircle2, Mail, Printer, RefreshCw } from 'lucide-react';
 import { buildCountryPath } from '@/config/countries';
 import { getOrderByNumber } from '@/lib/api/orders';
 import type { OrderConfirmation } from '@/types/order';
+import { safeCurrencyCode } from '@/lib/utils';
 
 interface OrderConfirmationContentProps {
   orderNumber: string;
@@ -32,7 +33,7 @@ function centsToAmount(cents: number): number {
 function formatCurrency(amount: number, currency: string, locale: string): string {
   return new Intl.NumberFormat(locale, {
     style: 'currency',
-    currency: currency.toUpperCase(),
+    currency: safeCurrencyCode(currency),
   }).format(amount);
 }
 
@@ -207,8 +208,8 @@ export function OrderConfirmationContent({ orderNumber }: OrderConfirmationConte
           </div>
 
           <div className="grid gap-6 p-5 sm:p-6">
-            <div className="grid gap-4 md:grid-cols-2">
-              <div>
+            <div className="grid min-w-0 gap-4 md:grid-cols-2">
+              <div className="min-w-0 break-words">
                 <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">{t('billTo')}</p>
                 <div className="mt-3 space-y-1 text-sm text-slate-700">
                   <p className="font-semibold text-slate-900">{order.customerName}</p>
@@ -221,8 +222,10 @@ export function OrderConfirmationContent({ orderNumber }: OrderConfirmationConte
                 </div>
               </div>
 
-              <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
-                <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="min-w-0 rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
+                {/* break-all on the transaction id: a Stripe pi_… string has no
+                    natural break point and will otherwise widen the whole card. */}
+                <div className="flex min-w-0 flex-wrap items-center justify-between gap-3 [&_p]:break-all">
                   <div>
                     <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">{t('paymentMethod')}</p>
                     <p className="mt-1 font-medium text-slate-900">{order.paymentMethod}</p>
@@ -235,13 +238,17 @@ export function OrderConfirmationContent({ orderNumber }: OrderConfirmationConte
               </div>
             </div>
 
-            <div>
+            {/* min-w-0: grid children default to min-width:auto and will not
+                shrink below the table's intrinsic width. Without this the card
+                grows wider than the screen, the inner overflow-x-auto never
+                scrolls, and the section's overflow-hidden clips the rest. */}
+            <div className="min-w-0">
               <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">{t('items')}</p>
 
               {order.sellerBreakdown && order.sellerBreakdown.length > 0 ? (
                 <div className="mt-3 space-y-4">
                   {order.sellerBreakdown.map((seller) => (
-                    <div key={seller.sellerId} className="overflow-hidden rounded-xl border border-slate-200">
+                    <div key={seller.sellerId} className="min-w-0 overflow-hidden rounded-xl border border-slate-200">
                       <div className="flex flex-wrap items-center justify-between gap-2 bg-slate-50 px-4 py-3 text-sm">
                         <div>
                           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">

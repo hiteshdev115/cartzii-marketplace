@@ -39,6 +39,7 @@
     "signIn": "Se Connecter",
     "signOut": "Se Déconnecter",
     "orders": "Commandes",
+    "trackOrder": "Suivre la Commande",
     "reviews": "Avis",
     "accountSettings": "Paramètres du Compte",
     "menu": "Menu"
@@ -153,6 +154,10 @@
     "buyNow": "Acheter Maintenant",
     "freeShipping": "Livraison Gratuite",
     "easyReturns": "Retours Faciles sous 30 Jours",
+    "returnsWithDays": "Retours sous {days} jours",
+    "returnPolicyTitle": "Retours et échanges",
+    "returnPolicyBody": "Retournez ou échangez cet article dans les {days} jours suivant la livraison.",
+    "returnPolicyExchange": "Échanges acceptés",
     "secureCheckout": "Paiement Sécurisé",
     "relatedProducts": "Vous Aimerez Aussi",
     "shareProduct": "Partager ce Produit",
@@ -415,14 +420,6 @@
     "updateProfile": "Mettre à Jour le Profil",
     "profileUpdated": "Profil mis à jour avec succès !",
     "passwordChanged": "Mot de passe changé avec succès !",
-    "orderStatus": {
-      "pending": "En Attente",
-      "processing": "En Traitement",
-      "shipped": "Expédié",
-      "delivered": "Livré",
-      "cancelled": "Annulé",
-      "returned": "Retourné"
-    },
     "noOrders": "Vous n'avez pas encore passé de commande.",
     "refresh": "Actualiser",
     "viewDetails": "Voir les détails",
@@ -472,6 +469,17 @@
     "phoneError": "Le numéro doit comporter entre 10 et 15 caractères",
     "genderError": "Le genre doit être homme, femme ou autre"
   },
+  "Orders": {
+    "cancelOrder": "Annuler la commande",
+    "cancelOrderTitle": "Annuler cette commande ?",
+    "cancelOrderConfirm": "Voulez-vous vraiment annuler la commande {orderNumber} ? Vous serez remboursé intégralement puisqu'elle n'a pas encore été expédiée.",
+    "keepOrder": "Garder la commande",
+    "confirmCancel": "Oui, annuler la commande",
+    "cancelling": "Annulation…",
+    "cancelError": "Échec de l'annulation de la commande",
+    "cancelSuccess": "Votre commande a été annulée et remboursée.",
+    "close": "Fermer"
+  },
   "Returns": {
     "requestReturn": "Demander un retour",
     "requestReturnTitle": "Demander un retour",
@@ -496,7 +504,26 @@
       "labelSent": "Étiquette envoyée",
       "received": "Reçu",
       "refunded": "Remboursé"
-    }
+    },
+    "stage": {
+      "started": "Retour démarré",
+      "dropoff": "Dépôt effectué",
+      "refundInitiated": "Remboursement initié",
+      "refunded": "Remboursé",
+      "rejected": "Retour refusé"
+    },
+    "returnButtonPrefix": "Retour",
+    "trackPackage": "Suivre le colis",
+    "requestedOn": "Demandé le",
+    "refundAmountLabel": "Montant du remboursement",
+    "orderLabel": "Commande",
+    "returnDetailTitle": "Retour n°{id}",
+    "rejectionNoticeTitle": "Ce retour a été refusé",
+    "shippingLabelTitle": "Étiquette d'expédition",
+    "shippingLabelHelp": "Retournez votre article avec l'une des options ci-dessous — une seule suffit.",
+    "qrHelp": "Montrez ce code QR au comptoir d'expédition — le personnel peut le scanner et imprimer l'étiquette pour vous.",
+    "printHelp": "Vous préférez l'imprimer vous-même ? Téléchargez l'étiquette et joignez-la à votre colis.",
+    "downloadLabel": "Télécharger / Imprimer l'étiquette"
   },
   "Search": {
     "title": "Résultats de Recherche",
@@ -621,6 +648,8 @@
     "errorTitle": "Impossible de récupérer les informations de suivi",
     "tryAnotherCode": "Essayer un autre code",
     "backToLookup": "Retour à la recherche de suivi",
+    "backToOrders": "Retour à l'historique des commandes",
+    "backToReturn": "Retour aux détails du retour",
     "orderNumber": "Commande",
     "carrier": "Transporteur",
     "trackingCode": "Code de suivi",

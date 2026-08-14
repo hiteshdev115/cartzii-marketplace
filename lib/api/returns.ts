@@ -18,6 +18,12 @@ export interface ReturnReason {
   reason: string;
 }
 
+export interface ReturnEvent {
+  status: string;
+  description: string | null;
+  occurredAt: string;
+}
+
 export interface ReturnRequest {
   returnId: number;
   orderItemId: number;
@@ -29,12 +35,20 @@ export interface ReturnRequest {
   customerNote: string | null;
   sellerNote: string | null;
   refundAmount: number;
+  /** The item's currency (CAD for /ca/ orders, USD for /us/) — never assume USD. */
+  currency: string;
   requestedAt: string;
   approvedAt: string | null;
   refundedAt: string | null;
   labelUrl: string | null;
   trackingCode: string | null;
   shipmentStatus: string | null;
+  /** Only populated by `getReturnById`, not the list endpoints. */
+  orderId?: number | null;
+  orderNumber?: string | null;
+  productName?: string;
+  productImageUrl?: string | null;
+  events?: ReturnEvent[];
 }
 
 export interface ReturnsPagination {

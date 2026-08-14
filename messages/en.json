@@ -39,6 +39,7 @@
     "signIn": "Sign In",
     "signOut": "Sign Out",
     "orders": "Orders",
+    "trackOrder": "Track Order",
     "reviews": "Reviews",
     "accountSettings": "Account Settings",
     "menu": "Menu"
@@ -153,6 +154,10 @@
     "buyNow": "Buy Now",
     "freeShipping": "Free Shipping",
     "easyReturns": "Easy 30-Day Returns",
+    "returnsWithDays": "{days}-Day Returns",
+    "returnPolicyTitle": "Returns & Exchanges",
+    "returnPolicyBody": "Return or exchange this item within {days} days of delivery.",
+    "returnPolicyExchange": "Exchanges accepted",
     "secureCheckout": "Secure Checkout",
     "relatedProducts": "You May Also Like",
     "shareProduct": "Share This Product",
@@ -415,14 +420,6 @@
     "updateProfile": "Update Profile",
     "profileUpdated": "Profile updated successfully!",
     "passwordChanged": "Password changed successfully!",
-    "orderStatus": {
-      "pending": "Pending",
-      "processing": "Processing",
-      "shipped": "Shipped",
-      "delivered": "Delivered",
-      "cancelled": "Cancelled",
-      "returned": "Returned"
-    },
     "noOrders": "You haven't placed any orders yet.",
     "refresh": "Refresh",
     "viewDetails": "View details",
@@ -472,6 +469,17 @@
     "phoneError": "Phone number must be 10–15 characters",
     "genderError": "Gender must be male, female, or other"
   },
+  "Orders": {
+    "cancelOrder": "Cancel Order",
+    "cancelOrderTitle": "Cancel this order?",
+    "cancelOrderConfirm": "Are you sure you want to cancel order {orderNumber}? You'll be refunded in full since it hasn't shipped yet.",
+    "keepOrder": "Keep Order",
+    "confirmCancel": "Yes, Cancel Order",
+    "cancelling": "Cancelling…",
+    "cancelError": "Failed to cancel order",
+    "cancelSuccess": "Your order has been cancelled and refunded.",
+    "close": "Close"
+  },
   "Returns": {
     "requestReturn": "Request Return",
     "requestReturnTitle": "Request a Return",
@@ -496,7 +504,26 @@
       "labelSent": "Label Sent",
       "received": "Received",
       "refunded": "Refunded"
-    }
+    },
+    "stage": {
+      "started": "Return Started",
+      "dropoff": "Drop Off",
+      "refundInitiated": "Refund Initiated",
+      "refunded": "Refunded",
+      "rejected": "Return Rejected"
+    },
+    "returnButtonPrefix": "Return",
+    "trackPackage": "Track Package",
+    "requestedOn": "Requested on",
+    "refundAmountLabel": "Refund Amount",
+    "orderLabel": "Order",
+    "returnDetailTitle": "Return #{id}",
+    "rejectionNoticeTitle": "This return was rejected",
+    "shippingLabelTitle": "Shipping Label",
+    "shippingLabelHelp": "Return your item using either option below — you only need one.",
+    "qrHelp": "Show this QR code at the shipping counter — staff can scan and print the label for you.",
+    "printHelp": "Prefer to print it yourself? Download the label and attach it to your package.",
+    "downloadLabel": "Download / Print Label"
   },
   "Search": {
     "title": "Search Results",
@@ -621,6 +648,8 @@
     "errorTitle": "Could not retrieve tracking information",
     "tryAnotherCode": "Try a different code",
     "backToLookup": "Back to tracking lookup",
+    "backToOrders": "Back to order history",
+    "backToReturn": "Back to return details",
     "orderNumber": "Order",
     "carrier": "Carrier",
     "trackingCode": "Tracking Code",

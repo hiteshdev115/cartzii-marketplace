@@ -1,14 +1,16 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { useTranslations, useLocale } from 'next-intl';
 import { Package, RefreshCw, ExternalLink } from 'lucide-react';
 import { Breadcrumb } from '@/components/layout/Breadcrumb';
 import { buildCountryPath } from '@/config/countries';
 import { getMyReturns, type ReturnRequest, type ReturnsPagination } from '@/lib/api/returns';
+import { safeCurrencyCode } from '@/lib/utils';
 
-function formatCurrency(cents: number, locale: string): string {
-  return new Intl.NumberFormat(locale, { style: 'currency', currency: 'USD' }).format(cents / 100);
+function formatCurrency(cents: number, currency: string, locale: string): string {
+  return new Intl.NumberFormat(locale, { style: 'currency', currency: safeCurrencyCode(currency) }).format(cents / 100);
 }
 
 function formatDate(value: string, locale: string): string {
@@ -112,7 +114,12 @@ export function ReturnsContent() {
               <div key={ret.returnId} className="rounded-2xl border border-slate-200 bg-white p-4">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
-                    <p className="text-sm font-semibold text-slate-900">{t('returnNumber', { id: ret.returnId })}</p>
+                    <Link
+                      href={buildCountryPath(locale, `/account/returns/${ret.returnId}`)}
+                      className="text-sm font-semibold text-slate-900 hover:underline"
+                    >
+                      {t('returnNumber', { id: ret.returnId })}
+                    </Link>
                     <p className="text-xs text-slate-500">{ret.reason}</p>
                     <p className="text-xs text-slate-400 mt-1">{formatDate(ret.requestedAt, locale)}</p>
                   </div>
@@ -121,7 +128,7 @@ export function ReturnsContent() {
                       {t(`status.${statusKey}`)}
                     </span>
                     <p className="text-sm font-bold text-slate-900 mt-1">
-                      {formatCurrency(ret.refundAmount, locale)}
+                      {formatCurrency(ret.refundAmount, ret.currency, locale)}
                     </p>
                   </div>
                 </div>

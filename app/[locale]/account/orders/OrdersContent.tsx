@@ -9,12 +9,16 @@ import { Breadcrumb } from '@/components/layout/Breadcrumb';
 import { buildCountryPath } from '@/config/countries';
 import { fetchMyOrders, subscribeToOrderUpdates } from '@/lib/api/orders';
 import { RequestReturnModal } from '@/components/returns/RequestReturnModal';
+import { CancelOrderModal } from '@/components/orders/CancelOrderModal';
+import { getOrderStatusBadge } from '@/lib/shippingConstants';
+import { getReturnStage } from '@/lib/returnConstants';
 import type {
   OrderHistoryPagination,
   OrderHistoryRow,
   OrderItem,
   OrderSellerBreakdown,
 } from '@/types/order';
+import { safeCurrencyCode } from '@/lib/utils';
 
 // Match the products / cart image-resolution conventions, with safe fallbacks:
 //   - bare filenames (e.g. "1774217621199-ubuji.jpg")  →  prefixed with the CDN base
@@ -39,7 +43,7 @@ function centsToAmount(cents: number): number {
 function formatCurrency(amount: number, currency: string, locale: string): string {
   return new Intl.NumberFormat(locale, {
     style: 'currency',
-    currency: (currency || 'USD').toUpperCase(),
+    currency: safeCurrencyCode(currency),
   }).format(amount);
 }
 
@@ -48,15 +52,6 @@ function formatDateTime(value: string, locale: string): string {
   if (Number.isNaN(d.getTime())) return value;
   return new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeStyle: 'short' }).format(d);
 }
-
-const ORDER_STATUS_KEY: Record<number, string> = {
-  1: 'pending',
-  2: 'processing',
-  3: 'shipped',
-  4: 'delivered',
-  5: 'cancelled',
-  6: 'returned',
-};
 
 const PAGE_SIZE = 20;
 
@@ -72,6 +67,7 @@ export function OrdersContent() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [returnModalItem, setReturnModalItem] = useState<OrderItem | null>(null);
+  const [cancelOrderNumber, setCancelOrderNumber] = useState<string | null>(null);
 
   const load = useCallback(async (targetPage: number) => {
     setLoading(true);
@@ -162,6 +158,7 @@ export function OrdersContent() {
               tCheckout={tCheckout}
               tAccount={t}
               onRequestReturn={setReturnModalItem}
+              onCancelOrder={setCancelOrderNumber}
             />
           ))}
 
@@ -201,6 +198,16 @@ export function OrdersContent() {
         orderItemId={returnModalItem?.orderItemId ?? 0}
         productName={returnModalItem?.productName ?? ''}
       />
+
+      <CancelOrderModal
+        isOpen={cancelOrderNumber != null}
+        onClose={() => setCancelOrderNumber(null)}
+        onSuccess={() => {
+          setCancelOrderNumber(null);
+          void load(page);
+        }}
+        orderNumber={cancelOrderNumber ?? ''}
+      />
     </main>
   );
 }
@@ -212,13 +219,21 @@ interface OrderCardProps {
   tCheckout: (key: string) => string;
   tAccount: (key: string) => string;
   onRequestReturn: (item: OrderItem) => void;
+  onCancelOrder: (orderNumber: string) => void;
 }
 
-function OrderCard({ order, locale, tCart, tCheckout, tAccount, onRequestReturn }: OrderCardProps) {
-  const statusKey = order.orderStatusId ? ORDER_STATUS_KEY[order.orderStatusId] : undefined;
-  const statusLabel = statusKey ? tAccount(`orderStatus.${statusKey}`) : undefined;
+function OrderCard({ order, locale, tCart, tCheckout, tAccount, onRequestReturn, onCancelOrder }: OrderCardProps) {
+  const tReturns = useTranslations('Returns');
+  const tOrders = useTranslations('Orders');
+  const statusBadge = getOrderStatusBadge(order.shipments);
   const sellerGroups =
     order.sellerBreakdown && order.sellerBreakdown.length > 0 ? order.sellerBreakdown : null;
+  const eligibleReturnItems = order.items.filter(
+    (item) => item.returnEligible && item.orderItemId != null,
+  );
+  const activeReturnItems = order.items.filter(
+    (item) => item.existingReturnId != null,
+  );
 
   return (
     <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
@@ -232,22 +247,15 @@ function OrderCard({ order, locale, tCart, tCheckout, tAccount, onRequestReturn 
           </Link>
           <p className="text-xs text-slate-500">{formatDateTime(order.orderDate, locale)}</p>
         </div>
-        <div className="text-right">
-          <p className="text-base font-bold text-slate-900">
-            {formatCurrency(centsToAmount(order.totalAmount), order.currency, locale)}
-          </p>
-          <div className="mt-1 flex items-center justify-end gap-2 text-xs">
-            {statusLabel && (
-              <span className="rounded-full bg-blue-100 px-2 py-0.5 text-blue-700">
-                {statusLabel}
-              </span>
-            )}
-            {order.paymentStatus && (
-              <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-emerald-700">
-                {order.paymentStatus}
-              </span>
-            )}
-          </div>
+        <div className="flex items-center gap-2 text-xs">
+          <span className={`rounded-full px-2 py-0.5 ${statusBadge.className}`}>
+            {statusBadge.label}
+          </span>
+          {order.paymentStatus && (
+            <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-emerald-700">
+              {order.paymentStatus}
+            </span>
+          )}
         </div>
       </div>
 
@@ -262,13 +270,12 @@ function OrderCard({ order, locale, tCart, tCheckout, tAccount, onRequestReturn 
               locale={locale}
               tCart={tCart}
               tCheckout={tCheckout}
-              onRequestReturn={onRequestReturn}
             />
           ))
         ) : (
           <div className="p-4 space-y-3">
             {order.items.map((item) => (
-              <ItemRow key={item.productId} item={item} locale={locale} onRequestReturn={onRequestReturn} />
+              <ItemRow key={item.productId} item={item} locale={locale} />
             ))}
           </div>
         )}
@@ -278,26 +285,60 @@ function OrderCard({ order, locale, tCart, tCheckout, tAccount, onRequestReturn 
         <span>
           {order.itemCount} {order.itemCount === 1 ? tCart('item') : tCheckout('items')}
         </span>
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2">
           {(order.shipments ?? [])
             .filter((s) => s.trackingCode)
             .map((s) => (
               <Link
                 key={s.trackingCode}
-                href={buildCountryPath(locale, `/track/${encodeURIComponent(s.trackingCode as string)}`)}
-                className="font-medium text-primary hover:underline"
+                href={`${buildCountryPath(locale, `/track/${encodeURIComponent(s.trackingCode as string)}`)}?from=orders`}
+                className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-white hover:bg-primary/90 transition-colors"
               >
                 {order.shipments && order.shipments.length > 1 && s.sellerName
                   ? `${tCheckout('trackOrder')} · ${s.sellerName}`
                   : tCheckout('trackOrder')}
               </Link>
             ))}
+          {activeReturnItems.map((item) => {
+            const stage = getReturnStage(item.existingReturnStatusId, item.existingReturnShipmentStatus);
+            const label = `${tReturns('returnButtonPrefix')}: ${tReturns(`stage.${stage.key}`)}`;
+            return (
+              <Link
+                key={`return-${item.existingReturnId}`}
+                href={buildCountryPath(locale, `/account/returns/${item.existingReturnId}`)}
+                className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${stage.className}`}
+              >
+                {activeReturnItems.length > 1 ? `${label} · ${item.productName}` : label}
+              </Link>
+            );
+          })}
+          {eligibleReturnItems.map((item) => (
+            <button
+              key={item.orderItemId}
+              type="button"
+              onClick={() => onRequestReturn(item)}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-primary/40 bg-white px-3 py-1.5 text-xs font-medium text-primary hover:bg-primary/5 transition-colors"
+            >
+              {eligibleReturnItems.length > 1
+                ? `${tReturns('requestReturn')} · ${item.productName}`
+                : tReturns('requestReturn')}
+            </button>
+          ))}
           <Link
             href={buildCountryPath(locale, `/order-confirmation/${order.orderNumber}`)}
-            className="font-medium text-blue-600 hover:underline"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors"
           >
             {tAccount('viewDetails')}
           </Link>
+          {order.cancelEligible && (
+            <button
+              type="button"
+              onClick={() => onCancelOrder(order.orderNumber)}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-rose-200 bg-white px-3 py-1.5 text-xs font-medium text-rose-600 hover:bg-rose-50 transition-colors"
+            >
+              {tOrders('cancelOrder')}
+            </button>
+          )}
         </div>
       </div>
     </div>
@@ -311,10 +352,9 @@ interface SellerBlockProps {
   locale: string;
   tCart: (key: string) => string;
   tCheckout: (key: string) => string;
-  onRequestReturn: (item: OrderItem) => void;
 }
 
-function SellerBlock({ seller, flatItems, currency, locale, tCart, tCheckout, onRequestReturn }: SellerBlockProps) {
+function SellerBlock({ seller, flatItems, currency, locale, tCart, tCheckout }: SellerBlockProps) {
   return (
     <div className="p-4">
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
@@ -338,7 +378,6 @@ function SellerBlock({ seller, flatItems, currency, locale, tCart, tCheckout, on
               key={`${seller.sellerId}-${merged.productId}`}
               item={merged}
               locale={locale}
-              onRequestReturn={onRequestReturn}
             />
           );
         })}
@@ -371,13 +410,10 @@ function SellerBlock({ seller, flatItems, currency, locale, tCart, tCheckout, on
 function ItemRow({
   item,
   locale,
-  onRequestReturn,
 }: {
   item: OrderItem;
   locale: string;
-  onRequestReturn: (item: OrderItem) => void;
 }) {
-  const t = useTranslations('Returns');
   const lineTotal = typeof item.finalPrice === 'number' ? item.finalPrice : item.totalPrice;
   const [imgSrc, setImgSrc] = useState(resolveImageUrl(item.imageUrl));
   return (
@@ -399,15 +435,6 @@ function ItemRow({
           Qty: {item.quantity}
           {item.variantInfo ? ` · ${item.variantInfo}` : ''}
         </p>
-        {item.returnEligible && item.orderItemId != null && (
-          <button
-            type="button"
-            onClick={() => onRequestReturn(item)}
-            className="mt-1 text-xs font-medium text-primary hover:underline"
-          >
-            {t('requestReturn')}
-          </button>
-        )}
       </div>
       <p className="text-sm font-semibold text-slate-900 whitespace-nowrap">
         {formatCurrency(centsToAmount(lineTotal), item.currencyCode, locale)}

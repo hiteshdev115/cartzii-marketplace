@@ -125,6 +125,7 @@ export function MobileNav() {
   const [open, setOpen] = useState(false);
   const t = useTranslations('Nav');
   const ta = useTranslations('Accessibility');
+
   const locale = useLocale();
 
   const [categoriesOpen, setCategoriesOpen] = useState(false);

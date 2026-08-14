@@ -56,3 +56,17 @@ export function generateOrderNumber(): string {
   const random = Math.random().toString(36).substring(2, 6).toUpperCase();
   return `CZ-${timestamp}-${random}`;
 }
+
+/**
+ * Coerces an API-supplied currency into something `Intl.NumberFormat` accepts.
+ *
+ * ISO 4217 codes are exactly three letters. Product pricing rows have been seen
+ * carrying a two-letter COUNTRY code ('CA' instead of 'CAD'), and passing one to
+ * NumberFormat throws `RangeError: Invalid currency code` — which, in a client
+ * component, takes down the whole page rather than one price label. A money
+ * string is never worth a white screen, so anything malformed falls back.
+ */
+export function safeCurrencyCode(currency: string | null | undefined, fallback = 'USD'): string {
+  const code = String(currency ?? '').trim().toUpperCase();
+  return /^[A-Z]{3}$/.test(code) ? code : fallback;
+}

@@ -43,7 +43,7 @@ export const STATUS_BADGE_MAP: Record<
   { label: string; className: string }
 > = {
   label_created: {
-    label: 'Label Created',
+    label: 'Processing',
     className: 'bg-slate-100 text-slate-700',
   },
   pre_transit: {
@@ -88,4 +88,43 @@ export const CARRIER_DISPLAY_NAMES: Record<string, string> = {
 
 export function getCarrierDisplay(carrier: string): string {
   return CARRIER_DISPLAY_NAMES[carrier.toUpperCase()] ?? carrier;
+}
+
+/** Progress order for non-problem statuses — lower means earlier in transit. */
+const STATUS_PROGRESS_RANK: Record<string, number> = {
+  label_created: 0,
+  unknown: 0,
+  pre_transit: 1,
+  in_transit: 2,
+  out_for_delivery: 3,
+  delivered: 4,
+};
+
+/**
+ * Rolls up a multi-seller order's per-shipment tracking statuses into one
+ * customer-facing badge. An order isn't fully delivered until every seller's
+ * shipment is, so the overall status reflects the LEAST-progressed shipment
+ * (e.g. one seller delivered + one still in transit → shows "In Transit") —
+ * except a failure/return anywhere takes priority since it needs attention
+ * regardless of how far along the other shipments are. No shipments yet
+ * (no seller has bought a label) falls back to the same "Processing" badge
+ * used for a freshly-created shipment.
+ */
+export function getOrderStatusBadge(
+  shipments: { currentStatus: string | null }[] | undefined,
+): { label: string; className: string } {
+  if (!shipments || shipments.length === 0) {
+    return STATUS_BADGE_MAP.label_created;
+  }
+
+  const statuses = shipments.map((s) => s.currentStatus ?? 'unknown');
+
+  if (statuses.includes('failure')) return STATUS_BADGE_MAP.failure;
+  if (statuses.includes('return_to_sender')) return STATUS_BADGE_MAP.return_to_sender;
+
+  const leastProgressed = statuses.reduce((worst, status) =>
+    (STATUS_PROGRESS_RANK[status] ?? 0) < (STATUS_PROGRESS_RANK[worst] ?? 0) ? status : worst,
+  );
+
+  return STATUS_BADGE_MAP[leastProgressed as ShipmentStatus] ?? STATUS_BADGE_MAP.unknown;
 }

@@ -169,9 +169,22 @@ export function CheckoutPageContent() {
             sellerId: quote.sellerId,
             providerShipmentId: quote.providerShipmentId,
             rateId: rate.rateId,
+            // What this seller's shipping actually added to the charge — zero
+            // when their free-shipping threshold was met. The server needs the
+            // per-seller split to credit shipping to the right seller's ledger;
+            // it validates the sum against the amount Stripe captured, so this
+            // cannot inflate the total, only describe how it divides.
+            amountCents: quote.freeShippingApplied ? 0 : Math.round(rate.rate * 100),
           };
         })
-        .filter((s): s is { sellerId: number; providerShipmentId: string; rateId: string } => s !== null);
+        .filter(
+          (s): s is {
+            sellerId: number;
+            providerShipmentId: string;
+            rateId: string;
+            amountCents: number;
+          } => s !== null,
+        );
 
       const order = await placeOrder({
         paymentIntentId: paymentResult.paymentIntentId,

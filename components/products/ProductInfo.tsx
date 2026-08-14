@@ -236,13 +236,40 @@ export function ProductInfo({ product, onVariantChange, onShowReviews, onWriteRe
         </div>
         <div className="flex flex-col items-center text-center gap-1">
           <RotateCcw className="w-5 h-5 text-primary" />
-          <span className="text-xs text-slate-600">{t('easyReturns')}</span>
+          <span className="text-xs text-slate-600">
+            {/* The seller's actual window, not a hardcoded "30-Day" string —
+                sellers can set their own, so the old fixed copy could lie. */}
+            {product.returnPolicy
+              ? t('returnsWithDays', { days: product.returnPolicy.returnWindowDays })
+              : t('easyReturns')}
+          </span>
         </div>
         <div className="flex flex-col items-center text-center gap-1">
           <Shield className="w-5 h-5 text-primary" />
           <span className="text-xs text-slate-600">{t('secureCheckout')}</span>
         </div>
       </div>
+
+      {/* Return & exchange policy — resolved per seller by the API. Hidden
+          entirely when absent so a legacy payload never renders "undefined". */}
+      {product.returnPolicy && (
+        <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+          <div className="flex items-start gap-3">
+            <RotateCcw className="w-5 h-5 text-primary mt-0.5 shrink-0" />
+            <div className="space-y-1">
+              <h3 className="text-sm font-semibold text-slate-900">
+                {t('returnPolicyTitle')}
+              </h3>
+              <p className="text-sm text-slate-600">
+                {t('returnPolicyBody', { days: product.returnPolicy.returnWindowDays })}
+              </p>
+              {product.returnPolicy.exchangeAllowed && (
+                <p className="text-xs text-slate-500">{t('returnPolicyExchange')}</p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* SKU */}
       <p className="text-xs text-slate-500">{t('sku')}: {product.sku}</p>
