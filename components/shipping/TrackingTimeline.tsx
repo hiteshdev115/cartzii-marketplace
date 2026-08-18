@@ -27,14 +27,39 @@ function formatEventTime(iso: string): string {
 
 const TERMINAL_STATUSES = new Set(['delivered', 'return_to_sender', 'failure']);
 
+/**
+ * Reduces the event log to one entry per stage per place.
+ *
+ * These events are lifecycle STAGES from a fixed vocabulary, not per-facility
+ * carrier scans — every repeat of "in transit" at the same location carries the
+ * same generic description and tells the customer nothing new. Webhook replays
+ * (delivery is at-least-once) and repeated QA runs turned that into a timeline
+ * that appeared to show each status two or three times.
+ *
+ * Keyed on status AND location, so a parcel genuinely scanned in two cities
+ * still shows both. Expects newest-first input and keeps the newest of each
+ * group, which is the occurrence the customer cares about.
+ */
+function dedupeStages(events: TrackingEvent[]): TrackingEvent[] {
+  const seen = new Set<string>();
+  return events.filter((event) => {
+    const key = `${event.status}::${event.location ?? ''}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
 export function TrackingTimeline({ events, currentStatus }: TrackingTimelineProps) {
   const sorted = [...events].sort(
     (a, b) => new Date(b.occurredAt).getTime() - new Date(a.occurredAt).getTime(),
   );
 
+  const timeline = dedupeStages(sorted);
+
   return (
     <ol className="relative space-y-0">
-      {sorted.map((event, idx) => {
+      {timeline.map((event, idx) => {
         const isFirst = idx === 0;
         const isDone = TERMINAL_STATUSES.has(currentStatus) || !isFirst;
 
@@ -60,7 +85,7 @@ export function TrackingTimeline({ events, currentStatus }: TrackingTimelineProp
                   <Circle className="h-3.5 w-3.5" />
                 )}
               </span>
-              {idx < sorted.length - 1 && (
+              {idx < timeline.length - 1 && (
                 <span className="mt-1 flex-1 w-0.5 bg-slate-200" />
               )}
             </div>
