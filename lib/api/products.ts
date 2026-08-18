@@ -1,4 +1,5 @@
 import { api } from './client';
+import { resolvePrice } from '@/lib/pricing';
 import type { Product, ProductVariant, DetailVariant, Review } from '@/types';
 
 // ---- API response shapes --------------------------------------------------
@@ -200,16 +201,11 @@ function pickPricing(
 
 function buildDetailVariants(variants: APIVariant[], country: string): DetailVariant[] {
   return variants.map((v) => {
-    const pricing = pickPricing(v, country);
-    const vPrice = pricing ? parseFloat(pricing.price) : 0;
-    const vDiscountPrice = pricing ? parseFloat(pricing.discountprice) : undefined;
-    const origPrice = vDiscountPrice && vDiscountPrice > vPrice ? vDiscountPrice : vPrice;
-    const saleP = vDiscountPrice && vDiscountPrice > vPrice ? vPrice : undefined;
-    let disc: number | undefined;
-    if (pricing?.discount) disc = parseFloat(pricing.discount);
-    if (!disc && saleP !== undefined && origPrice > 0) {
-      disc = Math.round(((origPrice - saleP) / origPrice) * 100);
-    }
+    // Shared resolver — see lib/pricing.ts. This used to decide which figure
+    // was the sale price by testing `discountprice > price`, which is backwards
+    // and silently dropped every real discount.
+    const { origPrice, salePrice: saleP, discountPct } = resolvePrice(pickPricing(v, country));
+    const disc = discountPct || undefined;
 
     const colorAttr = v.attributes.find((a) => a.attributeName.toLowerCase() === 'color');
     const sizeAttr = v.attributes.find((a) => a.attributeName.toLowerCase() === 'size');
@@ -283,20 +279,12 @@ function mapProduct(raw: APIProduct, country: string): Product {
         }
       : undefined;
 
-  const price = priceSrc ? parseFloat(priceSrc.price) : 0;
-  const discountPrice = priceSrc ? parseFloat(priceSrc.discountprice) : undefined;
+  // Shared resolver — see lib/pricing.ts. The previous comment here claimed
+  // `discountprice` was the higher compare-at price; it is the LOWER, reduced
+  // one, which is why discounted products rendered at full price.
+  const { origPrice: originalPrice, salePrice, discountPct } = resolvePrice(priceSrc);
 
-  // The API uses `price` as the sale/current price and `discountprice` as the
-  // original/compare-at price (higher value). Map to frontend conventions:
-  //   product.price      = original / compare-at (higher)
-  //   product.salePrice  = current / sale (lower)
-  const originalPrice =
-    discountPrice && discountPrice > price ? discountPrice : price;
-  const salePrice =
-    discountPrice && discountPrice > price ? price : undefined;
-
-  // Calculate discount percentage: prefer API value, otherwise derive from prices
-  let discount = priceSrc?.discount ? parseFloat(priceSrc.discount) : undefined;
+  let discount: number | undefined = discountPct || undefined;
   if (!discount && salePrice !== undefined && originalPrice > 0) {
     discount = Math.round(((originalPrice - salePrice) / originalPrice) * 100);
   }

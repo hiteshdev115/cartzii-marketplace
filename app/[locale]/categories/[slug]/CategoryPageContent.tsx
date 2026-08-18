@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { resolvePrice } from '@/lib/pricing';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useLocale } from 'next-intl';
@@ -72,19 +73,11 @@ function resolvePricing(item: CategoryProduct, countryCode: string) {
     return { origPrice: 0, salePrice: undefined as number | undefined, discountPct: 0, currency: 'USD' };
   }
 
-  const apiPrice = parseFloat(priceSrc.price) || 0;
-  const apiDiscountPrice = priceSrc.discountprice ? parseFloat(priceSrc.discountprice) || 0 : 0;
-
-  // discountprice > price → discountprice is original, price is the sale price
-  const origPrice = apiDiscountPrice > apiPrice ? apiDiscountPrice : apiPrice;
-  const salePrice: number | undefined = apiDiscountPrice > apiPrice ? apiPrice : undefined;
-
-  let discountPct = priceSrc.discount ? parseFloat(priceSrc.discount) || 0 : 0;
-  if (!discountPct && salePrice !== undefined && origPrice > 0) {
-    discountPct = Math.round(((origPrice - salePrice) / origPrice) * 100);
-  }
-
-  return { origPrice, salePrice, discountPct, currency: priceSrc.currencycode || 'USD' };
+  // Shared resolver — see lib/pricing.ts. The listing carried the same
+  // inverted assumption as the product page, so a discounted product showed
+  // its full price here too.
+  const { origPrice, salePrice, discountPct, currency } = resolvePrice(priceSrc);
+  return { origPrice, salePrice, discountPct, currency: currency || 'USD' };
 }
 
 function getPrimaryImage(item: CategoryProduct): string {
