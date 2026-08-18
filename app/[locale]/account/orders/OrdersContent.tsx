@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useTranslations, useLocale } from 'next-intl';
@@ -17,6 +17,7 @@ import type {
   OrderHistoryRow,
   OrderItem,
   OrderSellerBreakdown,
+  OrderShipmentSummary,
 } from '@/types/order';
 import { safeCurrencyCode } from '@/lib/utils';
 
@@ -228,12 +229,58 @@ function OrderCard({ order, locale, tCart, tCheckout, tAccount, onRequestReturn,
   const statusBadge = getOrderStatusBadge(order.shipments);
   const sellerGroups =
     order.sellerBreakdown && order.sellerBreakdown.length > 0 ? order.sellerBreakdown : null;
-  const eligibleReturnItems = order.items.filter(
-    (item) => item.returnEligible && item.orderItemId != null,
-  );
   const activeReturnItems = order.items.filter(
     (item) => item.existingReturnId != null,
   );
+
+  // ── One "Track order" button per seller ────────────────────────────────────
+  //
+  // A seller can end up with more than one shipment row against the same order
+  // (a duplicate label purchase — now blocked server-side, but historical rows
+  // remain). Rendering one button per row showed the customer the same parcel
+  // twice with no way to tell the buttons apart. Keyed by seller, last row
+  // wins, so what is offered is each seller's most recent shipment.
+  const trackableShipments = useMemo(() => {
+    const bySeller = new Map<string, OrderShipmentSummary>();
+    for (const shipment of order.shipments ?? []) {
+      if (!shipment.trackingCode) continue;
+      bySeller.set(String(shipment.sellerId ?? shipment.trackingCode), shipment);
+    }
+    return [...bySeller.values()];
+  }, [order.shipments]);
+
+  // ── When a return may be requested ─────────────────────────────────────────
+  //
+  // Only once the WHOLE order has arrived. Offering it per-item as soon as any
+  // parcel landed let a customer start a return on an order that was still
+  // partly in transit, and the item they wanted to send back had not reached
+  // them yet.
+  const orderFullyDelivered =
+    trackableShipments.length > 0 &&
+    trackableShipments.every((shipment) => shipment.currentStatus === 'delivered');
+
+  const eligibleReturnItems = orderFullyDelivered
+    ? order.items.filter((item) => item.returnEligible && item.orderItemId != null)
+    : [];
+
+  // ── When the order is finished ─────────────────────────────────────────────
+  //
+  // Every line refunded means there is nothing left to track, cancel or return,
+  // and the money is already back. Leaving those buttons up invited customers
+  // to chase a parcel that had been returned and paid back.
+  const refundedItemKeys = new Set(
+    order.items
+      .filter(
+        (item) =>
+          item.existingReturnId != null &&
+          getReturnStage(item.existingReturnStatusId, item.existingReturnShipmentStatus).key ===
+            'refunded',
+      )
+      .map((item) => String(item.orderItemId ?? item.productId)),
+  );
+  const orderFullyRefunded =
+    order.items.length > 0 &&
+    order.items.every((item) => refundedItemKeys.has(String(item.orderItemId ?? item.productId)));
 
   return (
     <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
@@ -286,32 +333,35 @@ function OrderCard({ order, locale, tCart, tCheckout, tAccount, onRequestReturn,
           {order.itemCount} {order.itemCount === 1 ? tCart('item') : tCheckout('items')}
         </span>
         <div className="flex flex-wrap items-center gap-2">
-          {(order.shipments ?? [])
-            .filter((s) => s.trackingCode)
-            .map((s) => (
+          {!orderFullyRefunded &&
+            trackableShipments.map((s) => (
               <Link
                 key={s.trackingCode}
                 href={`${buildCountryPath(locale, `/track/${encodeURIComponent(s.trackingCode as string)}`)}?from=orders`}
                 className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-white hover:bg-primary/90 transition-colors"
               >
-                {order.shipments && order.shipments.length > 1 && s.sellerName
+                {trackableShipments.length > 1 && s.sellerName
                   ? `${tCheckout('trackOrder')} · ${s.sellerName}`
                   : tCheckout('trackOrder')}
               </Link>
             ))}
-          {activeReturnItems.map((item) => {
-            const stage = getReturnStage(item.existingReturnStatusId, item.existingReturnShipmentStatus);
-            const label = `${tReturns('returnButtonPrefix')}: ${tReturns(`stage.${stage.key}`)}`;
-            return (
-              <Link
-                key={`return-${item.existingReturnId}`}
-                href={buildCountryPath(locale, `/account/returns/${item.existingReturnId}`)}
-                className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${stage.className}`}
-              >
-                {activeReturnItems.length > 1 ? `${label} · ${item.productName}` : label}
-              </Link>
-            );
-          })}
+          {!orderFullyRefunded &&
+            activeReturnItems.map((item) => {
+              const stage = getReturnStage(
+                item.existingReturnStatusId,
+                item.existingReturnShipmentStatus,
+              );
+              const label = `${tReturns('returnButtonPrefix')}: ${tReturns(`stage.${stage.key}`)}`;
+              return (
+                <Link
+                  key={`return-${item.existingReturnId}`}
+                  href={buildCountryPath(locale, `/account/returns/${item.existingReturnId}`)}
+                  className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${stage.className}`}
+                >
+                  {activeReturnItems.length > 1 ? `${label} · ${item.productName}` : label}
+                </Link>
+              );
+            })}
           {eligibleReturnItems.map((item) => (
             <button
               key={item.orderItemId}
@@ -330,7 +380,7 @@ function OrderCard({ order, locale, tCart, tCheckout, tAccount, onRequestReturn,
           >
             {tAccount('viewDetails')}
           </Link>
-          {order.cancelEligible && (
+          {order.cancelEligible && !orderFullyRefunded && (
             <button
               type="button"
               onClick={() => onCancelOrder(order.orderNumber)}
