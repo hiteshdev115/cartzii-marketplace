@@ -16,11 +16,11 @@ export const SHIPPING_ERROR_CODES = {
   UNSUPPORTED_COUNTRY: 1006,
   /** Seller has no complete origin address. Per-seller. */
   NO_ORIGIN: 1007,
-  /** Rate provider (EasyPost) returned an error for this seller. Per-seller. */
+  /** The shipping provider returned an error for this seller. Per-seller. */
   RATE_FETCH_ERROR: 1008,
   /** Tracking code not found. Emitted by /shipping/tracking/:code. */
   TRACKING_NOT_FOUND: 1052,
-  /** Legacy: EasyPost/shipping provider not configured on the API side. */
+  /** Shipping provider not configured on the API side. */
   NOT_CONFIGURED: 1047,
 } as const;
 
