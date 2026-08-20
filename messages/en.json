@@ -1,12 +1,12 @@
 {
   "Metadata": {
-    "title": "Cartziio — Discover Products You'll Love",
+    "title": "Cartzii — Discover Products You'll Love",
     "description": "Shop thousands of curated products from trusted sellers. Fast shipping, easy returns, and deals you won't find anywhere else.",
     "keywords": "online shopping, marketplace, electronics, fashion, home, deals",
-    "homeTitle": "Home — Cartziio Marketplace",
+    "homeTitle": "Home — Cartzii Marketplace",
     "homeDescription": "Discover thousands of curated products from trusted sellers. Fast shipping, easy returns, and deals you won't find anywhere else.",
-    "productsTitle": "All Products — Cartziio Marketplace",
-    "productsDescription": "Browse all products on Cartziio Marketplace. Find the best deals on electronics, fashion, home, and more."
+    "productsTitle": "All Products — Cartzii Marketplace",
+    "productsDescription": "Browse all products on Cartzii Marketplace. Find the best deals on electronics, fashion, home, and more."
   },
   "Common": {
     "loading": "Loading...",
@@ -87,7 +87,7 @@
     "emailPlaceholder": "Enter your email address",
     "subscribe": "Subscribe",
     "subscribedSuccess": "Thanks for subscribing!",
-    "whyChooseUs": "Why Choose Cartziio?",
+    "whyChooseUs": "Why Choose Cartzii?",
     "benefit1Title": "Fast Delivery",
     "benefit1Desc": "Free shipping on orders over $50 with 2-day delivery.",
     "benefit2Title": "Secure Payments",
@@ -99,7 +99,7 @@
   },
   "Products": {
     "allProducts": "All Products",
-    "metaDescription": "Browse all products on Cartziio Marketplace. Find the best deals on electronics, fashion, home, and more.",
+    "metaDescription": "Browse all products on Cartzii Marketplace. Find the best deals on electronics, fashion, home, and more.",
     "filters": "Filters",
     "clearFilters": "Clear All",
     "applyFilters": "Apply Filters",
@@ -331,10 +331,10 @@
   "Auth": {
     "loginTitle": "Welcome Back",
     "welcomeBack": "Welcome Back",
-    "loginSubtitle": "Sign in to your Cartziio account",
+    "loginSubtitle": "Sign in to your Cartzii account",
     "registerTitle": "Create Account",
     "createAccount": "Create Account",
-    "registerSubtitle": "Join Cartziio and start shopping",
+    "registerSubtitle": "Join Cartzii and start shopping",
     "loggingIn": "Signing in...",
     "restoringCart": "Restoring your cart...",
     "creating": "Creating account...",
@@ -576,7 +576,7 @@
     "cookiePolicy": "Cookie Policy",
     "followUs": "Follow Us",
     "paymentMethods": "We Accept",
-    "copyright": "© {year} Cartziio. All rights reserved.",
+    "copyright": "© {year} Cartzii. All rights reserved.",
     "madeWith": "Made with ❤️ for shoppers everywhere"
   },
   "Accessibility": {

@@ -13,8 +13,8 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
     locale,
   );
   return {
-    title: 'All Categories - Cartziio',
-    description: 'Browse all product categories on Cartziio — electronics, fashion, home & living, sports, beauty, and more.',
+    title: 'All Categories - Cartzii',
+    description: 'Browse all product categories on Cartzii — electronics, fashion, home & living, sports, beauty, and more.',
     alternates,
   };
 }

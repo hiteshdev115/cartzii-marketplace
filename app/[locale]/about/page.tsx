@@ -11,8 +11,8 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
   const { locale } = await params;
   const alternates = generateAlternates(process.env.NEXT_PUBLIC_BASE_URL || 'https://cartzii.com', '/about', locale);
   return {
-    title: 'About Us - Cartziio | Your Trusted Marketplace',
-    description: 'Discover the story behind Cartziio — a next-generation marketplace built on trust, quality, and innovation. Learn about our mission, values, and the team behind your shopping experience.',
+    title: 'About Us - Cartzii | Your Trusted Marketplace',
+    description: 'Discover the story behind Cartzii — a next-generation marketplace built on trust, quality, and innovation. Learn about our mission, values, and the team behind your shopping experience.',
     alternates,
   };
 }
@@ -23,7 +23,7 @@ export default async function AboutPage() {
     {
       icon: ShieldCheck,
       title: 'Quality First',
-      description: 'Every product on Cartziio is hand-curated from verified sellers and trusted brands — no compromises.',
+      description: 'Every product on Cartzii is hand-curated from verified sellers and trusted brands — no compromises.',
       gradient: 'from-orange-500 to-red-600',
       bg: 'bg-orange-50',
     },
@@ -72,7 +72,7 @@ export default async function AboutPage() {
   ];
 
   const milestones = [
-    { year: '2022', title: 'The Spark', description: 'Cartziio was founded with a simple idea: make online shopping feel personal again.' },
+    { year: '2022', title: 'The Spark', description: 'Cartzii was founded with a simple idea: make online shopping feel personal again.' },
     { year: '2023', title: 'First 10K Customers', description: 'We hit our first major milestone and expanded our product catalog to 10,000+ items.' },
     { year: '2024', title: 'Going Bilingual', description: 'Launched full French-language support and expanded into Canadian markets.' },
     { year: '2025', title: 'Platform 2.0', description: 'Complete platform rebuild with AI-powered recommendations and a reimagined checkout experience.' },
@@ -115,7 +115,7 @@ export default async function AboutPage() {
           </h1>
 
           <p className="text-lg md:text-xl text-slate-300 max-w-2xl mx-auto leading-relaxed mb-10">
-            Cartziio is more than a marketplace — it&apos;s a curated world of quality products, 
+            Cartzii is more than a marketplace — it&apos;s a curated world of quality products, 
             trusted sellers, and an experience designed entirely around you.
           </p>
 
@@ -155,7 +155,7 @@ export default async function AboutPage() {
                 We didn&apos;t just build a <span className="text-primary">store</span> — we built a <span className="text-primary">movement.</span>
               </h2>
               <p className="text-slate-600 text-lg leading-relaxed mb-6">
-                Cartziio was born out of frustration with the ordinary. We saw a world of online shopping 
+                Cartzii was born out of frustration with the ordinary. We saw a world of online shopping 
                 that felt cold, cluttered, and untrusted — and we knew we could do better.
               </p>
               <p className="text-slate-600 text-lg leading-relaxed mb-8">
@@ -208,7 +208,7 @@ export default async function AboutPage() {
             <div className="inline-flex items-center gap-2 bg-white/10 border border-white/20 rounded-full px-4 py-2 text-white/80 text-sm font-medium mb-4">
               <TrendingUp className="w-4 h-4" /> Growing every day
             </div>
-            <h2 className="text-4xl md:text-5xl font-extrabold text-white">Cartziio in Numbers</h2>
+            <h2 className="text-4xl md:text-5xl font-extrabold text-white">Cartzii in Numbers</h2>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
             {stats.map((stat) => (
@@ -267,7 +267,7 @@ export default async function AboutPage() {
                 Shopping that feels <span className="text-primary">right.</span>
               </h2>
               <p className="text-slate-600 text-lg leading-relaxed mb-6">
-                At Cartziio, our mission is to bridge the gap between quality products and the people who deserve them. 
+                At Cartzii, our mission is to bridge the gap between quality products and the people who deserve them. 
                 We believe that great shopping is about more than just transactions — it&apos;s about discovery, trust, and joy.
               </p>
               <p className="text-slate-600 text-lg leading-relaxed">
@@ -279,10 +279,10 @@ export default async function AboutPage() {
             {/* Why us checklist */}
             <div>
               <div className="inline-flex items-center gap-2 text-primary font-semibold text-sm uppercase tracking-widest mb-4">
-                <CheckCircle2 className="w-4 h-4" /> Why Choose Cartziio
+                <CheckCircle2 className="w-4 h-4" /> Why Choose Cartzii
               </div>
               <h2 className="text-4xl md:text-5xl font-extrabold text-slate-900 leading-tight mb-8">
-                The Cartziio <span className="text-primary">difference.</span>
+                The Cartzii <span className="text-primary">difference.</span>
               </h2>
               <ul className="space-y-4">
                 {whyUs.map((item) => (
@@ -376,7 +376,7 @@ export default async function AboutPage() {
               <h2 className="text-4xl md:text-5xl font-extrabold mb-4 leading-tight">
                 Ready to experience{' '}
                 <span className="bg-gradient-to-r from-orange-400 to-red-400 bg-clip-text text-transparent">
-                  Cartziio?
+                  Cartzii?
                 </span>
               </h2>
               <p className="text-slate-300 text-lg max-w-xl mx-auto mb-10">

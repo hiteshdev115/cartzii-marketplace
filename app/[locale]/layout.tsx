@@ -31,7 +31,7 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
 
   return {
     title: {
-      template: "%s | Cartziio",
+      template: "%s | Cartzii",
       default: t("title"),
     },
     description: t("description"),
@@ -43,7 +43,7 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
       title: t("title"),
       description: t("description"),
       url: `${baseUrl}${buildCountryPath(locale, "")}`,
-      siteName: "Cartziio",
+      siteName: "Cartzii",
       locale: locale.replace("-", "_"),
       type: "website",
     },

@@ -32,7 +32,7 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
     locale,
   );
   return {
-    title: `${category.name} - Cartziio`,
+    title: `${category.name} - Cartzii`,
     description: category.description,
     alternates,
   };

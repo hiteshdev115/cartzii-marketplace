@@ -359,7 +359,7 @@ export function HandicraftPageClient({ initialHandicraftCategories, initialAllCa
             </h2>
             <p className="text-white/70 text-base mb-8 leading-relaxed">
               Handmade products carry the care, skill, and creativity of the maker.
-              Shop authentic handicrafts and support independent artisans on Cartziio.
+              Shop authentic handicrafts and support independent artisans on Cartzii.
             </p>
             <Link
               href={buildCountryPath(locale, '/search?q=handmade artisan')}

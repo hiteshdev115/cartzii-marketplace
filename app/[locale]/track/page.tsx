@@ -4,7 +4,7 @@ import { TrackingLookupForm } from '@/components/shipping/TrackingLookupForm';
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: 'Tracking' });
-  return { title: `${t('pageTitle')} — Cartziio` };
+  return { title: `${t('pageTitle')} — Cartzii` };
 }
 
 export default async function TrackPage({ params }: { params: Promise<{ locale: string }> }) {

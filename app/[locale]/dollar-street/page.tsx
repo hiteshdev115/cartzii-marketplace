@@ -9,13 +9,13 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
     locale,
   );
   return {
-    title: 'Dollar Street — Products Under $5 | Cartziio',
+    title: 'Dollar Street — Products Under $5 | Cartzii',
     description:
-      'Shop products priced under $5 on Cartziio. Quality everyday items, accessories, and essentials at unbeatable value. Updated daily with fresh finds.',
+      'Shop products priced under $5 on Cartzii. Quality everyday items, accessories, and essentials at unbeatable value. Updated daily with fresh finds.',
     keywords: ['under $5', 'cheap products', 'budget shopping', 'dollar deals', 'affordable'],
     alternates,
     openGraph: {
-      title: 'Dollar Street — Products Under $5 | Cartziio',
+      title: 'Dollar Street — Products Under $5 | Cartzii',
       description: 'Browse hundreds of quality products all priced under $5.',
       type: 'website',
     },
