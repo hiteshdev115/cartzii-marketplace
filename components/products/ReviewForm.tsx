@@ -6,7 +6,7 @@ import { StarRating } from '@/components/ui/StarRating';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { ImagePlus, X } from 'lucide-react';
-import { postReview } from '@/lib/api/reviews';
+import { postReview, AlreadyReviewedError } from '@/lib/api/reviews';
 import { useAuthStore } from '@/stores/authStore';
 import { useLoginModalStore } from '@/stores/loginModalStore';
 import type { ReviewAPIItem } from '@/lib/api/reviews';
@@ -35,6 +35,9 @@ export function ReviewForm({ productId, reviews = [], onReviewPosted }: ReviewFo
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState('');
+  // Kept apart from `error`: this one is not a failure the customer can retry,
+  // so it replaces the form rather than appearing above it.
+  const [blockedReason, setBlockedReason] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -93,6 +96,13 @@ export function ReviewForm({ productId, reviews = [], onReviewPosted }: ReviewFo
       setSubmitted(true);
       onReviewPosted?.(review);
     } catch (err) {
+      // Reaches here when the review list this component was given was stale —
+      // a second tab, or a submit that raced another. Not retryable, so it
+      // takes over the form instead of inviting another attempt.
+      if (err instanceof AlreadyReviewedError) {
+        setBlockedReason(err.message);
+        return;
+      }
       const msg = err instanceof Error ? err.message : 'Failed to submit review';
       setError(msg);
     } finally {
@@ -104,18 +114,39 @@ export function ReviewForm({ productId, reviews = [], onReviewPosted }: ReviewFo
     return null;
   }
 
-  // Hide form if the user has already reviewed this product
-  const alreadyReviewed = reviews.some(
-    (r) => String(r.userid) === String(userId),
-  );
-  if (alreadyReviewed) {
-    return null;
-  }
-
+  // Checked BEFORE "already reviewed". A successful post is appended to the
+  // parent's list straight away, which makes `alreadyReviewed` true on the very
+  // next render — so without this order the customer's thank-you would be
+  // replaced by a notice telling them they had already reviewed it.
   if (submitted) {
     return (
       <div className="p-6 bg-green-50 rounded-xl text-center">
         <p className="text-green-700 font-semibold">{t('reviewSuccess')}</p>
+        <p className="mt-1 text-sm text-green-700/80">
+          It&apos;s live on the product page now.
+        </p>
+      </div>
+    );
+  }
+
+  // One review per customer per product, enforced by the API. Checked here from
+  // the already-loaded list so the form never appears for someone who cannot
+  // use it — silently hiding it used to leave people hunting for a button that
+  // was never coming, so it says why.
+  const alreadyReviewed = reviews.some(
+    (r) => String(r.userid) === String(userId),
+  );
+
+  if (alreadyReviewed || blockedReason) {
+    return (
+      <div className="mt-6 p-6 bg-slate-50 rounded-xl">
+        <p className="font-medium text-slate-800">
+          {blockedReason || 'You have already reviewed this product.'}
+        </p>
+        <p className="mt-1 text-sm text-slate-500">
+          Reviews can&apos;t be changed or removed once posted, so every rating here reflects what
+          a buyer thought at the time.
+        </p>
       </div>
     );
   }
@@ -193,6 +224,14 @@ export function ReviewForm({ productId, reviews = [], onReviewPosted }: ReviewFo
           className="hidden"
         />
       </div>
+
+      {/* Stated before the button, not after. A review cannot be edited or
+          deleted once posted, and finding that out afterwards is exactly the
+          wrong moment. */}
+      <p className="text-xs text-slate-500">
+        You can review this product once. Reviews are published straight away and can&apos;t be
+        edited or deleted afterwards.
+      </p>
 
       <Button type="submit" disabled={submitting}>
         {submitting ? 'Submitting…' : t('reviewSubmit')}
