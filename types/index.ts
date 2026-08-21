@@ -54,6 +54,12 @@ export interface Product {
    * UI must hide the badge rather than render "undefined days".
    */
   returnPolicy?: ProductReturnPolicy;
+  /**
+   * When true, the seller absorbs the shipping charge and the storefront
+   * shows a "Free Delivery" badge. Optional because legacy persisted carts
+   * and mock fixtures predate the flag; treat `undefined` as false.
+   */
+  isFreeDelivery?: boolean;
 }
 
 /** Resolved return terms as returned by the product detail API. */

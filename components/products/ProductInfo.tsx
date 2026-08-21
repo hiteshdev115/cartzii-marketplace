@@ -232,7 +232,11 @@ export function ProductInfo({ product, onVariantChange, onShowReviews, onWriteRe
       <div className="grid grid-cols-3 gap-3 pt-4 border-t">
         <div className="flex flex-col items-center text-center gap-1">
           <Truck className="w-5 h-5 text-primary" />
-          <span className="text-xs text-slate-600">{t('freeShipping')}</span>
+          <span className="text-xs text-slate-600">
+            {/* The seller can absorb shipping per-product; when they do, we
+                say so plainly instead of the generic "Free shipping" copy. */}
+            {product.isFreeDelivery ? 'Free Delivery' : t('freeShipping')}
+          </span>
         </div>
         <div className="flex flex-col items-center text-center gap-1">
           <RotateCcw className="w-5 h-5 text-primary" />

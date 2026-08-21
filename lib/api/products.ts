@@ -152,6 +152,10 @@ interface APIProduct {
   width?: number | string | null;
   height?: number | string | null;
   dimensionunit?: string | null;
+  // Free-delivery flag — when true the seller absorbs the shipping charge
+  // and the storefront shows a "Free Delivery" badge. Optional because
+  // legacy responses (and older mock fixtures) predate this field.
+  isfreedelivery?: boolean | null;
 }
 
 // ---- Helpers --------------------------------------------------------------
@@ -399,6 +403,9 @@ function mapProduct(raw: APIProduct, country: string): Product {
     width: toNumberOrNull(raw.width),
     height: toNumberOrNull(raw.height),
     dimensionUnit: raw.dimensionunit ?? null,
+    // Free-delivery flag surfaced by the API. Falsy legacy responses (undefined
+    // / null) collapse to false so the badge only shows for opted-in products.
+    isFreeDelivery: Boolean(raw.isfreedelivery),
   };
 }
 
