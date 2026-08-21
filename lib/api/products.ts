@@ -126,7 +126,6 @@ interface APIProduct {
   stockquantity: number;
   shortdescription: string;
   video: string | null;
-  shippinginfo: string | null;
   warranty: string | null;
   tags: string | null;
   status: string;
@@ -473,7 +472,6 @@ export async function fetchProductBySlug(
         if (values) specifications[attr.attributename] = values;
       }
     }
-    if (raw.shippinginfo) specifications['Shipping'] = raw.shippinginfo;
     if (raw.warranty) specifications['Warranty'] = raw.warranty;
     product.specifications = specifications;
 
