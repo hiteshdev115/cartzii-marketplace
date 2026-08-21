@@ -1,14 +1,12 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useLocale, useTranslations } from 'next-intl';
+import { useTranslations } from 'next-intl';
 import { AlertTriangle, Loader2, RefreshCw } from 'lucide-react';
 import { useCartStore } from '@/stores/cartStore';
 import { useCheckoutStore } from '@/stores/checkoutStore';
-import { useThresholdsStore } from '@/stores/thresholdsStore';
 import { getRatesForCart } from '@/lib/shippingApi';
 import { SHIPPING_ERROR_CODES } from '@/lib/shippingConstants';
-import { formatPrice } from '@/lib/utils';
 import { SellerRateSelector } from './SellerRateSelector';
 import type { ShippingFormData } from '@/lib/validators';
 import type { RatesCartItem, SellerRateQuote, ShippingRate } from '@/lib/shippingApi';
@@ -39,11 +37,9 @@ export function RateSelectorPanel({
   onEligibilityChange,
 }: RateSelectorPanelProps) {
   const t = useTranslations('Shipping');
-  const locale = useLocale();
   const cartItems = useCartStore((s) => s.items);
   const { setSellerRateQuotes, setSelectedRate, selectedRates, sellerRateQuotes } =
     useCheckoutStore();
-  const { thresholds, fetchThresholds } = useThresholdsStore();
 
   const [fetchState, setFetchState] = useState<FetchState>({ status: 'idle' });
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -51,7 +47,7 @@ export function RateSelectorPanel({
   const sellerCarts = useMemo(() => {
     const groups = new Map<
       number,
-      { sellerId: number; subtotalCents: number; items: RatesCartItem[] }
+      { sellerId: number; storeName: string | null; subtotalCents: number; items: RatesCartItem[] }
     >();
 
     for (const ci of cartItems) {
@@ -72,9 +68,12 @@ export function RateSelectorPanel({
 
       let group = groups.get(sellerId);
       if (!group) {
-        group = { sellerId, subtotalCents: 0, items: [] };
+        group = { sellerId, storeName: ci.product.sellerName ?? null, subtotalCents: 0, items: [] };
         groups.set(sellerId, group);
       }
+      // First item that knows the name wins — later lines from the same seller
+      // carry the same value, and a null must not overwrite a real one.
+      group.storeName ??= ci.product.sellerName ?? null;
       group.subtotalCents += itemCents;
       group.items.push({
         productId: Number(ci.product.id),
@@ -85,14 +84,6 @@ export function RateSelectorPanel({
 
     return Array.from(groups.values());
   }, [cartItems]);
-
-  // Fetch free-shipping thresholds for all sellers in the cart
-  const sellerIds = useMemo(() => sellerCarts.map((s) => s.sellerId), [sellerCarts]);
-  useEffect(() => {
-    if (sellerIds.length > 0) {
-      void fetchThresholds(sellerIds);
-    }
-  }, [sellerIds, fetchThresholds]);
 
   const doFetch = useCallback(async () => {
     if (sellerCarts.length === 0) return;
@@ -238,20 +229,12 @@ export function RateSelectorPanel({
     <div className="space-y-4">
       <h3 className="text-sm font-semibold text-slate-800">{t('shippingMethod')}</h3>
       {quotes.map((quote) => {
-        // Compute free-shipping progress for this seller
+        // No "spend $X more for free shipping" banner any more: free delivery is
+        // set per product by the seller, so there is no cart total for a buyer
+        // to work toward. `quote.freeShippingApplied` still reports when a
+        // seller's whole group ships free.
         const sellerCart = sellerCarts.find((s) => s.sellerId === quote.sellerId);
-        const threshold = thresholds.get(quote.sellerId);
-        const thresholdCents = threshold?.freeShippingThresholdCents ?? null;
-        const subtotalCents = sellerCart?.subtotalCents ?? 0;
-        const storeName = threshold?.storeName || t('sellerLabel', { id: quote.sellerId });
-
-        const showProgressBanner =
-          !quote.freeShippingApplied &&
-          thresholdCents !== null &&
-          thresholdCents > 0 &&
-          subtotalCents < thresholdCents;
-
-        const remainingCents = showProgressBanner ? thresholdCents - subtotalCents : 0;
+        const storeName = sellerCart?.storeName || t('sellerLabel', { id: quote.sellerId });
         const sellerItems = itemsBySeller.get(quote.sellerId) || [];
 
         return (
@@ -259,20 +242,6 @@ export function RateSelectorPanel({
             <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-slate-500">
               {storeName}
             </p>
-            {showProgressBanner && (
-              <div
-                className="flex items-center gap-2 px-3 py-2 rounded-md bg-blue-50 border border-blue-200 text-blue-900 text-sm mb-2"
-                role="status"
-              >
-                <span aria-hidden="true">⚡</span>
-                <span>
-                  {t('freeShippingProgress', {
-                    amount: formatPrice(remainingCents / 100, locale),
-                    storeName,
-                  })}
-                </span>
-              </div>
-            )}
             <SellerRateSelector
               quote={quote}
               sellerName={storeName}

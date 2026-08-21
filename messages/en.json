@@ -215,8 +215,7 @@
     "guestCheckoutDesc": "No account needed. Just fill in your details at checkout.",
     "signInToCheckout": "Sign In to Checkout",
     "signInCheckoutDesc": "Save order history and enjoy a faster checkout experience.",
-    "freeShippingUnlocked": "🎉 Free shipping unlocked from {storeName}!",
-    "freeShippingProgress": "Add {amount} more from {storeName} for free shipping!"
+    "freeShippingUnlocked": "🎉 Free shipping unlocked from {storeName}!"
   },
   "Checkout": {
     "title": "Checkout",
@@ -635,7 +634,6 @@
     "freeShippingApplied": "🎉 Free shipping applied",
     "free": "FREE",
     "freeShippingAriaLabel": "Was {originalPrice}, now free",
-    "freeShippingProgress": "Add {amount} more from {storeName} to get free shipping!",
     "freeShippingUnlocked": "🎉 You qualify for free shipping from {storeName}!"
   },
   "Tracking": {

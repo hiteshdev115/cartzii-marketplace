@@ -215,8 +215,7 @@
     "guestCheckoutDesc": "Aucun compte requis. Remplissez simplement vos coordonnées.",
     "signInToCheckout": "Se connecter pour payer",
     "signInCheckoutDesc": "Sauvegardez vos commandes et bénéficiez d'une caisse plus rapide.",
-    "freeShippingUnlocked": "🎉 Livraison gratuite débloquée chez {storeName} !",
-    "freeShippingProgress": "Ajoutez {amount} de plus chez {storeName} pour la livraison gratuite !"
+    "freeShippingUnlocked": "🎉 Livraison gratuite débloquée chez {storeName} !"
   },
   "Checkout": {
     "title": "Paiement",
@@ -635,7 +634,6 @@
     "freeShippingApplied": "🎉 Livraison gratuite appliquée",
     "free": "GRATUIT",
     "freeShippingAriaLabel": "Était {originalPrice}, maintenant gratuit",
-    "freeShippingProgress": "Ajoutez {amount} de plus de {storeName} pour la livraison gratuite !",
     "freeShippingUnlocked": "🎉 Vous bénéficiez de la livraison gratuite de {storeName} !"
   },
   "Tracking": {

@@ -10,7 +10,6 @@ import { formatPrice } from '@/lib/utils';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { GuestCheckoutModal } from '@/components/checkout/GuestCheckoutModal';
-import { CartFreeShippingBanners } from './CartFreeShippingBanners';
 
 export function CartSummary() {
   const t = useTranslations('Cart');
@@ -65,7 +64,6 @@ export function CartSummary() {
       </div>
 
       {/* Per-seller free-shipping banners — shown when threshold data is available */}
-      <CartFreeShippingBanners />
 
       <button
         onClick={() => {
