@@ -76,7 +76,12 @@ export interface TaxEstimate {
   taxName: string;
   components: TaxComponent[];
   subtotalCents: number;
+  /** Shipping included in the taxable base. */
+  shippingCents?: number;
+  /** Goods + shipping — what the rate was applied to. */
+  taxableBaseCents?: number;
   taxAmountCents: number;
+  /** Goods + shipping + tax. The whole charge — do NOT add shipping again. */
   totalAmountCents: number;
   subtotalDollars: string;
   taxAmountDollars: string;

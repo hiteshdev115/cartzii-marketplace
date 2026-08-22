@@ -59,8 +59,14 @@ export function CheckoutPageContent() {
   const sellerRateQuotes = useCheckoutStore((s) => s.sellerRateQuotes);
   const selectedRates = useCheckoutStore((s) => s.selectedRates);
 
-  // Re-fetch the tax estimate whenever the locked shipping address or the cart
-  // subtotal changes. Skipped while the shipping form is still being edited.
+  // Selected shipping, needed BEFORE the tax estimate: a delivery charge is
+  // part of the taxable supply of the goods it delivers, so it is taxed at the
+  // same rate. Declared above the effect because the estimate depends on it.
+  const shippingCents = getTotalShippingCents();
+
+  // Re-fetch the tax estimate whenever the locked shipping address, the cart
+  // subtotal, or the chosen shipping changes. Skipped while the shipping form
+  // is still being edited.
   useEffect(() => {
     if (!shippingData || editingShipping) {
       setTaxState({ status: 'pending' });
@@ -81,6 +87,7 @@ export function CheckoutPageContent() {
           countryCode: shippingData.country,
           stateCode: shippingData.state,
           subtotalCents,
+          shippingCents,
         });
         if (!cancelled) {
           setTaxState({ status: 'ready', estimate });
@@ -102,15 +109,20 @@ export function CheckoutPageContent() {
       cancelled = true;
       controller.abort();
     };
-  }, [shippingData, editingShipping, subtotalCents]);
+  }, [shippingData, editingShipping, subtotalCents, shippingCents]);
 
-  // Stripe needs the grand total in the smallest currency unit. Until the tax
-  // estimate resolves we fall back to subtotal-only so the form can mount.
-  // Include selected shipping cost in the total charged to the card.
-  const shippingCents = getTotalShippingCents();
+  // Stripe needs the grand total in the smallest currency unit.
+  //
+  // `totalAmountCents` is goods + shipping + tax, ALL OF IT. Shipping used to be
+  // added on here, on top of a total that had been taxed on goods alone — so
+  // the customer was charged shipping with no tax on it, and the platform was
+  // left owing that tax. Adding it again now would double-charge it.
+  //
+  // Until the estimate resolves we fall back to an untaxed total so the payment
+  // form can mount; it is replaced the moment the real figure arrives.
   const orderAmountCents =
     taxState.status === 'ready'
-      ? taxState.estimate.totalAmountCents + shippingCents
+      ? taxState.estimate.totalAmountCents
       : subtotalCents + shippingCents;
   const taxReady = taxState.status === 'ready';
 
