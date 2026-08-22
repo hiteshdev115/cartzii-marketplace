@@ -4,13 +4,18 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useTranslations, useLocale } from 'next-intl';
-import { Package, RefreshCw } from 'lucide-react';
+import { Package, RefreshCw, Truck } from 'lucide-react';
 import { Breadcrumb } from '@/components/layout/Breadcrumb';
 import { buildCountryPath } from '@/config/countries';
 import { fetchMyOrders, subscribeToOrderUpdates } from '@/lib/api/orders';
 import { RequestReturnModal } from '@/components/returns/RequestReturnModal';
 import { CancelOrderModal } from '@/components/orders/CancelOrderModal';
-import { getOrderStatusBadge } from '@/lib/shippingConstants';
+import {
+  getOrderStatusBadge,
+  getOrderDeliveryProgress,
+  findItemShipment,
+} from '@/lib/shippingConstants';
+import { StatusBadge } from '@/components/shipping/StatusBadge';
 import { getReturnStage } from '@/lib/returnConstants';
 import type {
   OrderHistoryPagination,
@@ -67,7 +72,7 @@ export function OrdersContent() {
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [returnModalItem, setReturnModalItem] = useState<OrderItem | null>(null);
+  const [returnModalOrder, setReturnModalOrder] = useState<OrderHistoryRow | null>(null);
   const [cancelOrderNumber, setCancelOrderNumber] = useState<string | null>(null);
 
   const load = useCallback(async (targetPage: number) => {
@@ -158,7 +163,7 @@ export function OrdersContent() {
               tCart={tCart}
               tCheckout={tCheckout}
               tAccount={t}
-              onRequestReturn={setReturnModalItem}
+              onRequestReturn={setReturnModalOrder}
               onCancelOrder={setCancelOrderNumber}
             />
           ))}
@@ -189,15 +194,29 @@ export function OrdersContent() {
         </div>
       )}
 
+      {/* One modal for the whole order — the customer picks the item inside it,
+          rather than the order card sprouting a button per line. */}
       <RequestReturnModal
-        isOpen={returnModalItem != null}
-        onClose={() => setReturnModalItem(null)}
+        isOpen={returnModalOrder != null}
+        onClose={() => setReturnModalOrder(null)}
         onSuccess={() => {
-          setReturnModalItem(null);
+          setReturnModalOrder(null);
           void load(page);
         }}
-        orderItemId={returnModalItem?.orderItemId ?? 0}
-        productName={returnModalItem?.productName ?? ''}
+        orderNumber={returnModalOrder?.orderNumber}
+        items={(returnModalOrder?.items ?? []).map((item) => ({
+          orderItemId: item.orderItemId,
+          productId: item.productId,
+          productName: item.productName,
+          imageUrl: item.imageUrl,
+          quantity: item.quantity,
+          returnEligible: item.returnEligible,
+          returnWindowExpiresAt: item.returnWindowExpiresAt,
+          existingReturnId: item.existingReturnId,
+          existingReturnStatusId: item.existingReturnStatusId,
+          shipmentStatus:
+            findItemShipment(item, returnModalOrder?.shipments)?.currentStatus ?? null,
+        }))}
       />
 
       <CancelOrderModal
@@ -219,49 +238,57 @@ interface OrderCardProps {
   tCart: (key: string) => string;
   tCheckout: (key: string) => string;
   tAccount: (key: string) => string;
-  onRequestReturn: (item: OrderItem) => void;
+  onRequestReturn: (order: OrderHistoryRow) => void;
   onCancelOrder: (orderNumber: string) => void;
 }
 
 function OrderCard({ order, locale, tCart, tCheckout, tAccount, onRequestReturn, onCancelOrder }: OrderCardProps) {
   const tReturns = useTranslations('Returns');
   const tOrders = useTranslations('Orders');
-  const statusBadge = getOrderStatusBadge(order.shipments);
   const sellerGroups =
     order.sellerBreakdown && order.sellerBreakdown.length > 0 ? order.sellerBreakdown : null;
   const activeReturnItems = order.items.filter(
     (item) => item.existingReturnId != null,
   );
 
-  // ── One "Track order" button per seller ────────────────────────────────────
+  // ── One parcel per seller ──────────────────────────────────────────────────
   //
   // A seller can end up with more than one shipment row against the same order
   // (a duplicate label purchase — now blocked server-side, but historical rows
-  // remain). Rendering one button per row showed the customer the same parcel
-  // twice with no way to tell the buttons apart. Keyed by seller, last row
-  // wins, so what is offered is each seller's most recent shipment.
+  // remain). Collapsed to one row per seller here, and everything on this card
+  // — the badge, the delivered counter, the per-item statuses — is derived
+  // from this same list. Deriving the badge from the raw rows and the counter
+  // from the deduplicated ones let an order read "Partially Delivered (1/1)".
+  //
+  // `findItemShipment` picks the LEAST-progressed of a seller's rows, so a
+  // stale duplicate can never make a parcel look delivered.
   const trackableShipments = useMemo(() => {
-    const bySeller = new Map<string, OrderShipmentSummary>();
-    for (const shipment of order.shipments ?? []) {
-      if (!shipment.trackingCode) continue;
-      bySeller.set(String(shipment.sellerId ?? shipment.trackingCode), shipment);
-    }
-    return [...bySeller.values()];
+    const withCodes = (order.shipments ?? []).filter((s) => s.trackingCode);
+    const sellerIds = [...new Set(withCodes.map((s) => String(s.sellerId ?? s.trackingCode)))];
+    return sellerIds
+      .map((key) => {
+        const rows = withCodes.filter((s) => String(s.sellerId ?? s.trackingCode) === key);
+        return findItemShipment({ sellerId: rows[0].sellerId }, rows) ?? rows[0];
+      })
+      .filter((s): s is OrderShipmentSummary => s != null);
   }, [order.shipments]);
+
+  const statusBadge = getOrderStatusBadge(trackableShipments);
+  const deliveryProgress = getOrderDeliveryProgress(trackableShipments);
 
   // ── When a return may be requested ─────────────────────────────────────────
   //
-  // Only once the WHOLE order has arrived. Offering it per-item as soon as any
-  // parcel landed let a customer start a return on an order that was still
-  // partly in transit, and the item they wanted to send back had not reached
-  // them yet.
-  const orderFullyDelivered =
-    trackableShipments.length > 0 &&
-    trackableShipments.every((shipment) => shipment.currentStatus === 'delivered');
-
-  const eligibleReturnItems = orderFullyDelivered
-    ? order.items.filter((item) => item.returnEligible && item.orderItemId != null)
-    : [];
+  // Per ITEM, from the server's own `returnEligible` — which already requires
+  // that item's seller's parcel to have a delivery date on it.
+  //
+  // This used to additionally require the WHOLE order to have arrived. That
+  // made sense while the card offered a button per line, but it contradicts
+  // showing per-item delivery: an item the customer is looking at, marked
+  // Delivered, that they are told they cannot return yet because a different
+  // seller's box is still in transit. The server-side rule is the honest one.
+  const eligibleReturnItems = order.items.filter(
+    (item) => item.returnEligible && item.orderItemId != null,
+  );
 
   // ── When the order is finished ─────────────────────────────────────────────
   //
@@ -313,6 +340,7 @@ function OrderCard({ order, locale, tCart, tCheckout, tAccount, onRequestReturn,
               key={seller.sellerId}
               seller={seller}
               flatItems={order.items}
+              shipments={trackableShipments}
               currency={order.currency}
               locale={locale}
               tCart={tCart}
@@ -322,7 +350,12 @@ function OrderCard({ order, locale, tCart, tCheckout, tAccount, onRequestReturn,
         ) : (
           <div className="p-4 space-y-3">
             {order.items.map((item) => (
-              <ItemRow key={item.productId} item={item} locale={locale} />
+              <ItemRow
+                key={item.productId}
+                item={item}
+                shipments={trackableShipments}
+                locale={locale}
+              />
             ))}
           </div>
         )}
@@ -333,18 +366,29 @@ function OrderCard({ order, locale, tCart, tCheckout, tAccount, onRequestReturn,
           {order.itemCount} {order.itemCount === 1 ? tCart('item') : tCheckout('items')}
         </span>
         <div className="flex flex-wrap items-center gap-2">
-          {!orderFullyRefunded &&
-            trackableShipments.map((s) => (
-              <Link
-                key={s.trackingCode}
-                href={`${buildCountryPath(locale, `/track/${encodeURIComponent(s.trackingCode as string)}`)}?from=orders`}
-                className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-white hover:bg-primary/90 transition-colors"
-              >
-                {trackableShipments.length > 1 && s.sellerName
-                  ? `${tCheckout('trackOrder')} · ${s.sellerName}`
-                  : tCheckout('trackOrder')}
-              </Link>
-            ))}
+          {/* ── One "Track order" button, always ──────────────────────────
+              A multi-seller order ships in several parcels, and one button
+              per parcel put two or three identical-looking links side by
+              side. The order-level tracking page shows every parcel with the
+              items it is carrying, which is the question the customer was
+              actually asking. */}
+          {!orderFullyRefunded && trackableShipments.length > 0 && order.orderNumber && (
+            <Link
+              href={buildCountryPath(
+                locale,
+                `/account/orders/${encodeURIComponent(order.orderNumber)}/tracking`,
+              )}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-white hover:bg-primary/90 transition-colors"
+            >
+              <Truck className="h-3.5 w-3.5" />
+              {tCheckout('trackOrder')}
+              {trackableShipments.length > 1 && (
+                <span className="opacity-80">
+                  ({deliveryProgress.delivered}/{deliveryProgress.total})
+                </span>
+              )}
+            </Link>
+          )}
           {!orderFullyRefunded &&
             activeReturnItems.map((item) => {
               const stage = getReturnStage(
@@ -362,18 +406,18 @@ function OrderCard({ order, locale, tCart, tCheckout, tAccount, onRequestReturn,
                 </Link>
               );
             })}
-          {eligibleReturnItems.map((item) => (
+          {/* ── One "Request return" button, always ───────────────────────
+              Which item is chosen inside the modal, so an order with four
+              returnable lines shows one button instead of four. */}
+          {eligibleReturnItems.length > 0 && (
             <button
-              key={item.orderItemId}
               type="button"
-              onClick={() => onRequestReturn(item)}
+              onClick={() => onRequestReturn(order)}
               className="inline-flex items-center gap-1.5 rounded-lg border border-primary/40 bg-white px-3 py-1.5 text-xs font-medium text-primary hover:bg-primary/5 transition-colors"
             >
-              {eligibleReturnItems.length > 1
-                ? `${tReturns('requestReturn')} · ${item.productName}`
-                : tReturns('requestReturn')}
+              {tReturns('requestReturn')}
             </button>
-          ))}
+          )}
           <Link
             href={buildCountryPath(locale, `/order-confirmation/${order.orderNumber}`)}
             className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors"
@@ -398,13 +442,26 @@ function OrderCard({ order, locale, tCart, tCheckout, tAccount, onRequestReturn,
 interface SellerBlockProps {
   seller: OrderSellerBreakdown;
   flatItems: OrderItem[];
+  shipments?: OrderShipmentSummary[];
   currency: string;
   locale: string;
   tCart: (key: string) => string;
   tCheckout: (key: string) => string;
 }
 
-function SellerBlock({ seller, flatItems, currency, locale, tCart, tCheckout }: SellerBlockProps) {
+function SellerBlock({
+  seller,
+  flatItems,
+  shipments,
+  currency,
+  locale,
+  tCart,
+  tCheckout,
+}: SellerBlockProps) {
+  // One parcel per seller, so the status belongs on the seller heading rather
+  // than repeated against each of their lines.
+  const shipment = findItemShipment({ sellerId: seller.sellerId }, shipments);
+
   return (
     <div className="p-4">
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
@@ -414,9 +471,12 @@ function SellerBlock({ seller, flatItems, currency, locale, tCart, tCheckout }: 
             {seller.sellerName ?? `Seller #${seller.sellerId}`}
           </span>
         </p>
-        <p className="text-xs text-slate-500">
-          {seller.itemCount} {seller.itemCount === 1 ? tCart('item') : tCheckout('items')}
-        </p>
+        <div className="flex items-center gap-2">
+          <StatusBadge status={shipment?.currentStatus ?? 'label_created'} />
+          <p className="text-xs text-slate-500">
+            {seller.itemCount} {seller.itemCount === 1 ? tCart('item') : tCheckout('items')}
+          </p>
+        </div>
       </div>
 
       <div className="space-y-3">
@@ -427,6 +487,8 @@ function SellerBlock({ seller, flatItems, currency, locale, tCart, tCheckout }: 
             <ItemRow
               key={`${seller.sellerId}-${merged.productId}`}
               item={merged}
+              shipments={shipments}
+              showStatus={false}
               locale={locale}
             />
           );
@@ -459,13 +521,20 @@ function SellerBlock({ seller, flatItems, currency, locale, tCart, tCheckout }: 
 
 function ItemRow({
   item,
+  shipments,
+  showStatus = true,
   locale,
 }: {
   item: OrderItem;
+  shipments?: OrderShipmentSummary[];
+  /** Off inside a SellerBlock, where the badge sits on the seller heading and
+   *  repeating it against every one of their lines is just noise. */
+  showStatus?: boolean;
   locale: string;
 }) {
   const lineTotal = typeof item.finalPrice === 'number' ? item.finalPrice : item.totalPrice;
   const [imgSrc, setImgSrc] = useState(resolveImageUrl(item.imageUrl));
+  const shipment = showStatus ? findItemShipment(item, shipments) : null;
   return (
     <div className="flex gap-3">
       <div className="relative w-16 h-16 rounded-lg overflow-hidden shrink-0 border border-slate-200 bg-slate-50">
@@ -485,6 +554,11 @@ function ItemRow({
           Qty: {item.quantity}
           {item.variantInfo ? ` · ${item.variantInfo}` : ''}
         </p>
+        {showStatus && (
+          <div className="mt-1">
+            <StatusBadge status={shipment?.currentStatus ?? 'label_created'} />
+          </div>
+        )}
       </div>
       <p className="text-sm font-semibold text-slate-900 whitespace-nowrap">
         {formatCurrency(centsToAmount(lineTotal), item.currencyCode, locale)}

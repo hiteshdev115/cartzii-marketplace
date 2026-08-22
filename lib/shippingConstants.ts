@@ -101,14 +101,55 @@ const STATUS_PROGRESS_RANK: Record<string, number> = {
 };
 
 /**
+ * An order-level rollup, not a carrier status.
+ *
+ * No parcel is ever "partially delivered" — an ORDER is, when one seller's
+ * box has arrived and another's has not. Kept out of STATUS_BADGE_MAP so that
+ * map stays exactly the vocabulary the carrier speaks and can never be handed
+ * to StatusBadge for a single shipment.
+ */
+export const PARTIALLY_DELIVERED_BADGE = {
+  label: 'Partially Delivered',
+  className: 'bg-teal-100 text-teal-700',
+};
+
+/**
+ * How much of a multi-seller order has actually arrived.
+ *
+ * A single order can carry one parcel per seller, and they do not land
+ * together. Everything customer-facing that has to say "where is my order"
+ * needs the same three facts, so they are derived once here rather than
+ * recounted — differently — at each call site.
+ */
+export function getOrderDeliveryProgress(
+  shipments: { currentStatus: string | null }[] | undefined,
+): { total: number; delivered: number; allDelivered: boolean; partiallyDelivered: boolean } {
+  const list = shipments ?? [];
+  const delivered = list.filter((s) => s.currentStatus === 'delivered').length;
+  return {
+    total: list.length,
+    delivered,
+    allDelivered: list.length > 0 && delivered === list.length,
+    partiallyDelivered: delivered > 0 && delivered < list.length,
+  };
+}
+
+/**
  * Rolls up a multi-seller order's per-shipment tracking statuses into one
- * customer-facing badge. An order isn't fully delivered until every seller's
- * shipment is, so the overall status reflects the LEAST-progressed shipment
- * (e.g. one seller delivered + one still in transit → shows "In Transit") —
- * except a failure/return anywhere takes priority since it needs attention
- * regardless of how far along the other shipments are. No shipments yet
- * (no seller has bought a label) falls back to the same "Processing" badge
- * used for a freshly-created shipment.
+ * customer-facing badge.
+ *
+ * An order isn't fully delivered until every seller's shipment is, so the
+ * overall status reflects the LEAST-progressed shipment — except:
+ *
+ *  - a failure/return anywhere takes priority, since it needs attention
+ *    regardless of how far along the other shipments are;
+ *  - when SOME parcels have landed and others have not, the badge says
+ *    "Partially Delivered" rather than naming the laggard's status. Showing
+ *    "In Transit" on an order the customer has already partly unpacked reads
+ *    as though nothing had arrived at all.
+ *
+ * No shipments yet (no seller has bought a label) falls back to the same
+ * "Processing" badge used for a freshly-created shipment.
  */
 export function getOrderStatusBadge(
   shipments: { currentStatus: string | null }[] | undefined,
@@ -122,9 +163,41 @@ export function getOrderStatusBadge(
   if (statuses.includes('failure')) return STATUS_BADGE_MAP.failure;
   if (statuses.includes('return_to_sender')) return STATUS_BADGE_MAP.return_to_sender;
 
+  const { allDelivered, partiallyDelivered } = getOrderDeliveryProgress(shipments);
+  if (allDelivered) return STATUS_BADGE_MAP.delivered;
+  if (partiallyDelivered) return PARTIALLY_DELIVERED_BADGE;
+
   const leastProgressed = statuses.reduce((worst, status) =>
     (STATUS_PROGRESS_RANK[status] ?? 0) < (STATUS_PROGRESS_RANK[worst] ?? 0) ? status : worst,
   );
 
   return STATUS_BADGE_MAP[leastProgressed as ShipmentStatus] ?? STATUS_BADGE_MAP.unknown;
+}
+
+/**
+ * The shipment carrying a given order line.
+ *
+ * Matched on seller, because that is what a shipment actually belongs to: one
+ * seller packs one box for their own lines. Returns null for an item whose
+ * seller has not bought a label yet — which is a real state ("still being
+ * prepared"), not an error.
+ *
+ * A seller with more than one shipment row on the same order (a duplicate
+ * label purchase — now blocked server-side, but historical rows remain)
+ * resolves to the LEAST-progressed of them, so an item is never shown as
+ * delivered on the strength of a stale duplicate.
+ */
+export function findItemShipment<T extends { sellerId: number | null; currentStatus: string | null }>(
+  item: { sellerId?: number | null },
+  shipments: T[] | undefined,
+): T | null {
+  if (item.sellerId == null) return null;
+  const mine = (shipments ?? []).filter((s) => s.sellerId === item.sellerId);
+  if (mine.length === 0) return null;
+  return mine.reduce((worst, s) =>
+    (STATUS_PROGRESS_RANK[s.currentStatus ?? 'unknown'] ?? 0) <
+    (STATUS_PROGRESS_RANK[worst.currentStatus ?? 'unknown'] ?? 0)
+      ? s
+      : worst,
+  );
 }

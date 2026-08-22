@@ -153,6 +153,20 @@ function ReturnDetailContent({ returnId }: { returnId: number }) {
           <div className="text-right shrink-0">
             <p className="text-xs text-slate-500">{t('refundAmountLabel')}</p>
             <p className="text-sm font-bold text-slate-900">{formatCurrency(ret.refundAmount, ret.currency, locale)}</p>
+            {/* Itemised whenever the total is not simply item + tax, so a
+                refund that came back short is explained on the page rather
+                than discovered on a bank statement. */}
+            {ret.refundBreakdown && (
+              <div className="mt-2 space-y-0.5 text-xs text-slate-500">
+                <p>{t('itemPrice')}: {formatCurrency(ret.refundBreakdown.itemCents, ret.currency, locale)}</p>
+                <p>{t('itemTax')}: {formatCurrency(ret.refundBreakdown.taxCents, ret.currency, locale)}</p>
+                {ret.refundBreakdown.returnShippingCents > 0 && (
+                  <p className="text-amber-700">
+                    {t('returnShipping')}: -{formatCurrency(ret.refundBreakdown.returnShippingCents, ret.currency, locale)}
+                  </p>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>

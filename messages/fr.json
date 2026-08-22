@@ -522,7 +522,24 @@
     "shippingLabelHelp": "Retournez votre article avec l'une des options ci-dessous — une seule suffit.",
     "qrHelp": "Montrez ce code QR au comptoir d'expédition — le personnel peut le scanner et imprimer l'étiquette pour vous.",
     "printHelp": "Vous préférez l'imprimer vous-même ? Téléchargez l'étiquette et joignez-la à votre colis.",
-    "downloadLabel": "Télécharger / Imprimer l'étiquette"
+    "downloadLabel": "Télécharger / Imprimer l'étiquette",
+    "calculatingRefund": "Calcul de votre remboursement…",
+    "refundSummaryTitle": "Montant de votre remboursement",
+    "itemPrice": "Article",
+    "itemTax": "Taxe sur l'article",
+    "returnShipping": "Frais de retour",
+    "youWillReceive": "Vous recevrez",
+    "sellerPaysReturnShipping": "Le vendeur prend en charge les frais de retour pour ce motif.",
+    "buyerPaysReturnShipping": "Les frais de retour sont déduits de votre remboursement pour ce motif.",
+    "noReturnShippingCharge": "Aucuns frais de retour ne vous seront facturés.",
+    "originalShippingNotRefunded": "Les frais de livraison initiaux, et la taxe sur ceux-ci, ne sont pas remboursés.",
+    "selectItemLabel": "Quel article souhaitez-vous retourner ?",
+    "selectItemError": "Veuillez choisir un article à retourner",
+    "noReturnableItems": "Aucun article de cette commande ne peut être retourné pour le moment.",
+    "itemAlreadyReturned": "Retour déjà demandé",
+    "itemNotDelivered": "Pas encore livré",
+    "itemWindowClosed": "Délai de retour expiré",
+    "itemNotReturnable": "Non éligible au retour"
   },
   "Search": {
     "title": "Résultats de Recherche",
@@ -655,6 +672,9 @@
     "delivered": "Livré",
     "trackingHistory": "Historique de suivi",
     "noEventsYet": "Aucun événement de suivi pour l’instant. Revenez bientôt.",
-    "pageDescription": "Entrez votre code de suivi ci-dessous pour voir le statut actuel de votre colis."
+    "pageDescription": "Entrez votre code de suivi ci-dessous pour voir le statut actuel de votre colis.",
+    "parcelsDelivered": "{delivered} colis sur {total} livrés",
+    "parcelOf": "Colis {index} sur {total}",
+    "noShipmentsYet": "Aucun colis n'a encore été expédié. Le suivi apparaîtra ici dès qu'un vendeur enverra vos articles."
   }
 }

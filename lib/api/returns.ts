@@ -13,9 +13,50 @@ function unwrap<T>(response: T | ApiEnvelope<T>): T {
   return response as T;
 }
 
+/** 'seller' pays the return label, or 'buyer' does. */
+export type FaultParty = 'seller' | 'buyer';
+
 export interface ReturnReason {
   id: number;
   reason: string;
+  /**
+   * Who the reason attributes the return to — and therefore who pays for the
+   * return label. Public so the buyer can see, before they choose, that
+   * "changed my mind" costs them return shipping and "arrived damaged" does
+   * not.
+   */
+  faultParty: FaultParty;
+  returnShippingPaidBy: FaultParty;
+}
+
+/**
+ * What a return would actually pay out, quoted before the buyer commits.
+ *
+ * The whole point of this shape is that every number the buyer is held to was
+ * shown to them first. A return-shipping deduction that was never disclosed is
+ * one Cartzii will not charge.
+ */
+export interface ReturnPreview {
+  faultParty: FaultParty;
+  reasonId: number;
+  reason: string;
+  currency: string;
+  /** The item price, refunded in full. */
+  refundItemCents: number;
+  /** Sales tax on the item, refunded in full. */
+  refundTaxCents: number;
+  /**
+   * Tax charged on this line's share of the original delivery. NOT refunded —
+   * the delivery was made, and tax follows the money.
+   */
+  nonRefundableShippingTaxCents: number;
+  /** Cheapest return label quoted. Null when the seller pays, or unquotable. */
+  returnShippingQuotedCents: number | null;
+  /** What will actually be deducted. Zero whenever the seller is at fault. */
+  returnShippingFeeCents: number;
+  /** The bottom line: what lands back on the buyer's card. */
+  refundAmountCents: number;
+  returnShippingPaidBy: FaultParty;
 }
 
 export interface ReturnEvent {
@@ -35,6 +76,17 @@ export interface ReturnRequest {
   customerNote: string | null;
   sellerNote: string | null;
   refundAmount: number;
+  /** The refund itemised, so `refundAmount` can be explained rather than just shown. */
+  refundBreakdown: {
+    itemCents: number;
+    taxCents: number;
+    returnShippingCents: number;
+    totalCents: number;
+  };
+  faultParty: FaultParty;
+  faultOverridden: boolean;
+  returnShippingPaidBy: FaultParty;
+  returnShippingQuotedCents: number | null;
   /** The item's currency (CAD for /ca/ orders, USD for /us/) — never assume USD. */
   currency: string;
   requestedAt: string;
@@ -65,6 +117,23 @@ export interface MyReturnsResponse {
 
 export async function getReturnReasons(): Promise<ReturnReason[]> {
   const res = await api.get<ApiEnvelope<ReturnReason[]>>('/api/v1/returns/reasons');
+  return unwrap(res);
+}
+
+/**
+ * Quotes a return before it is requested.
+ *
+ * Called whenever the buyer picks a reason, because the reason is what decides
+ * whether they pay for the return label.
+ */
+export async function previewReturn(params: {
+  orderitemid: number;
+  returnreasonid: number;
+}): Promise<ReturnPreview> {
+  const res = await api.get<ApiEnvelope<ReturnPreview>>('/api/v1/returns/preview', {
+    params,
+    skipGuestToken: true,
+  });
   return unwrap(res);
 }
 

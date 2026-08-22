@@ -522,7 +522,24 @@
     "shippingLabelHelp": "Return your item using either option below — you only need one.",
     "qrHelp": "Show this QR code at the shipping counter — staff can scan and print the label for you.",
     "printHelp": "Prefer to print it yourself? Download the label and attach it to your package.",
-    "downloadLabel": "Download / Print Label"
+    "downloadLabel": "Download / Print Label",
+    "calculatingRefund": "Calculating your refund…",
+    "refundSummaryTitle": "What you'll be refunded",
+    "itemPrice": "Item",
+    "itemTax": "Tax on the item",
+    "returnShipping": "Return shipping",
+    "youWillReceive": "You'll receive",
+    "sellerPaysReturnShipping": "The seller covers return shipping for this reason.",
+    "buyerPaysReturnShipping": "Return shipping is deducted from your refund for this reason.",
+    "noReturnShippingCharge": "You won't be charged for return shipping.",
+    "originalShippingNotRefunded": "Original delivery charges, and the tax on them, aren't refunded.",
+    "selectItemLabel": "Which item are you returning?",
+    "selectItemError": "Please choose an item to return",
+    "noReturnableItems": "None of the items on this order can be returned right now.",
+    "itemAlreadyReturned": "Return already requested",
+    "itemNotDelivered": "Not delivered yet",
+    "itemWindowClosed": "Return window closed",
+    "itemNotReturnable": "Not eligible for return"
   },
   "Search": {
     "title": "Search Results",
@@ -655,6 +672,9 @@
     "delivered": "Delivered",
     "trackingHistory": "Tracking History",
     "noEventsYet": "No tracking events yet. Check back soon.",
-    "pageDescription": "Enter your tracking code below to see the latest status of your shipment."
+    "pageDescription": "Enter your tracking code below to see the latest status of your shipment.",
+    "parcelsDelivered": "{delivered} of {total} parcels delivered",
+    "parcelOf": "Parcel {index} of {total}",
+    "noShipmentsYet": "No parcels have shipped yet. Tracking appears here once a seller sends your items."
   }
 }
