@@ -13,6 +13,53 @@ import {
   type CartAPIItem,
 } from '@/lib/api/cart';
 
+/**
+ * Fills in a variant selection the caller did not make.
+ *
+ * The product grid, search results, category pages and Quick View all add to
+ * cart from a tile that has no colour or size picker on it. They passed
+ * `undefined` for both, so a shirt that exists only as Purple/M, Purple/L,
+ * Teal/M … landed in the cart as a bare product: no colour or size shown to the
+ * customer, and no `variantid` sent to the API — which leaves the warehouse
+ * with nothing to pick and the line priced off the parent product rather than
+ * the variant.
+ *
+ * The rule matches what the product detail page already does — first colour,
+ * first size — with one addition: a variant that is actually in stock beats one
+ * that is not. Defaulting into a sold-out size is a checkout failure waiting to
+ * happen, and the tile gives the customer no way to see it coming.
+ *
+ * A caller that DID choose is never overridden, and a product with no variants
+ * stays undefined, which is correct: there is nothing to choose.
+ */
+function resolveDefaultSelection(
+  product: Product,
+  color?: string,
+  size?: string,
+): { color?: string; size?: string } {
+  if (color && size) return { color, size };
+
+  const variants = product.detailVariants ?? [];
+  if (variants.length > 0) {
+    // Honour a partial choice: given a colour, the default size is one that
+    // actually exists in that colour rather than the product's first size.
+    const candidates = variants.filter(
+      (v) => (!color || v.color === color) && (!size || v.size === size),
+    );
+    const chosen = candidates.find((v) => v.inStock) ?? candidates[0];
+    if (chosen) {
+      return { color: color ?? chosen.color, size: size ?? chosen.size };
+    }
+  }
+
+  // No variant rows — fall back to the same first-option rule the detail page
+  // uses, so the two entry points can never disagree about what "default" means.
+  return {
+    color: color ?? product.colors?.[0]?.value,
+    size: size ?? product.sizes?.[0],
+  };
+}
+
 // ---- Map API cart item → local CartItem -----------------------------------
 
 function mapAPIItemToCartItem(item: CartAPIItem): CartItem {
@@ -253,7 +300,12 @@ export const useCartStore = create<CartStore>()(
       openDrawer: () => set({ isDrawerOpen: true }),
       closeDrawer: () => set({ isDrawerOpen: false }),
 
-      addItem: async (product, quantity = 1, color, size, locale) => {
+      addItem: async (product, quantity = 1, requestedColor, requestedSize, locale) => {
+        // Resolved once, up front: every branch below (guest state, guest cart
+        // persistence, optimistic update, API call) keys off this pair, and
+        // they must all agree or the same product lands in the cart twice.
+        const { color, size } = resolveDefaultSelection(product, requestedColor, requestedSize);
+
         const onCartPage =
           typeof window !== 'undefined' &&
           (window.location.pathname.includes('/cart') || window.location.pathname.includes('/checkout'));
