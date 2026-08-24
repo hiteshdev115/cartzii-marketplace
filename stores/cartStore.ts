@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { CartItem, Product } from '@/types';
+import { CartItem, DetailVariant, Product } from '@/types';
 import { getCountryConfig } from '@/config/countries';
 import { addToGuestCart } from '@/lib/guestCart';
 import {
@@ -12,6 +12,33 @@ import {
   buildCartImageUrl,
   type CartAPIItem,
 } from '@/lib/api/cart';
+
+/**
+ * The images a cart line should show for one variant.
+ *
+ * Photographs belong to a COLOURWAY, not to a variant. A seller uploads six
+ * shots of the purple shirt against Purple/M and leaves Purple/L and Purple/XL
+ * with none, because the size does not change what it looks like. Falling
+ * straight through to the parent product there is what made two lines —
+ * Purple/L and Teal/XL — render the identical photo despite being different
+ * variants.
+ *
+ * So borrow from a sibling sharing the colour before giving up on the variant.
+ * Mirrors the same fallback in the API's cartService, so a guest cart and a
+ * signed-in cart show the same picture.
+ */
+function variantImages(product: Product, variant: DetailVariant): string[] {
+  if (variant.images.length > 0) return variant.images;
+
+  if (variant.color) {
+    const sibling = product.detailVariants?.find(
+      (v) => v.color === variant.color && v.images.length > 0,
+    );
+    if (sibling) return sibling.images;
+  }
+
+  return product.images;
+}
 
 /**
  * Fills in a variant selection the caller did not make.
@@ -330,7 +357,7 @@ export const useCartStore = create<CartStore>()(
         const lineProduct: Product = variant
           ? {
               ...product,
-              images: variant.images.length > 0 ? variant.images : product.images,
+              images: variantImages(product, variant),
               price: variant.price,
               salePrice: variant.salePrice,
               discount: variant.discount,
