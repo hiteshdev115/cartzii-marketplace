@@ -306,6 +306,41 @@ export const useCartStore = create<CartStore>()(
         // they must all agree or the same product lands in the cart twice.
         const { color, size } = resolveDefaultSelection(product, requestedColor, requestedSize);
 
+        // The variant this line actually is. Resolved once and reused by every
+        // branch below — computing it separately in three places is how they
+        // drift apart.
+        const variant =
+          product.detailVariants?.find(
+            (v) => (!color || v.color === color) && (!size || v.size === size),
+          ) ?? (color ? product.detailVariants?.find((v) => v.color === color) : undefined);
+
+        /**
+         * A cart line IS a variant, not a product.
+         *
+         * Storing the parent product meant two lines of the same shirt —
+         * Purple/L and Teal/XL — rendered from the same `product.images[0]`,
+         * so the customer saw one photo twice, priced off the parent and
+         * carrying the parent's SKU and stock count. Every cart surface reads
+         * `item.product.images[0]`, so the line carries a product narrowed to
+         * its own variant instead. This is exactly what the server already
+         * returns for an authenticated cart — `mapAPIItemToCartItem` builds
+         * `images: [variant image]` — so local and server carts now agree
+         * rather than the image changing on reload.
+         */
+        const lineProduct: Product = variant
+          ? {
+              ...product,
+              images: variant.images.length > 0 ? variant.images : product.images,
+              price: variant.price,
+              salePrice: variant.salePrice,
+              discount: variant.discount,
+              onSale: variant.salePrice !== undefined && variant.salePrice < variant.price,
+              sku: variant.sku,
+              stockCount: variant.stockCount,
+              inStock: variant.inStock,
+            }
+          : product;
+
         const onCartPage =
           typeof window !== 'undefined' &&
           (window.location.pathname.includes('/cart') || window.location.pathname.includes('/checkout'));
@@ -335,21 +370,18 @@ export const useCartStore = create<CartStore>()(
             return {
               items: [
                 ...state.items,
-                { product, quantity, selectedColor: color, selectedSize: size },
+                { product: lineProduct, quantity, selectedColor: color, selectedSize: size },
               ],
             };
           });
 
           // Also persist to guest_cart so mergeCartOnLogin can pick up variantId
-          const guestVariant = product.detailVariants?.find(
-            (v) => (!color || v.color === color) && (!size || v.size === size),
-          ) ?? (color ? product.detailVariants?.find((v) => v.color === color) : undefined);
           addToGuestCart({
             productId: product.id,
-            variantId: guestVariant?.variantId ?? '',
+            variantId: variant?.variantId ?? '',
             name: product.name,
-            image: product.images?.[0] ?? '',
-            price: product.salePrice ?? product.price,
+            image: lineProduct.images?.[0] ?? '',
+            price: lineProduct.salePrice ?? lineProduct.price,
             quantity,
             selectedAttributes: {
               ...(color ? { color } : {}),
@@ -387,16 +419,10 @@ export const useCartStore = create<CartStore>()(
         });
 
         try {
-          // Resolve variant from detailVariants using the user's current selection
-          const matchedVariant = product.detailVariants?.find(
-            (v) => (!color || v.color === color) && (!size || v.size === size),
-          ) ?? (color ? product.detailVariants?.find((v) => v.color === color) : undefined);
-          const variantId = matchedVariant?.variantId
-            ? parseInt(matchedVariant.variantId, 10)
-            : undefined;
+          const variantId = variant?.variantId ? parseInt(variant.variantId, 10) : undefined;
 
           const countryConfig = locale ? getCountryConfig(locale) : null;
-          const priceNum = matchedVariant?.salePrice ?? matchedVariant?.price ?? product.salePrice ?? product.price;
+          const priceNum = lineProduct.salePrice ?? lineProduct.price;
 
           await addCartItemAPI({
             userid: parseInt(userId, 10),
@@ -411,7 +437,7 @@ export const useCartStore = create<CartStore>()(
               ...(size ? { size } : {}),
             },
             name: product.name,
-            image: matchedVariant?.images?.[0] ?? product.images?.[0],
+            image: lineProduct.images?.[0],
           });
 
           // Refresh from server to get accurate cartId and merged quantities
