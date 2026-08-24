@@ -1,12 +1,12 @@
 {
   "Metadata": {
-    "title": "Cartziio — Discover Products You'll Love",
+    "title": "Cartzii — Discover Products You'll Love",
     "description": "Shop thousands of curated products from trusted sellers. Fast shipping, easy returns, and deals you won't find anywhere else.",
     "keywords": "online shopping, marketplace, electronics, fashion, home, deals",
-    "homeTitle": "Home — Cartziio Marketplace",
+    "homeTitle": "Home — Cartzii Marketplace",
     "homeDescription": "Discover thousands of curated products from trusted sellers. Fast shipping, easy returns, and deals you won't find anywhere else.",
-    "productsTitle": "All Products — Cartziio Marketplace",
-    "productsDescription": "Browse all products on Cartziio Marketplace. Find the best deals on electronics, fashion, home, and more."
+    "productsTitle": "All Products — Cartzii Marketplace",
+    "productsDescription": "Browse all products on Cartzii Marketplace. Find the best deals on electronics, fashion, home, and more."
   },
   "Common": {
     "loading": "Loading...",
@@ -87,7 +87,7 @@
     "emailPlaceholder": "Enter your email address",
     "subscribe": "Subscribe",
     "subscribedSuccess": "Thanks for subscribing!",
-    "whyChooseUs": "Why Choose Cartziio?",
+    "whyChooseUs": "Why Choose Cartzii?",
     "benefit1Title": "Fast Delivery",
     "benefit1Desc": "Free shipping on orders over $50 with 2-day delivery.",
     "benefit2Title": "Secure Payments",
@@ -99,7 +99,7 @@
   },
   "Products": {
     "allProducts": "All Products",
-    "metaDescription": "Browse all products on Cartziio Marketplace. Find the best deals on electronics, fashion, home, and more.",
+    "metaDescription": "Browse all products on Cartzii Marketplace. Find the best deals on electronics, fashion, home, and more.",
     "filters": "Filters",
     "clearFilters": "Clear All",
     "applyFilters": "Apply Filters",
@@ -215,8 +215,7 @@
     "guestCheckoutDesc": "No account needed. Just fill in your details at checkout.",
     "signInToCheckout": "Sign In to Checkout",
     "signInCheckoutDesc": "Save order history and enjoy a faster checkout experience.",
-    "freeShippingUnlocked": "🎉 Free shipping unlocked from {storeName}!",
-    "freeShippingProgress": "Add {amount} more from {storeName} for free shipping!"
+    "freeShippingUnlocked": "🎉 Free shipping unlocked from {storeName}!"
   },
   "Checkout": {
     "title": "Checkout",
@@ -331,10 +330,10 @@
   "Auth": {
     "loginTitle": "Welcome Back",
     "welcomeBack": "Welcome Back",
-    "loginSubtitle": "Sign in to your Cartziio account",
+    "loginSubtitle": "Sign in to your Cartzii account",
     "registerTitle": "Create Account",
     "createAccount": "Create Account",
-    "registerSubtitle": "Join Cartziio and start shopping",
+    "registerSubtitle": "Join Cartzii and start shopping",
     "loggingIn": "Signing in...",
     "restoringCart": "Restoring your cart...",
     "creating": "Creating account...",
@@ -523,7 +522,24 @@
     "shippingLabelHelp": "Return your item using either option below — you only need one.",
     "qrHelp": "Show this QR code at the shipping counter — staff can scan and print the label for you.",
     "printHelp": "Prefer to print it yourself? Download the label and attach it to your package.",
-    "downloadLabel": "Download / Print Label"
+    "downloadLabel": "Download / Print Label",
+    "calculatingRefund": "Calculating your refund…",
+    "refundSummaryTitle": "What you'll be refunded",
+    "itemPrice": "Item",
+    "itemTax": "Tax on the item",
+    "returnShipping": "Return shipping",
+    "youWillReceive": "You'll receive",
+    "sellerPaysReturnShipping": "The seller covers return shipping for this reason.",
+    "buyerPaysReturnShipping": "Return shipping is deducted from your refund for this reason.",
+    "noReturnShippingCharge": "You won't be charged for return shipping.",
+    "originalShippingNotRefunded": "Original delivery charges, and the tax on them, aren't refunded.",
+    "selectItemLabel": "Which item are you returning?",
+    "selectItemError": "Please choose an item to return",
+    "noReturnableItems": "None of the items on this order can be returned right now.",
+    "itemAlreadyReturned": "Return already requested",
+    "itemNotDelivered": "Not delivered yet",
+    "itemWindowClosed": "Return window closed",
+    "itemNotReturnable": "Not eligible for return"
   },
   "Search": {
     "title": "Search Results",
@@ -576,7 +592,7 @@
     "cookiePolicy": "Cookie Policy",
     "followUs": "Follow Us",
     "paymentMethods": "We Accept",
-    "copyright": "© {year} Cartziio. All rights reserved.",
+    "copyright": "© {year} Cartzii. All rights reserved.",
     "madeWith": "Made with ❤️ for shoppers everywhere"
   },
   "Accessibility": {
@@ -635,7 +651,6 @@
     "freeShippingApplied": "🎉 Free shipping applied",
     "free": "FREE",
     "freeShippingAriaLabel": "Was {originalPrice}, now free",
-    "freeShippingProgress": "Add {amount} more from {storeName} to get free shipping!",
     "freeShippingUnlocked": "🎉 You qualify for free shipping from {storeName}!"
   },
   "Tracking": {
@@ -657,6 +672,9 @@
     "delivered": "Delivered",
     "trackingHistory": "Tracking History",
     "noEventsYet": "No tracking events yet. Check back soon.",
-    "pageDescription": "Enter your tracking code below to see the latest status of your shipment."
+    "pageDescription": "Enter your tracking code below to see the latest status of your shipment.",
+    "parcelsDelivered": "{delivered} of {total} parcels delivered",
+    "parcelOf": "Parcel {index} of {total}",
+    "noShipmentsYet": "No parcels have shipped yet. Tracking appears here once a seller sends your items."
   }
 }

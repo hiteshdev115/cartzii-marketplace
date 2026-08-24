@@ -7,6 +7,7 @@ import { Package, RefreshCw, ExternalLink } from 'lucide-react';
 import { Breadcrumb } from '@/components/layout/Breadcrumb';
 import { buildCountryPath } from '@/config/countries';
 import { getMyReturns, type ReturnRequest, type ReturnsPagination } from '@/lib/api/returns';
+import { getReturnStage } from '@/lib/returnConstants';
 import { safeCurrencyCode } from '@/lib/utils';
 
 function formatCurrency(cents: number, currency: string, locale: string): string {
@@ -18,24 +19,6 @@ function formatDate(value: string, locale: string): string {
   if (Number.isNaN(d.getTime())) return value;
   return new Intl.DateTimeFormat(locale, { dateStyle: 'medium' }).format(d);
 }
-
-const STATUS_KEY: Record<number, string> = {
-  1: 'requested',
-  2: 'approved',
-  3: 'rejected',
-  4: 'labelSent',
-  5: 'received',
-  6: 'refunded',
-};
-
-const STATUS_BADGE: Record<number, string> = {
-  1: 'bg-amber-100 text-amber-700',
-  2: 'bg-blue-100 text-blue-700',
-  3: 'bg-rose-100 text-rose-700',
-  4: 'bg-blue-100 text-blue-700',
-  5: 'bg-blue-100 text-blue-700',
-  6: 'bg-emerald-100 text-emerald-700',
-};
 
 const PAGE_SIZE = 20;
 
@@ -109,7 +92,10 @@ export function ReturnsContent() {
       ) : (
         <div className="space-y-4">
           {returns.map((ret) => {
-            const statusKey = STATUS_KEY[ret.statusId] ?? 'requested';
+            // The same rollup the detail page draws its timeline from. The
+            // list used to show the raw RMA status instead, so a return could
+            // read "Label Sent" here and "Drop Off" one click away.
+            const stage = getReturnStage(ret.statusId, ret.shipmentStatus);
             return (
               <div key={ret.returnId} className="rounded-2xl border border-slate-200 bg-white p-4">
                 <div className="flex flex-wrap items-start justify-between gap-3">
@@ -124,8 +110,8 @@ export function ReturnsContent() {
                     <p className="text-xs text-slate-400 mt-1">{formatDate(ret.requestedAt, locale)}</p>
                   </div>
                   <div className="text-right">
-                    <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_BADGE[ret.statusId] ?? 'bg-slate-100 text-slate-700'}`}>
-                      {t(`status.${statusKey}`)}
+                    <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${stage.className}`}>
+                      {t(`stage.${stage.key}`)}
                     </span>
                     <p className="text-sm font-bold text-slate-900 mt-1">
                       {formatCurrency(ret.refundAmount, ret.currency, locale)}

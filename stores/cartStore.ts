@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { CartItem, Product } from '@/types';
+import { CartItem, DetailVariant, Product } from '@/types';
 import { getCountryConfig } from '@/config/countries';
 import { addToGuestCart } from '@/lib/guestCart';
 import {
@@ -12,6 +12,80 @@ import {
   buildCartImageUrl,
   type CartAPIItem,
 } from '@/lib/api/cart';
+
+/**
+ * The images a cart line should show for one variant.
+ *
+ * Photographs belong to a COLOURWAY, not to a variant. A seller uploads six
+ * shots of the purple shirt against Purple/M and leaves Purple/L and Purple/XL
+ * with none, because the size does not change what it looks like. Falling
+ * straight through to the parent product there is what made two lines —
+ * Purple/L and Teal/XL — render the identical photo despite being different
+ * variants.
+ *
+ * So borrow from a sibling sharing the colour before giving up on the variant.
+ * Mirrors the same fallback in the API's cartService, so a guest cart and a
+ * signed-in cart show the same picture.
+ */
+function variantImages(product: Product, variant: DetailVariant): string[] {
+  if (variant.images.length > 0) return variant.images;
+
+  if (variant.color) {
+    const sibling = product.detailVariants?.find(
+      (v) => v.color === variant.color && v.images.length > 0,
+    );
+    if (sibling) return sibling.images;
+  }
+
+  return product.images;
+}
+
+/**
+ * Fills in a variant selection the caller did not make.
+ *
+ * The product grid, search results, category pages and Quick View all add to
+ * cart from a tile that has no colour or size picker on it. They passed
+ * `undefined` for both, so a shirt that exists only as Purple/M, Purple/L,
+ * Teal/M … landed in the cart as a bare product: no colour or size shown to the
+ * customer, and no `variantid` sent to the API — which leaves the warehouse
+ * with nothing to pick and the line priced off the parent product rather than
+ * the variant.
+ *
+ * The rule matches what the product detail page already does — first colour,
+ * first size — with one addition: a variant that is actually in stock beats one
+ * that is not. Defaulting into a sold-out size is a checkout failure waiting to
+ * happen, and the tile gives the customer no way to see it coming.
+ *
+ * A caller that DID choose is never overridden, and a product with no variants
+ * stays undefined, which is correct: there is nothing to choose.
+ */
+function resolveDefaultSelection(
+  product: Product,
+  color?: string,
+  size?: string,
+): { color?: string; size?: string } {
+  if (color && size) return { color, size };
+
+  const variants = product.detailVariants ?? [];
+  if (variants.length > 0) {
+    // Honour a partial choice: given a colour, the default size is one that
+    // actually exists in that colour rather than the product's first size.
+    const candidates = variants.filter(
+      (v) => (!color || v.color === color) && (!size || v.size === size),
+    );
+    const chosen = candidates.find((v) => v.inStock) ?? candidates[0];
+    if (chosen) {
+      return { color: color ?? chosen.color, size: size ?? chosen.size };
+    }
+  }
+
+  // No variant rows — fall back to the same first-option rule the detail page
+  // uses, so the two entry points can never disagree about what "default" means.
+  return {
+    color: color ?? product.colors?.[0]?.value,
+    size: size ?? product.sizes?.[0],
+  };
+}
 
 // ---- Map API cart item → local CartItem -----------------------------------
 
@@ -253,7 +327,47 @@ export const useCartStore = create<CartStore>()(
       openDrawer: () => set({ isDrawerOpen: true }),
       closeDrawer: () => set({ isDrawerOpen: false }),
 
-      addItem: async (product, quantity = 1, color, size, locale) => {
+      addItem: async (product, quantity = 1, requestedColor, requestedSize, locale) => {
+        // Resolved once, up front: every branch below (guest state, guest cart
+        // persistence, optimistic update, API call) keys off this pair, and
+        // they must all agree or the same product lands in the cart twice.
+        const { color, size } = resolveDefaultSelection(product, requestedColor, requestedSize);
+
+        // The variant this line actually is. Resolved once and reused by every
+        // branch below — computing it separately in three places is how they
+        // drift apart.
+        const variant =
+          product.detailVariants?.find(
+            (v) => (!color || v.color === color) && (!size || v.size === size),
+          ) ?? (color ? product.detailVariants?.find((v) => v.color === color) : undefined);
+
+        /**
+         * A cart line IS a variant, not a product.
+         *
+         * Storing the parent product meant two lines of the same shirt —
+         * Purple/L and Teal/XL — rendered from the same `product.images[0]`,
+         * so the customer saw one photo twice, priced off the parent and
+         * carrying the parent's SKU and stock count. Every cart surface reads
+         * `item.product.images[0]`, so the line carries a product narrowed to
+         * its own variant instead. This is exactly what the server already
+         * returns for an authenticated cart — `mapAPIItemToCartItem` builds
+         * `images: [variant image]` — so local and server carts now agree
+         * rather than the image changing on reload.
+         */
+        const lineProduct: Product = variant
+          ? {
+              ...product,
+              images: variantImages(product, variant),
+              price: variant.price,
+              salePrice: variant.salePrice,
+              discount: variant.discount,
+              onSale: variant.salePrice !== undefined && variant.salePrice < variant.price,
+              sku: variant.sku,
+              stockCount: variant.stockCount,
+              inStock: variant.inStock,
+            }
+          : product;
+
         const onCartPage =
           typeof window !== 'undefined' &&
           (window.location.pathname.includes('/cart') || window.location.pathname.includes('/checkout'));
@@ -283,21 +397,18 @@ export const useCartStore = create<CartStore>()(
             return {
               items: [
                 ...state.items,
-                { product, quantity, selectedColor: color, selectedSize: size },
+                { product: lineProduct, quantity, selectedColor: color, selectedSize: size },
               ],
             };
           });
 
           // Also persist to guest_cart so mergeCartOnLogin can pick up variantId
-          const guestVariant = product.detailVariants?.find(
-            (v) => (!color || v.color === color) && (!size || v.size === size),
-          ) ?? (color ? product.detailVariants?.find((v) => v.color === color) : undefined);
           addToGuestCart({
             productId: product.id,
-            variantId: guestVariant?.variantId ?? '',
+            variantId: variant?.variantId ?? '',
             name: product.name,
-            image: product.images?.[0] ?? '',
-            price: product.salePrice ?? product.price,
+            image: lineProduct.images?.[0] ?? '',
+            price: lineProduct.salePrice ?? lineProduct.price,
             quantity,
             selectedAttributes: {
               ...(color ? { color } : {}),
@@ -335,16 +446,10 @@ export const useCartStore = create<CartStore>()(
         });
 
         try {
-          // Resolve variant from detailVariants using the user's current selection
-          const matchedVariant = product.detailVariants?.find(
-            (v) => (!color || v.color === color) && (!size || v.size === size),
-          ) ?? (color ? product.detailVariants?.find((v) => v.color === color) : undefined);
-          const variantId = matchedVariant?.variantId
-            ? parseInt(matchedVariant.variantId, 10)
-            : undefined;
+          const variantId = variant?.variantId ? parseInt(variant.variantId, 10) : undefined;
 
           const countryConfig = locale ? getCountryConfig(locale) : null;
-          const priceNum = matchedVariant?.salePrice ?? matchedVariant?.price ?? product.salePrice ?? product.price;
+          const priceNum = lineProduct.salePrice ?? lineProduct.price;
 
           await addCartItemAPI({
             userid: parseInt(userId, 10),
@@ -359,7 +464,7 @@ export const useCartStore = create<CartStore>()(
               ...(size ? { size } : {}),
             },
             name: product.name,
-            image: matchedVariant?.images?.[0] ?? product.images?.[0],
+            image: lineProduct.images?.[0],
           });
 
           // Refresh from server to get accurate cartId and merged quantities

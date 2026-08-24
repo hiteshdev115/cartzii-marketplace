@@ -4,7 +4,7 @@ import { ReturnsContent } from './ReturnsContent';
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: 'Account' });
-  return { title: `${t('returns')} - Cartziio` };
+  return { title: `${t('returns')} - Cartzii` };
 }
 
 export default function ReturnsPage() {

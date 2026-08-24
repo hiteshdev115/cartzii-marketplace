@@ -1,7 +1,7 @@
 import Image from 'next/image';
 
 export const metadata = {
-  title: 'Not Available in Your Region | Cartziio',
+  title: 'Not Available in Your Region | Cartzii',
 };
 
 export default function BlockedPage() {
@@ -11,7 +11,7 @@ export default function BlockedPage() {
         <div className="flex justify-center">
           <Image
             src="/assets/cartzii-logo.png"
-            alt="Cartziio"
+            alt="Cartzii"
             width={180}
             height={48}
             priority
@@ -24,7 +24,7 @@ export default function BlockedPage() {
             Not Available in Your Region
           </h1>
           <p className="text-slate-600 leading-relaxed">
-            Cartziio is currently only available in the{' '}
+            Cartzii is currently only available in the{' '}
             <span className="font-semibold">United States</span> and{' '}
             <span className="font-semibold">Canada</span>.
           </p>
@@ -34,7 +34,7 @@ export default function BlockedPage() {
         </div>
 
         <p className="text-xs text-slate-500">
-          &copy; {new Date().getFullYear()} Cartziio. All rights reserved.
+          &copy; {new Date().getFullYear()} Cartzii. All rights reserved.
         </p>
       </div>
     </main>

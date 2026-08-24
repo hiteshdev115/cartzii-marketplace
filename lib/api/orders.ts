@@ -71,8 +71,16 @@ export async function cancelOrder(orderNumber: string): Promise<CancelOrderResul
 export interface TaxEstimateParams {
   countryCode: string;
   stateCode: string;
-  /** Subtotal in the smallest currency unit (e.g. cents). */
+  /** Goods subtotal in the smallest currency unit (e.g. cents). */
   subtotalCents: number;
+  /**
+   * Selected shipping, in the same unit.
+   *
+   * Included in the taxable base: the CRA treats a delivery charge as part of
+   * the taxable supply of the goods it delivers, so it carries the same rate.
+   * Omitting it under-collects tax on every order.
+   */
+  shippingCents?: number;
 }
 
 export async function getTaxEstimate(params: TaxEstimateParams): Promise<TaxEstimate> {
@@ -84,6 +92,7 @@ export async function getTaxEstimate(params: TaxEstimateParams): Promise<TaxEsti
         countryCode: params.countryCode,
         stateCode: params.stateCode,
         subtotalCents: params.subtotalCents,
+        ...(params.shippingCents != null ? { shippingCents: params.shippingCents } : {}),
       },
       ...(isAuthenticated ? { skipGuestToken: true } : {}),
     },

@@ -101,6 +101,25 @@ function getAuthToken(): string | null {
   }
 }
 
+/** API error code for "this customer already reviewed this product". */
+export const REVIEW_ALREADY_EXISTS = 1059;
+
+/** Thrown when the customer has already reviewed the product. */
+export class AlreadyReviewedError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'AlreadyReviewedError';
+  }
+}
+
+/**
+ * Posts a review. ONE PER CUSTOMER PER PRODUCT, and final once posted.
+ *
+ * There is no update or delete counterpart, by design — see the API's Review
+ * model. A second attempt on the same product is refused with 409, which the
+ * form surfaces as a plain explanation rather than a failure the customer would
+ * try again.
+ */
 export async function postReview(formData: FormData): Promise<ReviewAPIItem> {
   const token = getAuthToken();
   if (!token) {
@@ -123,6 +142,16 @@ export async function postReview(formData: FormData): Promise<ReviewAPIItem> {
     } catch {
       errorBody = await res.text().catch(() => null);
     }
+
+    // Distinguished from every other failure because it is the one the customer
+    // must NOT retry — the review they are looking at is already theirs.
+    if (res.status === 409) {
+      const body = errorBody as { message?: string } | null;
+      throw new AlreadyReviewedError(
+        body?.message ?? 'You have already reviewed this product.',
+      );
+    }
+
     throw new ApiError(res.status, res.statusText, errorBody);
   }
 
@@ -130,6 +159,11 @@ export async function postReview(formData: FormData): Promise<ReviewAPIItem> {
 
   // API returns { error: 1022, message: "..." } on validation errors
   if (json.error) {
+    if (json.error === REVIEW_ALREADY_EXISTS) {
+      throw new AlreadyReviewedError(
+        json.message ?? 'You have already reviewed this product.',
+      );
+    }
     throw new ApiError(400, 'Validation Error', json);
   }
 

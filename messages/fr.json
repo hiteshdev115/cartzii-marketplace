@@ -1,12 +1,12 @@
 {
   "Metadata": {
-    "title": "Cartziio — Découvrez des Produits que Vous Allez Adorer",
+    "title": "Cartzii — Découvrez des Produits que Vous Allez Adorer",
     "description": "Découvrez des milliers de produits sélectionnés par des vendeurs de confiance. Livraison rapide, retours faciles et offres exclusives.",
     "keywords": "achats en ligne, marketplace, électronique, mode, maison, offres",
-    "homeTitle": "Accueil — Cartziio Marketplace",
+    "homeTitle": "Accueil — Cartzii Marketplace",
     "homeDescription": "Découvrez des milliers de produits sélectionnés par des vendeurs de confiance. Livraison rapide, retours faciles et offres exclusives.",
-    "productsTitle": "Tous les Produits — Cartziio Marketplace",
-    "productsDescription": "Parcourez tous les produits sur Cartziio Marketplace. Trouvez les meilleures offres en électronique, mode, maison et plus encore."
+    "productsTitle": "Tous les Produits — Cartzii Marketplace",
+    "productsDescription": "Parcourez tous les produits sur Cartzii Marketplace. Trouvez les meilleures offres en électronique, mode, maison et plus encore."
   },
   "Common": {
     "loading": "Chargement...",
@@ -87,7 +87,7 @@
     "emailPlaceholder": "Entrez votre adresse e-mail",
     "subscribe": "S'abonner",
     "subscribedSuccess": "Merci de votre abonnement !",
-    "whyChooseUs": "Pourquoi Choisir Cartziio ?",
+    "whyChooseUs": "Pourquoi Choisir Cartzii ?",
     "benefit1Title": "Livraison Rapide",
     "benefit1Desc": "Livraison gratuite pour les commandes de plus de 50 $ avec livraison en 2 jours.",
     "benefit2Title": "Paiements Sécurisés",
@@ -99,7 +99,7 @@
   },
   "Products": {
     "allProducts": "Tous les Produits",
-    "metaDescription": "Parcourez tous les produits sur Cartziio Marketplace. Trouvez les meilleures offres en électronique, mode, maison et plus encore.",
+    "metaDescription": "Parcourez tous les produits sur Cartzii Marketplace. Trouvez les meilleures offres en électronique, mode, maison et plus encore.",
     "filters": "Filtres",
     "clearFilters": "Tout Effacer",
     "applyFilters": "Appliquer les Filtres",
@@ -215,8 +215,7 @@
     "guestCheckoutDesc": "Aucun compte requis. Remplissez simplement vos coordonnées.",
     "signInToCheckout": "Se connecter pour payer",
     "signInCheckoutDesc": "Sauvegardez vos commandes et bénéficiez d'une caisse plus rapide.",
-    "freeShippingUnlocked": "🎉 Livraison gratuite débloquée chez {storeName} !",
-    "freeShippingProgress": "Ajoutez {amount} de plus chez {storeName} pour la livraison gratuite !"
+    "freeShippingUnlocked": "🎉 Livraison gratuite débloquée chez {storeName} !"
   },
   "Checkout": {
     "title": "Paiement",
@@ -331,10 +330,10 @@
   "Auth": {
     "loginTitle": "Bon Retour",
     "welcomeBack": "Bon Retour",
-    "loginSubtitle": "Connectez-vous à votre compte Cartziio",
+    "loginSubtitle": "Connectez-vous à votre compte Cartzii",
     "registerTitle": "Créer un Compte",
     "createAccount": "Créer un Compte",
-    "registerSubtitle": "Rejoignez Cartziio et commencez vos achats",
+    "registerSubtitle": "Rejoignez Cartzii et commencez vos achats",
     "loggingIn": "Connexion en cours...",
     "restoringCart": "Restauration de votre panier...",
     "creating": "Création du compte...",
@@ -523,7 +522,24 @@
     "shippingLabelHelp": "Retournez votre article avec l'une des options ci-dessous — une seule suffit.",
     "qrHelp": "Montrez ce code QR au comptoir d'expédition — le personnel peut le scanner et imprimer l'étiquette pour vous.",
     "printHelp": "Vous préférez l'imprimer vous-même ? Téléchargez l'étiquette et joignez-la à votre colis.",
-    "downloadLabel": "Télécharger / Imprimer l'étiquette"
+    "downloadLabel": "Télécharger / Imprimer l'étiquette",
+    "calculatingRefund": "Calcul de votre remboursement…",
+    "refundSummaryTitle": "Montant de votre remboursement",
+    "itemPrice": "Article",
+    "itemTax": "Taxe sur l'article",
+    "returnShipping": "Frais de retour",
+    "youWillReceive": "Vous recevrez",
+    "sellerPaysReturnShipping": "Le vendeur prend en charge les frais de retour pour ce motif.",
+    "buyerPaysReturnShipping": "Les frais de retour sont déduits de votre remboursement pour ce motif.",
+    "noReturnShippingCharge": "Aucuns frais de retour ne vous seront facturés.",
+    "originalShippingNotRefunded": "Les frais de livraison initiaux, et la taxe sur ceux-ci, ne sont pas remboursés.",
+    "selectItemLabel": "Quel article souhaitez-vous retourner ?",
+    "selectItemError": "Veuillez choisir un article à retourner",
+    "noReturnableItems": "Aucun article de cette commande ne peut être retourné pour le moment.",
+    "itemAlreadyReturned": "Retour déjà demandé",
+    "itemNotDelivered": "Pas encore livré",
+    "itemWindowClosed": "Délai de retour expiré",
+    "itemNotReturnable": "Non éligible au retour"
   },
   "Search": {
     "title": "Résultats de Recherche",
@@ -576,7 +592,7 @@
     "cookiePolicy": "Politique de Cookies",
     "followUs": "Suivez-nous",
     "paymentMethods": "Nous Acceptons",
-    "copyright": "© {year} Cartziio. Tous droits réservés.",
+    "copyright": "© {year} Cartzii. Tous droits réservés.",
     "madeWith": "Fait avec ❤️ pour les acheteurs du monde entier"
   },
   "Accessibility": {
@@ -635,7 +651,6 @@
     "freeShippingApplied": "🎉 Livraison gratuite appliquée",
     "free": "GRATUIT",
     "freeShippingAriaLabel": "Était {originalPrice}, maintenant gratuit",
-    "freeShippingProgress": "Ajoutez {amount} de plus de {storeName} pour la livraison gratuite !",
     "freeShippingUnlocked": "🎉 Vous bénéficiez de la livraison gratuite de {storeName} !"
   },
   "Tracking": {
@@ -657,6 +672,9 @@
     "delivered": "Livré",
     "trackingHistory": "Historique de suivi",
     "noEventsYet": "Aucun événement de suivi pour l’instant. Revenez bientôt.",
-    "pageDescription": "Entrez votre code de suivi ci-dessous pour voir le statut actuel de votre colis."
+    "pageDescription": "Entrez votre code de suivi ci-dessous pour voir le statut actuel de votre colis.",
+    "parcelsDelivered": "{delivered} colis sur {total} livrés",
+    "parcelOf": "Colis {index} sur {total}",
+    "noShipmentsYet": "Aucun colis n'a encore été expédié. Le suivi apparaîtra ici dès qu'un vendeur enverra vos articles."
   }
 }

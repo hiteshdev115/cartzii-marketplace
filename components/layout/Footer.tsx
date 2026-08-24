@@ -55,7 +55,7 @@ export function Footer() {
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-8">
           {/* Brand column */}
           <div className="col-span-2 md:col-span-4 lg:col-span-1 mb-4 lg:mb-0">
-            <Image src="/assets/cartzii-logo.png" alt="Cartziio" width={150} height={40} className="object-contain brightness-0 invert" />
+            <Image src="/assets/cartzii-logo.png" alt="Cartzii" width={150} height={40} className="object-contain brightness-0 invert" />
             <p className="mt-3 text-sm text-slate-400 max-w-xs">
               Discover products you&apos;ll love from trusted sellers worldwide.
             </p>

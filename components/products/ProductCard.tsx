@@ -54,6 +54,14 @@ export function ProductCard({ product }: ProductCardProps) {
           {product.onSale && product.discount && (
             <span className="badge-sale absolute top-3 left-3">-{product.discount}%</span>
           )}
+          {product.isFreeDelivery && (
+            <span
+              className="absolute bottom-3 left-3 rounded-full bg-emerald-600 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white shadow"
+              aria-label="Free delivery"
+            >
+              Free Delivery
+            </span>
+          )}
 
         </div>
       </Link>

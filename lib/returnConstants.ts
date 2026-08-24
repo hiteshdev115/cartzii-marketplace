@@ -24,7 +24,7 @@ const STAGE_REFUND_INITIATED: ReturnStage = { key: 'refundInitiated', stageIndex
 const STAGE_REFUNDED: ReturnStage = { key: 'refunded', stageIndex: 4, className: 'bg-emerald-100 text-emerald-700' };
 const STAGE_REJECTED: ReturnStage = { key: 'rejected', stageIndex: -1, className: 'bg-rose-100 text-rose-700' };
 
-/** Shipment statuses (from EasyPost tracking) that mean the package has
+/** Shipment statuses (from carrier tracking) that mean the package has
  *  actually been scanned by the carrier — i.e. genuinely dropped off, not
  *  just labeled and waiting. */
 const CARRIER_SCANNED_STATUSES = new Set(['in_transit', 'out_for_delivery', 'delivered']);
