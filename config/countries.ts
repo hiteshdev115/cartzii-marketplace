@@ -1,3 +1,17 @@
+/**
+ * Country is a property of the DEPLOYMENT, not of the URL.
+ *
+ * cartzii.ca serves Canada and cartzii.com serves the United States, each from
+ * its own build against its own API and database. Paths used to carry the
+ * country (`/ca/products`, `/us/products`); they no longer do, because the
+ * domain already says it.
+ *
+ * NEXT_PUBLIC_COUNTRY is what a deployment is told about itself. It is
+ * NEXT_PUBLIC_ because the value is needed while rendering, which means Next
+ * inlines it at BUILD time — a build made for one country cannot be moved to
+ * the other by changing the environment afterwards. Each slot builds its own.
+ */
+
 export interface CountryConfig {
   code: string;
   name: string;
@@ -22,15 +36,39 @@ export const countries: Record<string, CountryConfig> = {
     code: 'ca',
     name: 'Canada',
     defaultLocale: 'en-CA',
-    locales: ['en-CA', 'fr-CA'],
+    // fr-CA is not served yet. Re-adding it here is most of the work of
+    // bringing French back: the language switcher hides itself while a country
+    // has a single locale, and shows again when it does not.
+    locales: ['en-CA'],
     currency: 'CAD',
     currencyLocale: 'en-CA',
-    dateLocaleMap: { 'en-CA': 'en-CA', 'fr-CA': 'fr-CA' },
+    dateLocaleMap: { 'en-CA': 'en-CA' },
   },
 };
 
 export const allLocales = Object.values(countries).flatMap((c) => c.locales);
 export const defaultLocale = 'en-US';
+
+/** The country this deployment serves. Defaults to `ca` for local development. */
+export const currentCountry: string =
+  (process.env.NEXT_PUBLIC_COUNTRY || 'ca').toLowerCase() in countries
+    ? (process.env.NEXT_PUBLIC_COUNTRY || 'ca').toLowerCase()
+    : 'ca';
+
+/** The locale this deployment renders in. */
+export const currentLocale: string = countries[currentCountry].defaultLocale;
+
+/**
+ * Absolute origin of each country's storefront.
+ *
+ * Needed for hreflang, which has to point at the OTHER domain — the one thing
+ * that cannot be expressed as a path now that the countries are separate
+ * sites. Configurable so QA points at QA rather than production.
+ */
+export const countrySiteUrl: Record<string, string> = {
+  ca: process.env.NEXT_PUBLIC_SITE_URL_CA || 'https://cartzii.ca',
+  us: process.env.NEXT_PUBLIC_SITE_URL_US || 'https://cartzii.com',
+};
 
 export function getCountryFromLocale(locale: string): string {
   const suffix = locale.split('-')[1]?.toLowerCase();
@@ -46,45 +84,32 @@ export function getMessageFile(locale: string): string {
   return lang === 'fr' ? 'fr' : 'en';
 }
 
-export function buildCountryPath(locale: string, pagePath: string): string {
-  const country = getCountryFromLocale(locale);
-  const lang = locale.split('-')[0];
-  const countryConfig = countries[country];
-  const isDefaultLang = locale === countryConfig.defaultLocale;
-  const normalizedPath = pagePath === '/' ? '' : pagePath;
-
-  if (isDefaultLang) {
-    return `/${country}${normalizedPath}`;
-  }
-  return `/${country}/${lang}${normalizedPath}`;
+/**
+ * A site-root-relative URL for a page.
+ *
+ * Now that the domain carries the country this is close to the identity
+ * function, but it stays the single place page URLs are formed: it is what
+ * made removing the country segment a one-line change instead of an edit to
+ * every link in the app, and it is where a future prefix would go.
+ */
+export function buildPath(pagePath: string): string {
+  if (!pagePath || pagePath === '/') return '/';
+  return pagePath.startsWith('/') ? pagePath : `/${pagePath}`;
 }
 
 /**
- * Extract the page-level path from either:
- *  - An internal/rewritten locale path  e.g. /en-CA/products  → /products
- *  - An external country path           e.g. /ca/products     → /products
- *                                            /ca/fr/products   → /products
+ * The page path as the visitor sees it.
+ *
+ * `usePathname()` reports the browser's URL, and middleware rewrites to the
+ * internal `/{locale}/...` route without changing it — so the external path
+ * needs no unwrapping. The internal prefix is still stripped defensively for
+ * any caller that passes a rewritten path.
  */
-export function extractPagePath(pathname: string, locale: string): string {
-  // 1. Internal format after middleware rewrite: /en-CA/products → /products
-  const localePrefix = `/${locale}`;
-  if (pathname === localePrefix) return '/';
-  if (pathname.startsWith(`${localePrefix}/`)) {
-    return pathname.slice(localePrefix.length);
+export function extractPagePath(pathname: string): string {
+  for (const locale of allLocales) {
+    const prefix = `/${locale}`;
+    if (pathname === prefix) return '/';
+    if (pathname.startsWith(`${prefix}/`)) return pathname.slice(prefix.length);
   }
-
-  // 2. External country format using only the current locale's prefix
-  //    en-CA → /ca   |   fr-CA → /ca/fr   |   en-US → /us
-  const country = getCountryFromLocale(locale);
-  const countryConfig = countries[country];
-  const isDefaultLang = locale === countryConfig.defaultLocale;
-  const lang = locale.split('-')[0];
-  const externalPrefix = isDefaultLang ? `/${country}` : `/${country}/${lang}`;
-
-  if (pathname === externalPrefix) return '/';
-  if (pathname.startsWith(`${externalPrefix}/`)) {
-    return pathname.slice(externalPrefix.length);
-  }
-
-  return '/';
+  return pathname || '/';
 }

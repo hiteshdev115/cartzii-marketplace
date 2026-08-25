@@ -1,6 +1,6 @@
 'use client';
 
-import { useTranslations, useLocale } from 'next-intl';
+import { useTranslations } from 'next-intl';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { Breadcrumb } from '@/components/layout/Breadcrumb';
 import Link from 'next/link';
-import { buildCountryPath } from '@/config/countries';
+import { buildPath } from '@/config/countries';
 import { api, ApiError } from '@/lib/api/client';
 import { Mail, ArrowLeft, CheckCircle } from 'lucide-react';
 import { useState } from 'react';
@@ -21,7 +21,6 @@ type ForgotPasswordFormData = z.infer<typeof forgotPasswordSchema>;
 
 export function ForgotPasswordForm() {
   const t = useTranslations('Auth');
-  const locale = useLocale();
   const [apiError, setApiError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
@@ -65,7 +64,7 @@ export function ForgotPasswordForm() {
               <p className="text-sm text-slate-500 mt-1">{t('forgotPasswordCheckInbox')}</p>
             </div>
             <Link
-              href={buildCountryPath(locale, '/auth/login')}
+              href={buildPath('/auth/login')}
               className="text-sm text-primary font-medium hover:underline flex items-center gap-1"
             >
               <ArrowLeft className="w-4 h-4" /> {t('backToLogin')}
@@ -94,7 +93,7 @@ export function ForgotPasswordForm() {
 
             <p className="text-sm text-slate-500 text-center mt-6">
               <Link
-                href={buildCountryPath(locale, '/auth/login')}
+                href={buildPath('/auth/login')}
                 className="text-primary font-medium hover:underline flex items-center justify-center gap-1"
               >
                 <ArrowLeft className="w-4 h-4" /> {t('backToLogin')}

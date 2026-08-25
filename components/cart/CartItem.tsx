@@ -8,7 +8,7 @@ import { CartItem as CartItemType } from '@/types';
 import { formatPrice } from '@/lib/utils';
 import { QuantitySelector } from '@/components/ui/QuantitySelector';
 import { useCartStore } from '@/stores/cartStore';
-import { buildCountryPath } from '@/config/countries';
+import { buildPath } from '@/config/countries';
 
 interface CartItemProps {
   item: CartItemType;
@@ -20,7 +20,7 @@ export function CartItem({ item }: CartItemProps) {
   const updateQuantity = useCartStore((s) => s.updateQuantity);
   const unitPrice = item.product.salePrice || item.product.price;
 
-  const productHref = buildCountryPath(locale, `/products/${item.product.slug}`);
+  const productHref = buildPath(`/products/${item.product.slug}`);
 
   return (
     <div className="flex gap-4 p-4 border-b border-gray-100">

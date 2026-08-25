@@ -3,9 +3,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useLocale, useTranslations } from 'next-intl';
+import { useTranslations } from 'next-intl';
 import { ArrowLeft, Loader2, Package } from 'lucide-react';
-import { buildCountryPath } from '@/config/countries';
+import { buildPath } from '@/config/countries';
 import { getOrderByNumber } from '@/lib/api/orders';
 import { getTracking, subscribeToTracking, type TrackingData } from '@/lib/shippingApi';
 import { StatusBadge } from '@/components/shipping/StatusBadge';
@@ -59,7 +59,6 @@ interface Props {
 function OrderTrackingContent({ orderNumber }: { orderNumber: string }) {
   const t = useTranslations('Tracking');
   const tCheckout = useTranslations('Checkout');
-  const locale = useLocale();
 
   const [order, setOrder] = useState<OrderConfirmation | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -88,7 +87,7 @@ function OrderTrackingContent({ orderNumber }: { orderNumber: string }) {
   const progress = getOrderDeliveryProgress(shipments);
   const overallBadge = getOrderStatusBadge(shipments);
 
-  const backHref = buildCountryPath(locale, '/account/orders');
+  const backHref = buildPath('/account/orders');
 
   if (loading) {
     return (

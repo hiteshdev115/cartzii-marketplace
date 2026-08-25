@@ -2,7 +2,7 @@
 
 import { useLocale, useTranslations } from 'next-intl';
 import { useRouter, usePathname } from 'next/navigation';
-import { getCountryFromLocale, countries, buildCountryPath, extractPagePath } from '@/config/countries';
+import { getCountryFromLocale, countries, buildPath, extractPagePath } from '@/config/countries';
 import { Globe, Check } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 
@@ -33,8 +33,16 @@ export function LanguageSwitcher() {
   if (countryConfig.locales.length <= 1) return null;
 
   const switchLocale = (newLocale: string) => {
-    const pagePath = extractPagePath(pathname, locale);
-    router.push(buildCountryPath(newLocale, pagePath));
+    // Unreachable today: the guard above returns null while a country has one
+    // locale, and fr-CA is not served. Left deliberately incomplete rather
+    // than made to look correct — when French returns it needs a URL of its
+    // own (a /fr segment, most likely). Pushing the current path would switch
+    // the label and nothing else.
+    if (newLocale === locale) {
+      setOpen(false);
+      return;
+    }
+    router.push(buildPath(extractPagePath(pathname)));
     setOpen(false);
   };
 

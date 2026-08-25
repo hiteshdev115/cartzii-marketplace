@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { useTranslations, useLocale } from 'next-intl';
 import { Package, RefreshCw, Truck } from 'lucide-react';
 import { Breadcrumb } from '@/components/layout/Breadcrumb';
-import { buildCountryPath } from '@/config/countries';
+import { buildPath } from '@/config/countries';
 import { fetchMyOrders, subscribeToOrderUpdates } from '@/lib/api/orders';
 import { RequestReturnModal } from '@/components/returns/RequestReturnModal';
 import { CancelOrderModal } from '@/components/orders/CancelOrderModal';
@@ -119,7 +119,7 @@ export function OrdersContent() {
     <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <Breadcrumb
         items={[
-          { label: t('dashboard'), href: buildCountryPath(locale, '/account') },
+          { label: t('dashboard'), href: buildPath('/account') },
           { label: t('orders') },
         ]}
       />
@@ -314,7 +314,7 @@ function OrderCard({ order, locale, tCart, tCheckout, tAccount, onRequestReturn,
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 bg-slate-50 px-4 py-3">
         <div>
           <Link
-            href={buildCountryPath(locale, `/order-confirmation/${order.orderNumber}`)}
+            href={buildPath(`/order-confirmation/${order.orderNumber}`)}
             className="text-sm font-semibold text-slate-900 hover:underline"
           >
             {order.orderNumber}
@@ -374,9 +374,7 @@ function OrderCard({ order, locale, tCart, tCheckout, tAccount, onRequestReturn,
               actually asking. */}
           {!orderFullyRefunded && trackableShipments.length > 0 && order.orderNumber && (
             <Link
-              href={buildCountryPath(
-                locale,
-                `/account/orders/${encodeURIComponent(order.orderNumber)}/tracking`,
+              href={buildPath(`/account/orders/${encodeURIComponent(order.orderNumber)}/tracking`,
               )}
               className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-white hover:bg-primary/90 transition-colors"
             >
@@ -399,7 +397,7 @@ function OrderCard({ order, locale, tCart, tCheckout, tAccount, onRequestReturn,
               return (
                 <Link
                   key={`return-${item.existingReturnId}`}
-                  href={buildCountryPath(locale, `/account/returns/${item.existingReturnId}`)}
+                  href={buildPath(`/account/returns/${item.existingReturnId}`)}
                   className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${stage.className}`}
                 >
                   {activeReturnItems.length > 1 ? `${label} · ${item.productName}` : label}
@@ -419,7 +417,7 @@ function OrderCard({ order, locale, tCart, tCheckout, tAccount, onRequestReturn,
             </button>
           )}
           <Link
-            href={buildCountryPath(locale, `/order-confirmation/${order.orderNumber}`)}
+            href={buildPath(`/order-confirmation/${order.orderNumber}`)}
             className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors"
           >
             {tAccount('viewDetails')}

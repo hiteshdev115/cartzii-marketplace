@@ -1,122 +1,95 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { countries, allLocales } from '@/config/countries';
+import { countries, allLocales, currentCountry, currentLocale } from '@/config/countries';
 
 const ALLOWED_COUNTRIES = new Set(['US', 'CA']);
 
-// Paths that require a logged-in user (matched against the first segment after the country prefix).
+// Matched against the first path segment.
 const PROTECTED_PATH_SEGMENTS = new Set(['account']);
 
-// Map internal locale back to external country path prefix
-const localeToCountryPath: Record<string, string> = {
-  'en-US': '/us',
-  'en-CA': '/ca',
-  'fr-CA': '/ca/fr',
-};
+// Path prefixes this site used to serve, kept only so old links still resolve.
+const LEGACY_PREFIXES = [
+  ...Object.keys(countries).map((c) => `/${c}`), // /ca, /us
+  ...allLocales.map((l) => `/${l}`),             // /en-CA, /en-US
+  '/fr-CA',                                      // fr-CA is no longer in allLocales
+  '/ca/fr',
+];
 
 function getGeoCountry(request: NextRequest): string | null {
-  // Nginx GeoIP sets this header
+  // Set by nginx GeoIP when present.
   return request.headers.get('x-country-code') || null;
 }
 
-function mapGeoToPath(geoCountry: string): string {
-  switch (geoCountry) {
-    case 'CA':
-      return 'ca';
-    case 'US':
-    default:
-      return 'us';
+/**
+ * Strips a legacy country or locale prefix, if the path carries one.
+ * `/ca/products` → `/products`, `/ca` → `/`, `/products` → null (nothing to do).
+ */
+function stripLegacyPrefix(pathname: string): string | null {
+  // Longest first, so `/ca/fr` is matched before `/ca`.
+  for (const prefix of [...LEGACY_PREFIXES].sort((a, b) => b.length - a.length)) {
+    if (pathname === prefix) return '/';
+    if (pathname.startsWith(`${prefix}/`)) return pathname.slice(prefix.length) || '/';
   }
+  return null;
 }
 
 export default function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Allow the geo-blocked page to render without redirect loops
+  // Render without redirecting, or the block page would bounce forever.
   if (pathname === '/blocked') {
     return NextResponse.next();
   }
 
   const geoCountry = getGeoCountry(request);
 
-  // Block users outside US and CA (only when header is present, i.e. behind Nginx)
+  // Only enforced when nginx supplied the header; absent, everyone is allowed.
   if (geoCountry && !ALLOWED_COUNTRIES.has(geoCountry)) {
     return NextResponse.rewrite(new URL('/blocked', request.url));
   }
 
-  // Redirect root to geo-detected country path
-  if (pathname === '/') {
-    const countryPath = geoCountry ? mapGeoToPath(geoCountry) : 'ca';
-    return NextResponse.redirect(new URL(`/${countryPath}`, request.url));
+  // Country now comes from the domain, so /ca and /us are dead prefixes. They
+  // are redirected rather than dropped: they are in sent emails, in links
+  // people have shared, and possibly in a search index. 301 moves that history
+  // onto the new URL instead of stranding it on a 404.
+  //
+  // No cross-domain redirect. A US visitor opening a cartzii.ca link stays on
+  // cartzii.ca — bouncing them to .com would break every shared link and make
+  // the canonical URL disagree with the page actually served.
+  const stripped = stripLegacyPrefix(pathname);
+  if (stripped !== null) {
+    const url = request.nextUrl.clone();
+    url.pathname = stripped;
+    return NextResponse.redirect(url, { status: 301 });
   }
 
-  // Redirect internal locale-prefixed paths → external country paths
-  // e.g. /en-CA/products → /ca/products  |  /fr-CA/deals → /ca/fr/deals
-  for (const locale of allLocales) {
-    const localePrefix = `/${locale}`;
-    if (pathname === localePrefix || pathname.startsWith(`${localePrefix}/`)) {
-      const countryBase = localeToCountryPath[locale] ?? '/us';
-      const rest = pathname.slice(localePrefix.length); // '' or '/products/...'
-      return NextResponse.redirect(
-        new URL(`${countryBase}${rest}`, request.url),
-        { status: 301 },
-      );
-    }
-  }
-
-  const segments = pathname.split('/').filter(Boolean);
-  const country = segments[0]?.toLowerCase();
-
-  if (!countries[country]) {
-    const countryPath = geoCountry ? mapGeoToPath(geoCountry) : 'ca';
-    return NextResponse.redirect(new URL(`/${countryPath}`, request.url));
-  }
-
-  const countryConfig = countries[country];
-  let internalLocale = countryConfig.defaultLocale;
-  let restSegments = segments.slice(1);
-
-  // Check if second segment is a language prefix for non-default lang
-  if (country === 'ca' && segments[1] === 'fr') {
-    internalLocale = 'fr-CA';
-    restSegments = segments.slice(2);
-  }
-
-  // --- Auth guard for protected paths ---
-  // Check BEFORE rewriting so we can construct the redirect using the external URL.
-  const firstSegment = restSegments[0]?.toLowerCase();
+  // Auth guard, before the rewrite, so the redirect is built from the URL the
+  // visitor actually typed.
+  const firstSegment = pathname.split('/').filter(Boolean)[0]?.toLowerCase();
   if (firstSegment && PROTECTED_PATH_SEGMENTS.has(firstSegment)) {
     const token = request.cookies.get('cartzii_access_token')?.value;
     if (!token) {
-      const loginUrl = new URL(`/${country}/auth/login`, request.url);
+      const loginUrl = new URL('/auth/login', request.url);
       loginUrl.searchParams.set('redirect', pathname);
       return NextResponse.redirect(loginUrl);
     }
   }
 
-  // Rewrite external URL to internal [locale] route
-  const internalPath = `/${internalLocale}${restSegments.length ? '/' + restSegments.join('/') : ''}`;
+  // The routes still live under app/[locale], so the public path is rewritten
+  // onto the internal locale segment. The visitor's URL does not change.
   const url = request.nextUrl.clone();
-  url.pathname = internalPath;
+  url.pathname = `/${currentLocale}${pathname === '/' ? '' : pathname}`;
 
   const response = NextResponse.rewrite(url);
-  // Set the locale header so next-intl can resolve the locale in getRequestConfig
-  response.headers.set('X-NEXT-INTL-LOCALE', internalLocale);
+  // next-intl reads this in getRequestConfig.
+  response.headers.set('X-NEXT-INTL-LOCALE', currentLocale);
+  // Lets the API and any cache tell the two storefronts apart.
+  response.headers.set('X-Cartzii-Country', currentCountry);
   return response;
 }
 
 export const config = {
-  matcher: [
-    '/',
-    '/blocked',
-    '/(us|ca)/:path*',
-    '/(us|ca)/checkout/:path*',
-    '/(us|ca)/account/:path*',
-    // Also intercept bare locale-prefixed paths so they get redirected to /country/*
-    '/en-US',
-    '/en-CA',
-    '/fr-CA',
-    '/en-US/:path*',
-    '/en-CA/:path*',
-    '/fr-CA/:path*',
-  ],
+  // Everything except Next internals, API routes and files with an extension.
+  // The old matcher listed `/(us|ca)/:path*`, which cannot work now that those
+  // segments are gone from real URLs.
+  matcher: ['/((?!_next/static|_next/image|api/|favicon.ico|.*\\..*).*)'],
 };

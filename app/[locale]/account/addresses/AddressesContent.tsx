@@ -1,9 +1,9 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { useTranslations, useLocale } from 'next-intl';
+import { useTranslations } from 'next-intl';
 import { Breadcrumb } from '@/components/layout/Breadcrumb';
-import { buildCountryPath } from '@/config/countries';
+import { buildPath } from '@/config/countries';
 import { Button } from '@/components/ui/Button';
 import { Toast, type ToastType } from '@/components/ui/Toast';
 import { useAddressStore } from '@/stores/addressStore';
@@ -16,7 +16,6 @@ import { MapPin, Plus } from 'lucide-react';
 
 export function AddressesContent() {
   const t = useTranslations('Account');
-  const locale = useLocale();
   const userId = useAuthStore((s) => s.userId);
   const { addresses, loading, fetchAddresses, addAddress, editAddress, removeAddress } =
     useAddressStore();
@@ -82,8 +81,8 @@ export function AddressesContent() {
     <main className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <Breadcrumb
         items={[
-          { label: t('dashboard'), href: buildCountryPath(locale, '/account') },
-          { label: t('settings'), href: buildCountryPath(locale, '/account/settings') },
+          { label: t('dashboard'), href: buildPath('/account') },
+          { label: t('settings'), href: buildPath('/account/settings') },
           { label: t('addresses') },
         ]}
       />

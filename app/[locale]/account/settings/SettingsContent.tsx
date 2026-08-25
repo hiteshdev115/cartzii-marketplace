@@ -1,8 +1,8 @@
 'use client';
 
-import { useTranslations, useLocale } from 'next-intl';
+import { useTranslations } from 'next-intl';
 import { Breadcrumb } from '@/components/layout/Breadcrumb';
-import { buildCountryPath } from '@/config/countries';
+import { buildPath } from '@/config/countries';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { Button } from '@/components/ui/Button';
@@ -24,7 +24,6 @@ const GENDER_OPTIONS = [
 
 export function SettingsContent() {
   const t = useTranslations('Account');
-  const locale = useLocale();
   const userId = useAuthStore((s) => s.userId);
   const firstName = useAuthStore((s) => s.firstName);
   const authEmail = useAuthStore((s) => s.email);
@@ -186,7 +185,7 @@ export function SettingsContent() {
     <main className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <Breadcrumb
         items={[
-          { label: t('dashboard'), href: buildCountryPath(locale, '/account') },
+          { label: t('dashboard'), href: buildPath('/account') },
           { label: t('settings') },
         ]}
       />
@@ -360,7 +359,7 @@ export function SettingsContent() {
               <MapPin className="w-5 h-5 text-primary" /> {t('addresses')}
             </h2>
             <Link
-              href={buildCountryPath(locale, '/account/addresses')}
+              href={buildPath('/account/addresses')}
               className="text-sm text-primary hover:underline inline-flex items-center gap-1"
             >
               {t('manageAddresses')} <ChevronRight className="w-4 h-4" />

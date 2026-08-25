@@ -8,7 +8,7 @@ import { useLocale } from 'next-intl';
 import { ShoppingCart, Heart, SlidersHorizontal, ChevronDown, PackageSearch } from 'lucide-react';
 import { fetchCategoryProductsBySlug } from '@/lib/api';
 import type { CategoryProduct, CategoryProductCountry, CategoryVariantPricing, CategoryProductsResult } from '@/lib/api';
-import { buildCountryPath, getCountryFromLocale } from '@/config/countries';
+import { buildPath, getCountryFromLocale } from '@/config/countries';
 import { formatPrice } from '@/lib/utils';
 import { useCartStore } from '@/stores/cartStore';
 import { useWishlistStore } from '@/stores/wishlistStore';
@@ -88,7 +88,7 @@ function getPrimaryImage(item: CategoryProduct): string {
   return buildProductImageUrl(primary?.imageurl);
 }
 
-function mapToProduct(item: CategoryProduct, countryCode: string, locale: string): Product {
+function mapToProduct(item: CategoryProduct, countryCode: string): Product {
   const { origPrice, salePrice, discountPct, currency } = resolvePricing(item, countryCode);
   const rating = item.averageRating != null ? parseFloat(String(item.averageRating)) || 0 : 0;
   return {
@@ -162,7 +162,7 @@ function ProductCardItem({ item, countryCode }: ProductCardItemProps) {
   const rating = item.averageRating != null ? parseFloat(String(item.averageRating)) || 0 : 0;
 
   const handleAddToCart = () => {
-    addToCart(mapToProduct(item, countryCode, locale), 1, undefined, undefined, locale);
+    addToCart(mapToProduct(item, countryCode), 1, undefined, undefined, locale);
   };
 
   const handleWishlist = () => {
@@ -196,7 +196,7 @@ function ProductCardItem({ item, countryCode }: ProductCardItemProps) {
       )}
 
       {/* Image */}
-      <Link href={buildCountryPath(locale, `/products/${item.slug}`)}>  
+      <Link href={buildPath(`/products/${item.slug}`)}>  
         <div className="relative aspect-square overflow-hidden bg-slate-50">
           <Image
             src={imageUrl}
@@ -215,7 +215,7 @@ function ProductCardItem({ item, countryCode }: ProductCardItemProps) {
             {item.categoryName}
           </p>
         )}
-        <Link href={buildCountryPath(locale, `/products/${item.slug}`)}>  
+        <Link href={buildPath(`/products/${item.slug}`)}>  
           <h3 className="text-sm font-semibold text-slate-800 line-clamp-2 mb-2 hover:text-primary transition-colors leading-snug">
             {item.productname}
           </h3>
@@ -402,7 +402,7 @@ export function CategoryPageContent({ slug, categoryName, categoryDescription }:
             </p>
           </div>
           <Link
-            href={buildCountryPath(locale, '/products')}
+            href={buildPath('/products')}
             className="mt-2 inline-flex items-center gap-2 bg-primary text-white text-sm font-semibold px-5 py-2.5 rounded-xl hover:bg-primary/90 transition-colors"
           >
             Browse all products

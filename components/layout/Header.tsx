@@ -5,8 +5,8 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter, usePathname } from 'next/navigation';
 import { Search, ShoppingCart, Heart, User, LogOut, Package, Star, Settings, Truck } from 'lucide-react';
-import { useTranslations, useLocale } from 'next-intl';
-import { buildCountryPath } from '@/config/countries';
+import { useTranslations } from 'next-intl';
+import { buildPath } from '@/config/countries';
 import { useCartStore } from '@/stores/cartStore';
 import { useWishlistStore } from '@/stores/wishlistStore';
 import { useAuthStore } from '@/stores/authStore';
@@ -21,7 +21,6 @@ import { useHydrated } from '@/hooks/useHydration';
 export function Header() {
   const t = useTranslations('Header');
   const tNav = useTranslations('Nav');
-  const locale = useLocale();
   const [scrolled, setScrolled] = useState(false);
   const [visible, setVisible] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -52,7 +51,7 @@ export function Header() {
 
   const handleCartIconClick = () => {
     if (pathname.includes('/checkout')) {
-      router.push(buildCountryPath(locale, '/cart'));
+      router.push(buildPath('/cart'));
       return;
     }
     if (pathname.includes('/cart')) return;
@@ -66,7 +65,7 @@ export function Header() {
     // stuck on a page they can no longer access.
     const PROTECTED_SEGMENTS = ['checkout', 'account'];
     if (PROTECTED_SEGMENTS.some((seg) => pathname.includes(`/${seg}`))) {
-      router.push(buildCountryPath(locale, '/'));
+      router.push(buildPath('/'));
     }
   };
 
@@ -138,21 +137,21 @@ export function Header() {
   }, []);
 
   const navBeforeCategories = [
-    { label: tNav('home'), href: buildCountryPath(locale, '/') },
-    { label: tNav('shop'), href: buildCountryPath(locale, '/products') },
+    { label: tNav('home'), href: buildPath('/') },
+    { label: tNav('shop'), href: buildPath('/products') },
   ];
 
   const navAfterCategories = [
-    { label: tNav('deals'), href: buildCountryPath(locale, '/deals') },
-    { label: tNav('handicraft'), href: buildCountryPath(locale, '/handicraft') },
-    { label: tNav('dollarStreet'), href: buildCountryPath(locale, '/dollar-street') },
+    { label: tNav('deals'), href: buildPath('/deals') },
+    { label: tNav('handicraft'), href: buildPath('/handicraft') },
+    { label: tNav('dollarStreet'), href: buildPath('/dollar-street') },
   ];
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
       setSearchFocused(false);
-      window.location.href = buildCountryPath(locale, `/search?q=${encodeURIComponent(searchQuery.trim())}`);
+      window.location.href = buildPath(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
     }
   };
 
@@ -178,28 +177,28 @@ export function Header() {
                               </>
                             )}
                             <Link
-                              href={buildCountryPath(locale, '/account/orders')}
+                              href={buildPath('/account/orders')}
                               className="flex items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 hover:text-primary transition-colors"
                               onClick={() => setUserMenuOpen(false)}
                             >
                               <Package className="w-4 h-4" /> {t('orders')}
                             </Link>
                             <Link
-                              href={buildCountryPath(locale, '/track')}
+                              href={buildPath('/track')}
                               className="flex items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 hover:text-primary transition-colors"
                               onClick={() => setUserMenuOpen(false)}
                             >
                               <Truck className="w-4 h-4" /> {t('trackOrder')}
                             </Link>
                             <Link
-                              href={buildCountryPath(locale, '/account/reviews')}
+                              href={buildPath('/account/reviews')}
                               className="flex items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 hover:text-primary transition-colors"
                               onClick={() => setUserMenuOpen(false)}
                             >
                               <Star className="w-4 h-4" /> {t('reviews')}
                             </Link>
                             <Link
-                              href={buildCountryPath(locale, '/account/settings')}
+                              href={buildPath('/account/settings')}
                               className="flex items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 hover:text-primary transition-colors"
                               onClick={() => setUserMenuOpen(false)}
                             >
@@ -216,7 +215,7 @@ export function Header() {
                           </>
                         ) : (
                           <Link
-                            href={buildCountryPath(locale, '/auth/login')}
+                            href={buildPath('/auth/login')}
                             className="flex items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 hover:text-primary transition-colors"
                             onClick={() => setUserMenuOpen(false)}
                           >
@@ -244,12 +243,12 @@ export function Header() {
             {/* Mobile Row 1: Hamburger | Logo (centered) | Icons */}
             <div className="flex items-center justify-between h-12">
               <MobileNav />
-              <Link href={buildCountryPath(locale, '/')} className="absolute left-1/2 -translate-x-1/2">
+              <Link href={buildPath('/')} className="absolute left-1/2 -translate-x-1/2">
                 <Image src="/assets/cartzii-logo.png" alt="Cartzii" width={120} height={34} className="object-contain" priority />
               </Link>
               <div className="flex items-center gap-0.5">
                 <Link
-                  href={buildCountryPath(locale, '/account/wishlist')}
+                  href={buildPath('/account/wishlist')}
                   className="relative p-2 hover:bg-slate-100 rounded-lg"
                   aria-label={`${t('wishlist')}${hydrated && wishlistCount > 0 ? ` (${wishlistCount})` : ''}`}
                 >
@@ -316,7 +315,7 @@ export function Header() {
           <div className="hidden lg:block">
             {/* Desktop Row 1: Logo | Search | Icons */}
             <div className="flex items-center h-16 gap-4">
-              <Link href={buildCountryPath(locale, '/')} className="flex items-center shrink-0">
+              <Link href={buildPath('/')} className="flex items-center shrink-0">
                 <Image src="/assets/cartzii-logo.png" alt="Cartzii" width={144} height={41} className="object-contain" priority />
               </Link>
 
@@ -354,7 +353,7 @@ export function Header() {
                 <CountrySelector />
 
                 <Link
-                  href={buildCountryPath(locale, '/account/wishlist')}
+                  href={buildPath('/account/wishlist')}
                   className="relative p-2 hover:bg-slate-100 rounded-lg"
                   aria-label={`${t('wishlist')}${hydrated && wishlistCount > 0 ? ` (${wishlistCount})` : ''}`}
                 >

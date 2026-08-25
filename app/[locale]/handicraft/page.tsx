@@ -31,12 +31,10 @@ function collectHandicraftCategories(cats: Category[]): Category[] {
   return result;
 }
 
-export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
-  const { locale } = await params;
+export async function generateMetadata() {
   const alternates = generateAlternates(
     process.env.NEXT_PUBLIC_BASE_URL || 'https://cartzii.com',
     '/handicraft',
-    locale,
   );
   return {
     title: 'Handicraft — Artisan & Handmade | Cartzii',

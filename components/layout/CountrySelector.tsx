@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useLocale } from 'next-intl';
 import { usePathname } from 'next/navigation';
-import { countries, getCountryFromLocale, buildCountryPath, extractPagePath } from '@/config/countries';
+import { countries, getCountryFromLocale, buildPath, extractPagePath } from '@/config/countries';
 import { ChevronDown, Check, Globe } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -28,15 +28,18 @@ export function CountrySelector() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // US only has English — no need to show country/language selector
-  if (currentCountry === 'us') return null;
+  // Nothing to choose between. The country is the domain now — switching it
+  // means going to the other site, not changing a path — and a country with a
+  // single locale has no language to offer either. Re-adding fr-CA to
+  // config/countries.ts is what brings this control back.
+  if (countries[currentCountry].locales.length <= 1) return null;
 
   const switchTo = (targetLocale: string) => {
     if (targetLocale === locale) {
       setOpen(false);
       return;
     }
-    window.location.assign(buildCountryPath(targetLocale, extractPagePath(pathname, locale)));
+    window.location.assign(buildPath(extractPagePath(pathname)));
   };
 
   const currentLangLabel = localeLabels[locale] ?? 'English';

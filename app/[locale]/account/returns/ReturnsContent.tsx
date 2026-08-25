@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useTranslations, useLocale } from 'next-intl';
 import { Package, RefreshCw, ExternalLink } from 'lucide-react';
 import { Breadcrumb } from '@/components/layout/Breadcrumb';
-import { buildCountryPath } from '@/config/countries';
+import { buildPath } from '@/config/countries';
 import { getMyReturns, type ReturnRequest, type ReturnsPagination } from '@/lib/api/returns';
 import { getReturnStage } from '@/lib/returnConstants';
 import { safeCurrencyCode } from '@/lib/utils';
@@ -55,7 +55,7 @@ export function ReturnsContent() {
     <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <Breadcrumb
         items={[
-          { label: tAccount('dashboard'), href: buildCountryPath(locale, '/account') },
+          { label: tAccount('dashboard'), href: buildPath('/account') },
           { label: tAccount('returns') },
         ]}
       />
@@ -101,7 +101,7 @@ export function ReturnsContent() {
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
                     <Link
-                      href={buildCountryPath(locale, `/account/returns/${ret.returnId}`)}
+                      href={buildPath(`/account/returns/${ret.returnId}`)}
                       className="text-sm font-semibold text-slate-900 hover:underline"
                     >
                       {t('returnNumber', { id: ret.returnId })}

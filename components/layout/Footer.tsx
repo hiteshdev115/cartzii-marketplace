@@ -2,19 +2,18 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { useTranslations, useLocale } from 'next-intl';
-import { buildCountryPath } from '@/config/countries';
+import { useTranslations } from 'next-intl';
+import { buildPath } from '@/config/countries';
 import { CountrySelector } from './CountrySelector';
 
 export function Footer() {
   const t = useTranslations('Footer');
-  const locale = useLocale();
 
   const sections = [
     {
       title: t('company'),
       links: [
-        { label: t('aboutUs'), href: buildCountryPath(locale, '/about') },
+        { label: t('aboutUs'), href: buildPath('/about') },
         { label: t('careers'), href: '#' },
         { label: t('press'), href: '#' },
         { label: t('blog'), href: '#' },
@@ -23,10 +22,10 @@ export function Footer() {
     {
       title: t('shop'),
       links: [
-        { label: t('allProducts'), href: buildCountryPath(locale, '/products') },
-        { label: t('newArrivals'), href: buildCountryPath(locale, '/products') },
-        { label: t('bestSellers'), href: buildCountryPath(locale, '/products') },
-        { label: t('deals'), href: buildCountryPath(locale, '/deals') },
+        { label: t('allProducts'), href: buildPath('/products') },
+        { label: t('newArrivals'), href: buildPath('/products') },
+        { label: t('bestSellers'), href: buildPath('/products') },
+        { label: t('deals'), href: buildPath('/deals') },
       ],
     },
     {

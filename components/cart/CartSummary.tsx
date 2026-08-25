@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { ArrowRight, Tag } from 'lucide-react';
 import { useCartStore } from '@/stores/cartStore';
 import { useAuthStore } from '@/stores/authStore';
-import { buildCountryPath } from '@/config/countries';
+import { buildPath } from '@/config/countries';
 import { formatPrice } from '@/lib/utils';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -68,7 +68,7 @@ export function CartSummary() {
       <button
         onClick={() => {
           if (token) {
-            router.push(buildCountryPath(locale, '/checkout'));
+            router.push(buildPath('/checkout'));
           } else {
             setShowCheckoutModal(true);
           }
@@ -81,7 +81,7 @@ export function CartSummary() {
       <GuestCheckoutModal isOpen={showCheckoutModal} onClose={() => setShowCheckoutModal(false)} />
 
       <Link
-        href={buildCountryPath(locale, '/products')}
+        href={buildPath('/products')}
         className="mt-2 block text-center text-sm text-primary hover:underline"
       >
         {t('continueShopping')}

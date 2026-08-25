@@ -6,7 +6,7 @@ import { ProductListingClient } from './ProductListingClient';
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: 'Metadata' });
-  const alternates = generateAlternates(process.env.NEXT_PUBLIC_BASE_URL || 'https://cartzii.com', '/products', locale);
+  const alternates = generateAlternates(process.env.NEXT_PUBLIC_BASE_URL || 'https://cartzii.com', '/products');
   return {
     title: t('productsTitle'),
     description: t('productsDescription'),

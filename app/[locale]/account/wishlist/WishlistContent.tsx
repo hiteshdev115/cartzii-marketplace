@@ -9,7 +9,7 @@ import { Heart, Loader2, Trash2 } from 'lucide-react';
 import { useWishlistStore } from '@/stores/wishlistStore';
 import { useAuthStore } from '@/stores/authStore';
 import { Breadcrumb } from '@/components/layout/Breadcrumb';
-import { buildCountryPath } from '@/config/countries';
+import { buildPath } from '@/config/countries';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { formatPrice } from '@/lib/utils';
 import { buildWishlistImageUrl } from '@/lib/api/wishlist';
@@ -30,7 +30,7 @@ export function WishlistContent() {
   // Redirect to login if not authenticated
   useEffect(() => {
     if (hydrated && !token) {
-      router.push(buildCountryPath(locale, '/auth/login'));
+      router.push(buildPath('/auth/login'));
     }
   }, [hydrated, token, locale, router]);
 
@@ -53,7 +53,7 @@ export function WishlistContent() {
     <main className="max-w-[var(--container-max)] mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <Breadcrumb
         items={[
-          { label: t('dashboard'), href: buildCountryPath(locale, '/account') },
+          { label: t('dashboard'), href: buildPath('/account') },
           { label: t('wishlist') },
         ]}
       />
@@ -88,7 +88,7 @@ export function WishlistContent() {
                 >
                   <Trash2 className="w-4 h-4 text-red-500" />
                 </button>
-                <Link href={buildCountryPath(locale, `/products/${p.slug}`)}>
+                <Link href={buildPath(`/products/${p.slug}`)}>
                   <div className="aspect-square bg-slate-50 overflow-hidden">
                     <Image
                       src={buildWishlistImageUrl(primaryImage?.imageurl)}

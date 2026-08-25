@@ -8,7 +8,7 @@ import {
   DollarSign, ArrowRight, SlidersHorizontal, Star, TrendingUp,
   Sparkles, Package, ChevronDown, X,
 } from 'lucide-react';
-import { buildCountryPath, getCountryFromLocale, getCountryConfig } from '@/config/countries';
+import { buildPath, getCountryFromLocale, getCountryConfig } from '@/config/countries';
 import { fetchAllProducts } from '@/lib/api';
 import { Breadcrumb } from '@/components/layout/Breadcrumb';
 import { formatPrice } from '@/lib/utils';
@@ -42,14 +42,14 @@ function ProductCardSkeleton() {
 
 // ─── Product Card ─────────────────────────────────────────────────────────────
 
-function ProductCard({ product, locale }: { product: Product; locale: string }) {
+function ProductCard({ product }: { product: Product }) {
   const price = effectivePrice(product);
   const hasDiscount = product.salePrice !== undefined && product.salePrice < product.price;
   const imageSrc = product.images?.[0] || '/assets/placeholder-product.png';
 
   return (
     <Link
-      href={buildCountryPath(locale, `/products/${product.slug}`)}
+      href={buildPath(`/products/${product.slug}`)}
       className="group bg-white rounded-2xl border border-slate-100 overflow-hidden hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 flex flex-col"
     >
       {/* Image */}
@@ -380,7 +380,7 @@ export function DollarStreetPageClient() {
               <>
                 <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
                   {paginated.map((product) => (
-                    <ProductCard key={product.id} product={product} locale={locale} />
+                    <ProductCard key={product.id} product={product} />
                   ))}
                 </div>
 
@@ -416,7 +416,7 @@ export function DollarStreetPageClient() {
                 Explore thousands more products across all price ranges on Cartzii.
               </p>
               <Link
-                href={buildCountryPath(locale, '/deals')}
+                href={buildPath('/deals')}
                 className="inline-flex items-center gap-2 bg-white text-emerald-700 font-bold px-8 py-3.5 rounded-2xl hover:bg-white/90 transition-all shadow-lg"
               >
                 Explore All Deals <ArrowRight className="w-4 h-4" />

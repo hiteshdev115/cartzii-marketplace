@@ -1,6 +1,6 @@
 'use client';
 
-import { useTranslations, useLocale } from 'next-intl';
+import { useTranslations } from 'next-intl';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { loginSchema, LoginFormData } from '@/lib/validators';
@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/Button';
 import { Breadcrumb } from '@/components/layout/Breadcrumb';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { buildCountryPath } from '@/config/countries';
+import { buildPath } from '@/config/countries';
 import { api, ApiError } from '@/lib/api/client';
 import { useAuthStore } from '@/stores/authStore';
 import { mergeCartOnLogin } from '@/lib/mergeCart';
@@ -28,7 +28,6 @@ interface LoginResponse {
 
 export function LoginForm() {
   const t = useTranslations('Auth');
-  const locale = useLocale();
   const router = useRouter();
   const searchParams = useSearchParams();
   const justRegistered = searchParams.get('registered') === 'true';
@@ -80,7 +79,7 @@ export function LoginForm() {
           }
         }
 
-        const destination = redirectTo ?? buildCountryPath(locale, '/');
+        const destination = redirectTo ?? buildPath('/');
         router.push(destination);
       }
     } catch (error) {
@@ -143,10 +142,10 @@ export function LoginForm() {
               <input type="checkbox" className="rounded border-gray-300 text-primary" />
               {t('rememberMe')}
             </label>
-            <Link href={buildCountryPath(locale, '/auth/forgot-password')} className="text-sm text-primary hover:underline">{t('forgotPassword')}</Link>
+            <Link href={buildPath('/auth/forgot-password')} className="text-sm text-primary hover:underline">{t('forgotPassword')}</Link>
           </div>
           <p className="text-sm">
-            <Link href={buildCountryPath(locale, '/auth/otp-login')} className="text-primary hover:underline">
+            <Link href={buildPath('/auth/otp-login')} className="text-primary hover:underline">
               {t('loginWithCodeInstead')}
             </Link>
           </p>
@@ -166,7 +165,7 @@ export function LoginForm() {
 
         <p className="text-sm text-slate-500 text-center mt-6">
           {t('noAccount')}{' '}
-          <Link href={buildCountryPath(locale, '/auth/register')} className="text-primary font-medium hover:underline">
+          <Link href={buildPath('/auth/register')} className="text-primary font-medium hover:underline">
             {t('createAccount')}
           </Link>
         </p>

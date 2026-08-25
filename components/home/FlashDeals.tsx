@@ -1,7 +1,7 @@
 'use client';
 
-import { useTranslations, useLocale } from 'next-intl';
-import { buildCountryPath } from '@/config/countries';
+import { useTranslations } from 'next-intl';
+import { buildPath } from '@/config/countries';
 import { allDeals } from '@/lib/mockData';
 import { CountdownTimer } from '@/components/ui/CountdownTimer';
 import { PriceTag } from '@/components/ui/PriceTag';
@@ -11,7 +11,6 @@ import Link from 'next/link';
 
 export function FlashDeals() {
   const t = useTranslations('Home');
-  const locale = useLocale();
   const flashDeals = allDeals.filter((d) => d.type === 'flash').slice(0, 4);
 
   return (
@@ -22,7 +21,7 @@ export function FlashDeals() {
             <h2 className="text-3xl font-bold text-slate-900">⚡ {t('flashDeals')}</h2>
             <p className="mt-2 text-slate-500">{t('flashDealsSubtitle')}</p>
           </div>
-          <Link href={buildCountryPath(locale, '/deals')} className="hidden sm:inline-flex btn-ghost text-primary font-semibold">
+          <Link href={buildPath('/deals')} className="hidden sm:inline-flex btn-ghost text-primary font-semibold">
             View All →
           </Link>
         </div>
@@ -30,7 +29,7 @@ export function FlashDeals() {
           {flashDeals.map((deal) => (
             <Link
               key={deal.id}
-              href={buildCountryPath(locale, `/products/${deal.product.slug}`)}
+              href={buildPath(`/products/${deal.product.slug}`)}
               className="card-interactive group"
             >
               <div className="relative aspect-square overflow-hidden">

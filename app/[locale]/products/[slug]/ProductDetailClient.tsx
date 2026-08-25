@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
-import { getCountryFromLocale, buildCountryPath, getCountryConfig } from '@/config/countries';
+import { getCountryFromLocale, buildPath, getCountryConfig } from '@/config/countries';
 import { fetchProductBySlug } from '@/lib/api/products';
 import { fetchProductReviews } from '@/lib/api/reviews';
 import { ProductGallery } from '@/components/products/ProductGallery';
@@ -176,7 +176,7 @@ export function ProductDetailClient({ slug }: ProductDetailClientProps) {
       />
       <Breadcrumb
         items={[
-          { label: t('allProducts'), href: buildCountryPath(locale, '/products') },
+          { label: t('allProducts'), href: buildPath('/products') },
           { label: product.name },
         ]}
       />

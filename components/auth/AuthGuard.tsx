@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useLocale } from 'next-intl';
 import { useAuthStore } from '@/stores/authStore';
 import { useHydrated } from '@/hooks/useHydration';
-import { buildCountryPath } from '@/config/countries';
+import { buildPath } from '@/config/countries';
 
 export function AuthGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -17,7 +17,7 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
   // Redirect to login if not authenticated and not in guest checkout mode
   useEffect(() => {
     if (hydrated && !token && !isGuestCheckout) {
-      router.replace(buildCountryPath(locale, '/auth/login'));
+      router.replace(buildPath('/auth/login'));
     }
   }, [hydrated, token, isGuestCheckout, router, locale]);
 

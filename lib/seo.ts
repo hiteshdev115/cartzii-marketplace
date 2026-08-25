@@ -1,19 +1,36 @@
-import { buildCountryPath, allLocales } from '@/config/countries';
+import { buildPath, countries, countrySiteUrl } from '@/config/countries';
 
 export const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://cartzii.com';
 
-export function generateAlternates(baseUrl: string, pagePath: string, currentLocale: string) {
-  const languages: Record<string, string> = {
-    'x-default': `${baseUrl}${buildCountryPath('en-US', pagePath)}`,
-  };
+/**
+ * Canonical and hreflang for a page.
+ *
+ * hreflang is the one place the split into two domains actually shows up in
+ * the markup: the Canadian alternate of a page is on cartzii.ca and the US one
+ * on cartzii.com, so these entries cannot be paths — they have to be absolute
+ * URLs on the other origin.
+ *
+ * Getting this wrong is how two country sites with near-identical catalogues
+ * end up competing with each other in search instead of being understood as
+ * regional variants of the same page.
+ *
+ * `pagePath` is the shared, country-free path — the whole reason it can be
+ * reused verbatim across both origins.
+ */
+export function generateAlternates(baseUrl: string, pagePath: string) {
+  const path = buildPath(pagePath);
 
-  for (const locale of allLocales) {
-    const hreflangCode = locale.toLowerCase();
-    languages[hreflangCode] = `${baseUrl}${buildCountryPath(locale, pagePath)}`;
+  const languages: Record<string, string> = {};
+  for (const [country, config] of Object.entries(countries)) {
+    for (const locale of config.locales) {
+      languages[locale.toLowerCase()] = `${countrySiteUrl[country]}${path}`;
+    }
   }
+  // x-default is what a searcher outside both countries should be sent to.
+  languages['x-default'] = `${countrySiteUrl.us}${path}`;
 
   return {
-    canonical: `${baseUrl}${buildCountryPath(currentLocale, pagePath)}`,
+    canonical: `${baseUrl}${path}`,
     languages,
   };
 }

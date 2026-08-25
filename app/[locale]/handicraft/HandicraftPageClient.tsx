@@ -3,12 +3,12 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useLocale } from 'next-intl';
+
 import {
   ArrowRight, Scissors, Paintbrush2, Hammer, Gem, Leaf, BookOpen,
   Shirt, Star, Sparkles, ChevronRight, Search,
 } from 'lucide-react';
-import { buildCountryPath } from '@/config/countries';
+import { buildPath } from '@/config/countries';
 import { fetchCategoryTree } from '@/lib/api';
 import { getCategoryIconConfig } from '@/lib/categoryIcons';
 import { Breadcrumb } from '@/components/layout/Breadcrumb';
@@ -127,14 +127,14 @@ function CardSkeleton() {
 
 // ─── Category Card ────────────────────────────────────────────────────────────
 
-function CategoryCard({ cat, locale }: { cat: Category; locale: string }) {
+function CategoryCard({ cat }: { cat: Category }) {
   const imgSrc = buildCategoryImageUrl(cat.image);
   const { icon: Icon, gradient } = getCategoryIconConfig(cat.slug, cat.name);
   const subCount = cat.subcategories?.length ?? 0;
 
   return (
     <Link
-      href={buildCountryPath(locale, `/categories/${cat.slug}`)}
+      href={buildPath(`/categories/${cat.slug}`)}
       className="group flex flex-col bg-white border border-slate-100 rounded-2xl p-5 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300"
     >
       <div className="relative w-14 h-14 rounded-2xl overflow-hidden mb-4 flex-shrink-0">
@@ -177,7 +177,6 @@ interface Props {
 }
 
 export function HandicraftPageClient({ initialHandicraftCategories, initialAllCategories }: Props) {
-  const locale = useLocale();
   const [handicraftCategories, setHandicraftCategories] = useState<Category[]>(initialHandicraftCategories);
   const [allCategories, setAllCategories] = useState<Category[]>(initialAllCategories);
   const [loading, setLoading] = useState(
@@ -239,13 +238,13 @@ export function HandicraftPageClient({ initialHandicraftCategories, initialAllCa
             </p>
             <div className="flex flex-wrap gap-3">
               <Link
-                href={buildCountryPath(locale, '/search?q=handmade')}
+                href={buildPath('/search?q=handmade')}
                 className="inline-flex items-center gap-2 bg-white text-slate-900 font-bold px-6 py-3 rounded-xl hover:bg-white/90 transition-all shadow-lg"
               >
                 Shop Handmade <ArrowRight className="w-4 h-4" />
               </Link>
               <Link
-                href={buildCountryPath(locale, '/products')}
+                href={buildPath('/products')}
                 className="inline-flex items-center gap-2 bg-white/10 border border-white/20 text-white font-semibold px-6 py-3 rounded-xl hover:bg-white/20 transition-all"
               >
                 All Products
@@ -276,7 +275,7 @@ export function HandicraftPageClient({ initialHandicraftCategories, initialAllCa
             {CRAFT_SPOTLIGHTS.map((craft) => (
               <Link
                 key={craft.title}
-                href={buildCountryPath(locale, `/search?q=${encodeURIComponent(craft.query)}`)}
+                href={buildPath(`/search?q=${encodeURIComponent(craft.query)}`)}
                 className="group flex flex-col bg-white border border-slate-100 rounded-2xl p-5 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300"
               >
                 <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${craft.gradient} flex items-center justify-center mb-4 group-hover:scale-105 transition-transform duration-300 shadow-md`}>
@@ -340,7 +339,7 @@ export function HandicraftPageClient({ initialHandicraftCategories, initialAllCa
                 </div>
               )
               : filtered.map((cat) => (
-                  <CategoryCard key={cat.id} cat={cat} locale={locale} />
+                  <CategoryCard key={cat.id} cat={cat} />
                 ))}
           </div>
         </section>
@@ -362,7 +361,7 @@ export function HandicraftPageClient({ initialHandicraftCategories, initialAllCa
               Shop authentic handicrafts and support independent artisans on Cartzii.
             </p>
             <Link
-              href={buildCountryPath(locale, '/search?q=handmade artisan')}
+              href={buildPath('/search?q=handmade artisan')}
               className="inline-flex items-center gap-2 bg-gradient-to-r from-rose-500 to-pink-600 text-white font-bold px-8 py-3.5 rounded-2xl hover:opacity-90 transition-all shadow-lg shadow-rose-900/40"
             >
               Discover Handmade <ArrowRight className="w-4 h-4" />

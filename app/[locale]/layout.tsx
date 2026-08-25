@@ -3,7 +3,7 @@ import { getMessages, getTranslations } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { routing } from "@/i18n/routing";
 import {
-  buildCountryPath,
+  buildPath,
   allLocales,
 } from "@/config/countries";
 import { Header } from "@/components/layout/Header";
@@ -23,10 +23,10 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
   const baseUrl = "https://cartzii.com";
 
   const languages: Record<string, string> = {
-    "x-default": `${baseUrl}${buildCountryPath("en-US", "")}`,
+    "x-default": `${baseUrl}${buildPath("")}`,
   };
   for (const loc of allLocales) {
-    languages[loc.toLowerCase()] = `${baseUrl}${buildCountryPath(loc, "")}`;
+    languages[loc.toLowerCase()] = `${baseUrl}${buildPath("")}`;
   }
 
   return {
@@ -36,13 +36,13 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
     },
     description: t("description"),
     alternates: {
-      canonical: `${baseUrl}${buildCountryPath(locale, "")}`,
+      canonical: `${baseUrl}${buildPath("")}`,
       languages,
     },
     openGraph: {
       title: t("title"),
       description: t("description"),
-      url: `${baseUrl}${buildCountryPath(locale, "")}`,
+      url: `${baseUrl}${buildPath("")}`,
       siteName: "Cartzii",
       locale: locale.replace("-", "_"),
       type: "website",

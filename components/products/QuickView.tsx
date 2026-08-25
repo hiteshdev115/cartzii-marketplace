@@ -10,7 +10,7 @@ import { useCartStore } from '@/stores/cartStore';
 import { useWishlistStore } from '@/stores/wishlistStore';
 import { useAuthStore } from '@/stores/authStore';
 import { useLoginModalStore } from '@/stores/loginModalStore';
-import { buildCountryPath } from '@/config/countries';
+import { buildPath } from '@/config/countries';
 import Link from 'next/link';
 
 interface QuickViewProps {
@@ -87,7 +87,7 @@ export function QuickView({ product, onClose }: QuickViewProps) {
               </button>
             </div>
             <Link
-              href={buildCountryPath(locale, `/products/${product.slug}`)}
+              href={buildPath(`/products/${product.slug}`)}
               className="block text-center text-sm text-primary font-medium hover:underline"
               onClick={onClose}
             >

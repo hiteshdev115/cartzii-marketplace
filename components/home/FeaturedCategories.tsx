@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useTranslations, useLocale } from 'next-intl';
-import { buildCountryPath } from '@/config/countries';
+import { useTranslations } from 'next-intl';
+import { buildPath } from '@/config/countries';
 import { fetchRootCategories } from '@/lib/api';
 import { Category } from '@/types';
 import Link from 'next/link';
@@ -32,7 +32,6 @@ function CategorySkeleton() {
 
 export function FeaturedCategories() {
   const t = useTranslations('Home');
-  const locale = useLocale();
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -56,7 +55,7 @@ export function FeaturedCategories() {
             <h2 className="text-3xl font-bold text-slate-900">{t('featuredCategories')}</h2>
           </div>
           <Link
-            href={buildCountryPath(locale, '/categories')}
+            href={buildPath('/categories')}
             className="hidden sm:flex items-center gap-1.5 text-sm font-semibold text-primary hover:gap-2.5 transition-all"
           >
             View all <ArrowRight className="w-4 h-4" />
@@ -74,7 +73,7 @@ export function FeaturedCategories() {
                 return (
                   <Link
                     key={cat.id}
-                    href={buildCountryPath(locale, `/categories/${cat.slug}`)}
+                    href={buildPath(`/categories/${cat.slug}`)}
                     className="group flex flex-col bg-white border border-slate-100 rounded-2xl p-5 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300"
                   >
                     {/* Icon / Image box */}
@@ -120,7 +119,7 @@ export function FeaturedCategories() {
         {/* Mobile "View all" */}
         <div className="mt-6 text-center sm:hidden">
           <Link
-            href={buildCountryPath(locale, '/categories')}
+            href={buildPath('/categories')}
             className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary"
           >
             View all categories <ArrowRight className="w-4 h-4" />

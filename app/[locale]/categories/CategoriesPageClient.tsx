@@ -3,11 +3,11 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useLocale } from 'next-intl';
+
 import {
   ChevronLeft, ChevronRight, ArrowRight, Tag, Zap, Sparkles, Gift,
 } from 'lucide-react';
-import { buildCountryPath } from '@/config/countries';
+import { buildPath } from '@/config/countries';
 import { fetchRootCategories } from '@/lib/api';
 import { getCategoryIconConfig } from '@/lib/categoryIcons';
 import { cn } from '@/lib/utils';
@@ -92,7 +92,6 @@ function CategoryCardSkeleton() {
 // ─── Offers Carousel ─────────────────────────────────────────────────────────
 
 function OffersCarousel() {
-  const locale = useLocale();
   const [current, setCurrent] = useState(0);
   const [paused, setPaused] = useState(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -156,7 +155,7 @@ function OffersCarousel() {
                   {slide.subtitle}
                 </p>
                 <Link
-                  href={buildCountryPath(locale, slide.ctaPath)}
+                  href={buildPath(slide.ctaPath)}
                   className="inline-flex items-center gap-2 bg-white text-slate-900 font-bold text-sm px-5 py-2.5 rounded-xl hover:bg-white/90 transition-all w-fit shadow-lg"
                 >
                   {slide.cta} <ArrowRight className="w-4 h-4" />
@@ -204,14 +203,14 @@ function OffersCarousel() {
 
 // ─── Category Card ────────────────────────────────────────────────────────────
 
-function CategoryCard({ cat, locale }: { cat: Category; locale: string }) {
+function CategoryCard({ cat }: { cat: Category }) {
   const imgSrc = buildCategoryImageUrl(cat.image);
   const { icon: Icon, gradient } = getCategoryIconConfig(cat.slug, cat.name);
   const subCount = cat.subcategories?.length ?? 0;
 
   return (
     <Link
-      href={buildCountryPath(locale, `/categories/${cat.slug}`)}
+      href={buildPath(`/categories/${cat.slug}`)}
       className="group flex flex-col bg-white border border-slate-100 rounded-2xl p-5 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 focus-visible:outline-2 focus-visible:outline-primary"
     >
       {/* Icon / Image box */}
@@ -260,7 +259,6 @@ interface Props {
 }
 
 export function CategoriesPageClient({ initialCategories }: Props) {
-  const locale = useLocale();
   const [categories, setCategories] = useState<Category[]>(initialCategories);
   const [loading, setLoading] = useState(initialCategories.length === 0);
 
@@ -306,7 +304,7 @@ export function CategoriesPageClient({ initialCategories }: Props) {
                 </div>
               )
               : categories.map((cat) => (
-                  <CategoryCard key={cat.id} cat={cat} locale={locale} />
+                  <CategoryCard key={cat.id} cat={cat} />
                 ))}
           </div>
         </section>

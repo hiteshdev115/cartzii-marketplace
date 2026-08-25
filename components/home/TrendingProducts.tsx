@@ -1,14 +1,13 @@
 'use client';
 
-import { useTranslations, useLocale } from 'next-intl';
-import { buildCountryPath } from '@/config/countries';
+import { useTranslations } from 'next-intl';
+import { buildPath } from '@/config/countries';
 import { getBestSellers } from '@/lib/mockData';
 import { ProductCard } from '@/components/products/ProductCard';
 import Link from 'next/link';
 
 export function TrendingProducts() {
   const t = useTranslations('Home');
-  const locale = useLocale();
   const products = getBestSellers().slice(0, 8);
 
   return (
@@ -20,7 +19,7 @@ export function TrendingProducts() {
             <p className="mt-2 text-slate-500">{t('trendingSubtitle')}</p>
           </div>
           <Link
-            href={buildCountryPath(locale, '/products')}
+            href={buildPath('/products')}
             className="hidden sm:inline-flex btn-ghost text-primary font-semibold"
           >
             View All →

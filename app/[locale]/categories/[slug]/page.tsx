@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation';
 import { fetchCategoryTree } from '@/lib/api';
 import { Category } from '@/types';
 import { Breadcrumb } from '@/components/layout/Breadcrumb';
-import { buildCountryPath } from '@/config/countries';
+import { buildPath } from '@/config/countries';
 import { generateAlternates } from '@/lib/seo';
 import { CategoryPageContent } from './CategoryPageContent';
 
@@ -19,7 +19,7 @@ function findBySlug(cats: Category[], slug: string): Category | undefined {
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string; slug: string }> }) {
-  const { locale, slug } = await params;
+  const { slug } = await params;
   let category: Category | undefined;
   try {
     const tree = await fetchCategoryTree();
@@ -29,7 +29,6 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
   const alternates = generateAlternates(
     process.env.NEXT_PUBLIC_BASE_URL || 'https://cartzii.com',
     `/categories/${slug}`,
-    locale,
   );
   return {
     title: `${category.name} - Cartzii`,
@@ -54,7 +53,7 @@ export default async function CategoryPage({ params }: { params: Promise<{ local
     <main className="max-w-[var(--container-max)] mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <Breadcrumb
         items={[
-          { label: t('allProducts'), href: buildCountryPath(locale, '/products') },
+          { label: t('allProducts'), href: buildPath('/products') },
           { label: category!.name },
         ]}
       />

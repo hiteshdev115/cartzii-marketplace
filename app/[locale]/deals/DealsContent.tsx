@@ -7,7 +7,7 @@ import { allDeals } from '@/lib/mockData';
 import { Breadcrumb } from '@/components/layout/Breadcrumb';
 import { CountdownTimer } from '@/components/ui/CountdownTimer';
 import { Badge } from '@/components/ui/Badge';
-import { buildCountryPath } from '@/config/countries';
+import { buildPath } from '@/config/countries';
 import { formatPrice } from '@/lib/utils';
 import { Flame, ArrowRight } from 'lucide-react';
 
@@ -32,7 +32,7 @@ export function DealsContent() {
         {allDeals.map((deal) => (
           <Link
             key={deal.id}
-            href={buildCountryPath(locale, `/products/${deal.product.slug}`)}
+            href={buildPath(`/products/${deal.product.slug}`)}
             className="group card-interactive overflow-hidden"
           >
             <div className="relative aspect-[4/3] overflow-hidden">

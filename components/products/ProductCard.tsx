@@ -4,7 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Heart } from 'lucide-react';
 import { useLocale } from 'next-intl';
-import { buildCountryPath } from '@/config/countries';
+import { buildPath } from '@/config/countries';
 import { formatPrice } from '@/lib/utils';
 import { StarRating } from '@/components/ui/StarRating';
 import { useWishlistStore } from '@/stores/wishlistStore';
@@ -42,7 +42,7 @@ export function ProductCard({ product }: ProductCardProps) {
       className="card-interactive group"
       aria-label={`${product.name} - ${formatPrice(product.salePrice || product.price, locale)}`}
     >
-      <Link href={buildCountryPath(locale, `/products/${product.slug}`)}>
+      <Link href={buildPath(`/products/${product.slug}`)}>
         <div className="relative aspect-square overflow-hidden">
           <Image
             src={product.images[0]}
@@ -76,7 +76,7 @@ export function ProductCard({ product }: ProductCardProps) {
 
       <div className="p-4">
         <p className="text-xs text-slate-500 mb-1">{product.brand}</p>
-        <Link href={buildCountryPath(locale, `/products/${product.slug}`)}>
+        <Link href={buildPath(`/products/${product.slug}`)}>
           <h3 className="text-sm font-semibold text-slate-900 line-clamp-2 mb-2 hover:text-primary transition-colors">
             {product.name}
           </h3>

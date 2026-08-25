@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
-import { buildCountryPath, getCountryConfig, getCountryFromLocale } from '@/config/countries';
+import { buildPath, getCountryConfig, getCountryFromLocale } from '@/config/countries';
 import { useCartStore } from '@/stores/cartStore';
 import { useAuthStore } from '@/stores/authStore';
 import { PaymentForm, type PaymentSubmitResult } from '@/components/checkout/PaymentForm';
@@ -230,7 +230,7 @@ export function CheckoutPageContent() {
       setPlacedOrder(order);
       await useCartStore.getState().clearCart();
       const confirmationQuery = order.accountCreated ? '?newAccount=1' : '';
-      router.push(buildCountryPath(locale, `/order-confirmation/${order.orderNumber}${confirmationQuery}`));
+      router.push(buildPath(`/order-confirmation/${order.orderNumber}${confirmationQuery}`));
     } catch (cause) {
       let message = t('orderPlacementFailed');
       if (cause instanceof ApiError) {
@@ -313,9 +313,7 @@ export function CheckoutPageContent() {
                 currency={currency}
                 onSuccess={(paymentIntentId) => {
                   router.push(
-                    buildCountryPath(
-                      locale,
-                      `/checkout/success?payment_intent=${encodeURIComponent(paymentIntentId)}`,
+                    buildPath(`/checkout/success?payment_intent=${encodeURIComponent(paymentIntentId)}`,
                     ),
                   );
                 }}

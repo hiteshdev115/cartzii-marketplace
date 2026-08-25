@@ -12,7 +12,7 @@ import type { Product } from '@/types';
 import type { SearchProductResult, SearchPagination } from '@/lib/api';
 import { Breadcrumb } from '@/components/layout/Breadcrumb';
 import { Pagination } from '@/components/ui/Pagination';
-import { buildCountryPath, getCountryFromLocale } from '@/config/countries';
+import { buildPath, getCountryFromLocale } from '@/config/countries';
 import { formatPrice } from '@/lib/utils';
 import { useWishlistStore } from '@/stores/wishlistStore';
 import { useAuthStore } from '@/stores/authStore';
@@ -161,7 +161,7 @@ export function SearchContent() {
                       >
                         <Heart className={`w-4 h-4 ${isWishlisted ? 'fill-red-500 text-red-500' : 'text-slate-600'}`} />
                       </button>
-                      <Link href={buildCountryPath(locale, `/products/${item.slug}`)}>
+                      <Link href={buildPath(`/products/${item.slug}`)}>
                         <div className="aspect-square bg-slate-50 overflow-hidden">
                           <Image
                             src={buildImageUrl(item.primaryImage?.imageurl)}

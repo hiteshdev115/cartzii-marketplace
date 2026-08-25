@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { useTranslations, useLocale } from 'next-intl';
-import { buildCountryPath } from '@/config/countries';
+import { useTranslations } from 'next-intl';
+import { buildPath } from '@/config/countries';
 import Link from 'next/link';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -26,7 +26,6 @@ const slideStyles = [
 
 export function HeroBanner() {
   const t = useTranslations('Home');
-  const locale = useLocale();
   const [current, setCurrent] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
 
@@ -35,21 +34,21 @@ export function HeroBanner() {
       title: t('heroTitle'),
       subtitle: t('heroSubtitle'),
       cta: t('shopNow'),
-      ctaHref: buildCountryPath(locale, '/products'),
+      ctaHref: buildPath('/products'),
       secondaryCta: t('exploreDeals'),
-      secondaryHref: buildCountryPath(locale, '/deals'),
+      secondaryHref: buildPath('/deals'),
     },
     {
       title: t('slide2Title'),
       subtitle: t('slide2Subtitle'),
       cta: t('slide2Cta'),
-      ctaHref: buildCountryPath(locale, '/deals'),
+      ctaHref: buildPath('/deals'),
     },
     {
       title: t('slide3Title'),
       subtitle: t('slide3Subtitle'),
       cta: t('slide3Cta'),
-      ctaHref: buildCountryPath(locale, '/products'),
+      ctaHref: buildPath('/products'),
     },
   ];
 
