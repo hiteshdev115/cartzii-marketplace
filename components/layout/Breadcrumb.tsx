@@ -3,8 +3,7 @@
 import { ChevronRight, Home } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { buildPath } from '@/config/countries';
-import Link from 'next/link';
-
+import { Link } from '@/i18n/navigation';
 interface BreadcrumbItem {
   label: string;
   href?: string;

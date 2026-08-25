@@ -1,5 +1,4 @@
-import Link from 'next/link';
-
+import { Link } from '@/i18n/navigation';
 export default function NotFound() {
   return (
     <main className="max-w-[var(--container-max)] mx-auto px-4 py-24 text-center">

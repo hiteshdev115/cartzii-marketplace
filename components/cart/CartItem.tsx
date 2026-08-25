@@ -1,7 +1,7 @@
 'use client';
 
 import Image from 'next/image';
-import Link from 'next/link';
+import { Link } from '@/i18n/navigation';
 import { Trash2 } from 'lucide-react';
 import { useLocale } from 'next-intl';
 import { CartItem as CartItemType } from '@/types';

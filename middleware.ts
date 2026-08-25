@@ -1,18 +1,30 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { countries, allLocales, currentCountry, currentLocale } from '@/config/countries';
+import {
+  currentCountry,
+  currentLocale,
+  deploymentLocales,
+  localePathPrefixes,
+} from '@/config/countries';
 
 const ALLOWED_COUNTRIES = new Set(['US', 'CA']);
 
 // Matched against the first path segment.
 const PROTECTED_PATH_SEGMENTS = new Set(['account']);
 
-// Path prefixes this site used to serve, kept only so old links still resolve.
-const LEGACY_PREFIXES = [
-  ...Object.keys(countries).map((c) => `/${c}`), // /ca, /us
-  ...allLocales.map((l) => `/${l}`),             // /en-CA, /en-US
-  '/fr-CA',                                      // fr-CA is no longer in allLocales
-  '/ca/fr',
-];
+// Path prefixes this site used to serve, mapped to what replaces them.
+//
+// The value is the prefix the visitor should end up on, so a French URL stays
+// French: /ca/fr/products becomes /fr/products, not /products. Redirecting a
+// reader of French onto the English page would look like the language setting
+// silently resetting itself.
+const LEGACY_PREFIX_MAP: Record<string, string> = {
+  '/ca/fr': localePathPrefixes['fr-CA'] ?? '',
+  '/fr-CA': localePathPrefixes['fr-CA'] ?? '',
+  '/en-CA': '',
+  '/en-US': '',
+  '/ca': '',
+  '/us': '',
+};
 
 function getGeoCountry(request: NextRequest): string | null {
   // Set by nginx GeoIP when present.
@@ -20,14 +32,19 @@ function getGeoCountry(request: NextRequest): string | null {
 }
 
 /**
- * Strips a legacy country or locale prefix, if the path carries one.
- * `/ca/products` → `/products`, `/ca` → `/`, `/products` → null (nothing to do).
+ * Rewrites a legacy country/locale prefix onto its replacement.
+ * `/ca/products` → `/products`, `/ca/fr/products` → `/fr/products`,
+ * `/products` → null (nothing to do).
  */
-function stripLegacyPrefix(pathname: string): string | null {
+function replaceLegacyPrefix(pathname: string): string | null {
   // Longest first, so `/ca/fr` is matched before `/ca`.
-  for (const prefix of [...LEGACY_PREFIXES].sort((a, b) => b.length - a.length)) {
-    if (pathname === prefix) return '/';
-    if (pathname.startsWith(`${prefix}/`)) return pathname.slice(prefix.length) || '/';
+  const prefixes = Object.keys(LEGACY_PREFIX_MAP).sort((a, b) => b.length - a.length);
+  for (const prefix of prefixes) {
+    const target = LEGACY_PREFIX_MAP[prefix];
+    if (pathname === prefix) return target || '/';
+    if (pathname.startsWith(`${prefix}/`)) {
+      return `${target}${pathname.slice(prefix.length)}`;
+    }
   }
   return null;
 }
@@ -55,33 +72,56 @@ export default function middleware(request: NextRequest) {
   // No cross-domain redirect. A US visitor opening a cartzii.ca link stays on
   // cartzii.ca — bouncing them to .com would break every shared link and make
   // the canonical URL disagree with the page actually served.
-  const stripped = stripLegacyPrefix(pathname);
-  if (stripped !== null) {
+  const replaced = replaceLegacyPrefix(pathname);
+  if (replaced !== null) {
     const url = request.nextUrl.clone();
-    url.pathname = stripped;
+    url.pathname = replaced;
     return NextResponse.redirect(url, { status: 301 });
   }
 
   // Auth guard, before the rewrite, so the redirect is built from the URL the
-  // visitor actually typed.
-  const firstSegment = pathname.split('/').filter(Boolean)[0]?.toLowerCase();
+  // visitor actually typed. The language prefix is stripped first, or
+  // /fr/account would slip past the guard that /account is subject to.
+  const languagePrefix = deploymentLocales
+    .map((l) => localePathPrefixes[l])
+    .find((p) => p && (pathname === p || pathname.startsWith(`${p}/`)));
+  const guardPath = languagePrefix ? pathname.slice(languagePrefix.length) || '/' : pathname;
+
+  const firstSegment = guardPath.split('/').filter(Boolean)[0]?.toLowerCase();
   if (firstSegment && PROTECTED_PATH_SEGMENTS.has(firstSegment)) {
     const token = request.cookies.get('cartzii_access_token')?.value;
     if (!token) {
-      const loginUrl = new URL('/auth/login', request.url);
+      // Keep the visitor in their language through the login round-trip.
+      const loginUrl = new URL(`${languagePrefix ?? ''}/auth/login`, request.url);
       loginUrl.searchParams.set('redirect', pathname);
       return NextResponse.redirect(loginUrl);
+    }
+  }
+
+  // Resolve the language from its URL prefix. The country came from the
+  // domain; only the language can still be in the path, and only when it is
+  // not this country's default — so `/fr/products` is French and `/products`
+  // is English.
+  let locale = currentLocale;
+  let pagePath = pathname;
+  for (const candidate of deploymentLocales) {
+    const prefix = localePathPrefixes[candidate];
+    if (!prefix) continue;
+    if (pathname === prefix || pathname.startsWith(`${prefix}/`)) {
+      locale = candidate;
+      pagePath = pathname.slice(prefix.length) || '/';
+      break;
     }
   }
 
   // The routes still live under app/[locale], so the public path is rewritten
   // onto the internal locale segment. The visitor's URL does not change.
   const url = request.nextUrl.clone();
-  url.pathname = `/${currentLocale}${pathname === '/' ? '' : pathname}`;
+  url.pathname = `/${locale}${pagePath === '/' ? '' : pagePath}`;
 
   const response = NextResponse.rewrite(url);
   // next-intl reads this in getRequestConfig.
-  response.headers.set('X-NEXT-INTL-LOCALE', currentLocale);
+  response.headers.set('X-NEXT-INTL-LOCALE', locale);
   // Lets the API and any cache tell the two storefronts apart.
   response.headers.set('X-Cartzii-Country', currentCountry);
   return response;

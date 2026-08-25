@@ -7,8 +7,7 @@ import { CountdownTimer } from '@/components/ui/CountdownTimer';
 import { PriceTag } from '@/components/ui/PriceTag';
 import { Badge } from '@/components/ui/Badge';
 import Image from 'next/image';
-import Link from 'next/link';
-
+import { Link } from '@/i18n/navigation';
 export function FlashDeals() {
   const t = useTranslations('Home');
   const flashDeals = allDeals.filter((d) => d.type === 'flash').slice(0, 4);

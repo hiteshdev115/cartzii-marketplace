@@ -4,8 +4,7 @@ import { useTranslations } from 'next-intl';
 import { buildPath } from '@/config/countries';
 import { getBestSellers } from '@/lib/mockData';
 import { ProductCard } from '@/components/products/ProductCard';
-import Link from 'next/link';
-
+import { Link } from '@/i18n/navigation';
 export function TrendingProducts() {
   const t = useTranslations('Home');
   const products = getBestSellers().slice(0, 8);

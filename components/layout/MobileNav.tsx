@@ -7,9 +7,9 @@ import { useTranslations, useLocale } from 'next-intl';
 import { buildPath, getCountryFromLocale, countries, extractPagePath } from '@/config/countries';
 import { fetchCategories } from '@/lib/api';
 import { Category } from '@/types';
-import Link from 'next/link';
+import { Link } from '@/i18n/navigation';
 import Image from 'next/image';
-import { usePathname } from 'next/navigation';
+import { usePathname } from '@/i18n/navigation';
 import { cn } from '@/lib/utils';
 
 function MobileCategoryTree({

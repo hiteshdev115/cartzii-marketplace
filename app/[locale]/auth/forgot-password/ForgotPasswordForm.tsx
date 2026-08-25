@@ -7,7 +7,7 @@ import { z } from 'zod';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { Breadcrumb } from '@/components/layout/Breadcrumb';
-import Link from 'next/link';
+import { Link } from '@/i18n/navigation';
 import { buildPath } from '@/config/countries';
 import { api, ApiError } from '@/lib/api/client';
 import { Mail, ArrowLeft, CheckCircle } from 'lucide-react';

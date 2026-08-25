@@ -32,7 +32,7 @@ function collectHandicraftCategories(cats: Category[]): Category[] {
 }
 
 export async function generateMetadata() {
-  const alternates = generateAlternates(
+  const alternates = await generateAlternates(
     process.env.NEXT_PUBLIC_BASE_URL || 'https://cartzii.com',
     '/handicraft',
   );

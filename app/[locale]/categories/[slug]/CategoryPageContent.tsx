@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { resolvePrice } from '@/lib/pricing';
 import Image from 'next/image';
-import Link from 'next/link';
+import { Link } from '@/i18n/navigation';
 import { useLocale } from 'next-intl';
 import { ShoppingCart, Heart, SlidersHorizontal, ChevronDown, PackageSearch } from 'lucide-react';
 import { fetchCategoryProductsBySlug } from '@/lib/api';

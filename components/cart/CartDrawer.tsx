@@ -2,7 +2,7 @@
 
 import { X, ShoppingBag, ArrowRight, Trash2, ShoppingCart } from 'lucide-react';
 import Image from 'next/image';
-import Link from 'next/link';
+import { Link } from '@/i18n/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import { useCartStore } from '@/stores/cartStore';
 import { useAuthStore } from '@/stores/authStore';
@@ -10,7 +10,7 @@ import { buildPath } from '@/config/countries';
 import { formatPrice, cn } from '@/lib/utils';
 import { QuantitySelector } from '@/components/ui/QuantitySelector';
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter } from '@/i18n/navigation';
 import { GuestCheckoutModal } from '@/components/checkout/GuestCheckoutModal';
 
 export function CartDrawer() {

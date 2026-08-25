@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter } from '@/i18n/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import { buildPath, getCountryConfig, getCountryFromLocale } from '@/config/countries';
 import { useCartStore } from '@/stores/cartStore';

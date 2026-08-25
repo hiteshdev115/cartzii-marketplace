@@ -26,7 +26,7 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
     category = findBySlug(tree, slug);
   } catch { /* fall through */ }
   if (!category) return {};
-  const alternates = generateAlternates(
+  const alternates = await generateAlternates(
     process.env.NEXT_PUBLIC_BASE_URL || 'https://cartzii.com',
     `/categories/${slug}`,
   );

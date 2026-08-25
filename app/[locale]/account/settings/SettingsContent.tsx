@@ -13,8 +13,7 @@ import { User, MapPin, ChevronRight, Camera, Lock } from 'lucide-react';
 import { useAddressStore } from '@/stores/addressStore';
 import { useAuthStore } from '@/stores/authStore';
 import { fetchUserProfile, updateUserProfile } from '@/lib/api';
-import Link from 'next/link';
-
+import { Link } from '@/i18n/navigation';
 const GENDER_OPTIONS = [
   { value: '', label: 'Select' },
   { value: 'male', label: 'Male' },

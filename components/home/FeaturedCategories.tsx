@@ -5,7 +5,7 @@ import { useTranslations } from 'next-intl';
 import { buildPath } from '@/config/countries';
 import { fetchRootCategories } from '@/lib/api';
 import { Category } from '@/types';
-import Link from 'next/link';
+import { Link } from '@/i18n/navigation';
 import Image from 'next/image';
 import { ArrowRight } from 'lucide-react';
 import { getCategoryIconConfig } from '@/lib/categoryIcons';

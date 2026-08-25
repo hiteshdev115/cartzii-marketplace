@@ -2,10 +2,7 @@ import { NextIntlClientProvider } from "next-intl";
 import { getMessages, getTranslations } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { routing } from "@/i18n/routing";
-import {
-  buildPath,
-  allLocales,
-} from "@/config/countries";
+import { generateAlternates } from "@/lib/seo";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { SkipLink } from "@/components/accessibility/SkipLink";
@@ -20,14 +17,14 @@ type Props = {
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "Metadata" });
-  const baseUrl = "https://cartzii.com";
+  // Read from the environment, not hardcoded: this layout is built for both
+  // cartzii.ca and cartzii.com, and a fixed .com here would have the Canadian
+  // site declare the US one as its canonical home page.
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://cartzii.com";
 
-  const languages: Record<string, string> = {
-    "x-default": `${baseUrl}${buildPath("")}`,
-  };
-  for (const loc of allLocales) {
-    languages[loc.toLowerCase()] = `${baseUrl}${buildPath("")}`;
-  }
+  // One builder for canonical and hreflang, so the home page cannot drift
+  // from every other page's tags.
+  const alternates = await generateAlternates(baseUrl, "/");
 
   return {
     title: {
@@ -35,14 +32,11 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
       default: t("title"),
     },
     description: t("description"),
-    alternates: {
-      canonical: `${baseUrl}${buildPath("")}`,
-      languages,
-    },
+    alternates,
     openGraph: {
       title: t("title"),
       description: t("description"),
-      url: `${baseUrl}${buildPath("")}`,
+      url: alternates.canonical,
       siteName: "Cartzii",
       locale: locale.replace("-", "_"),
       type: "website",

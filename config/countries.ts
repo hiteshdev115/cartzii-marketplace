@@ -36,13 +36,10 @@ export const countries: Record<string, CountryConfig> = {
     code: 'ca',
     name: 'Canada',
     defaultLocale: 'en-CA',
-    // fr-CA is not served yet. Re-adding it here is most of the work of
-    // bringing French back: the language switcher hides itself while a country
-    // has a single locale, and shows again when it does not.
-    locales: ['en-CA'],
+    locales: ['en-CA', 'fr-CA'],
     currency: 'CAD',
     currencyLocale: 'en-CA',
-    dateLocaleMap: { 'en-CA': 'en-CA' },
+    dateLocaleMap: { 'en-CA': 'en-CA', 'fr-CA': 'fr-CA' },
   },
 };
 
@@ -69,6 +66,24 @@ export const countrySiteUrl: Record<string, string> = {
   ca: process.env.NEXT_PUBLIC_SITE_URL_CA || 'https://cartzii.ca',
   us: process.env.NEXT_PUBLIC_SITE_URL_US || 'https://cartzii.com',
 };
+
+/**
+ * URL prefix for each non-default locale.
+ *
+ * The country is the domain, so only the LANGUAGE needs a path segment, and
+ * only when it is not the country's default. On cartzii.ca that means English
+ * lives at /products and French at /fr/products. The default locale is
+ * deliberately unprefixed: adding one would move every existing English URL.
+ *
+ * `/fr` rather than `/fr-CA` — the country is already implied by the domain,
+ * so repeating it in the path says nothing.
+ */
+export const localePathPrefixes: Record<string, string> = {
+  'fr-CA': '/fr',
+};
+
+/** Locales this deployment serves — its own country's, and no others. */
+export const deploymentLocales: string[] = countries[currentCountry].locales;
 
 export function getCountryFromLocale(locale: string): string {
   const suffix = locale.split('-')[1]?.toLowerCase();
@@ -105,6 +120,26 @@ export function buildPath(pagePath: string): string {
  * needs no unwrapping. The internal prefix is still stripped defensively for
  * any caller that passes a rewritten path.
  */
+/**
+ * A page's path *for a given locale*, including the language prefix when that
+ * locale needs one.
+ *
+ *   localeUrlPath('en-CA', '/products') → '/products'
+ *   localeUrlPath('fr-CA', '/products') → '/fr/products'
+ *
+ * Used to build hreflang, where the French alternate of a page must be the
+ * French URL. Pointing it at the English one tells a search engine the two
+ * languages live at the same address, which is how the wrong language ends up
+ * in results.
+ */
+export function localeUrlPath(locale: string, pagePath: string): string {
+  const country = getCountryFromLocale(locale);
+  const isDefaultLang = locale === countries[country]?.defaultLocale;
+  const prefix = isDefaultLang ? '' : (localePathPrefixes[locale] ?? '');
+  const path = buildPath(pagePath);
+  return path === '/' ? prefix || '/' : `${prefix}${path}`;
+}
+
 export function extractPagePath(pathname: string): string {
   for (const locale of allLocales) {
     const prefix = `/${locale}`;

@@ -11,8 +11,7 @@ import { fetchUserReviews } from '@/lib/api/reviews';
 import type { ReviewAPIItem } from '@/lib/api/reviews';
 import { useAuthStore } from '@/stores/authStore';
 import Image from 'next/image';
-import Link from 'next/link';
-
+import { Link } from '@/i18n/navigation';
 const IMAGE_CDN_URL =
   process.env.NEXT_PUBLIC_IMAGE_CDN_URL ||
   'https://staging-api.cartzii.com/assets/upload/productImages';

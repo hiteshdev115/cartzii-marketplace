@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import Link from 'next/link';
+import { Link } from '@/i18n/navigation';
 import Image from 'next/image';
-import { useRouter, usePathname } from 'next/navigation';
+import { useRouter, usePathname } from '@/i18n/navigation';
 import { Search, ShoppingCart, Heart, User, LogOut, Package, Star, Settings, Truck } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { buildPath } from '@/config/countries';

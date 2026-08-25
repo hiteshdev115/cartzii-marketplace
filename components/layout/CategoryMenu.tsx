@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect, useCallback } from 'react';
-import Link from 'next/link';
+import { Link } from '@/i18n/navigation';
 import { ChevronDown, ChevronRight, Loader2 } from 'lucide-react';
 import { useTranslations, useLocale } from 'next-intl';
 import { buildPath } from '@/config/countries';

@@ -6,7 +6,7 @@ import { CategoriesPageClient } from './CategoriesPageClient';
 import type { Category } from '@/types';
 
 export async function generateMetadata() {
-  const alternates = generateAlternates(
+  const alternates = await generateAlternates(
     process.env.NEXT_PUBLIC_BASE_URL || 'https://cartzii.com',
     '/categories',
   );

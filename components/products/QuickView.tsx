@@ -11,8 +11,7 @@ import { useWishlistStore } from '@/stores/wishlistStore';
 import { useAuthStore } from '@/stores/authStore';
 import { useLoginModalStore } from '@/stores/loginModalStore';
 import { buildPath } from '@/config/countries';
-import Link from 'next/link';
-
+import { Link } from '@/i18n/navigation';
 interface QuickViewProps {
   product: Product;
   onClose: () => void;

@@ -1,7 +1,7 @@
 'use client';
 
-import { useSearchParams, useRouter } from 'next/navigation';
-
+import { useSearchParams } from 'next/navigation';
+import { useRouter } from '@/i18n/navigation';
 import { CheckCircle2, XCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { buildPath } from '@/config/countries';

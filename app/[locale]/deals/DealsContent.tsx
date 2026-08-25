@@ -2,7 +2,7 @@
 
 import { useTranslations, useLocale } from 'next-intl';
 import Image from 'next/image';
-import Link from 'next/link';
+import { Link } from '@/i18n/navigation';
 import { allDeals } from '@/lib/mockData';
 import { Breadcrumb } from '@/components/layout/Breadcrumb';
 import { CountdownTimer } from '@/components/ui/CountdownTimer';

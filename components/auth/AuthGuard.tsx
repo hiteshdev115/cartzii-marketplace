@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter } from '@/i18n/navigation';
 import { useLocale } from 'next-intl';
 import { useAuthStore } from '@/stores/authStore';
 import { useHydrated } from '@/hooks/useHydration';
