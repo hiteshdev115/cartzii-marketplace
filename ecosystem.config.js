@@ -92,10 +92,21 @@ module.exports = {
         // port or expose the process beyond the loopback interface.
         NODE_ENV: 'production',
         PORT: port,
-        // Loopback only. All sixteen processes share one box and every one of
-        // them is reached through its nginx server block; binding 0.0.0.0 would
-        // publish this port directly, bypassing TLS and the proxy.
-        HOSTNAME: '127.0.0.1',
+        // MUST be 0.0.0.0, not 127.0.0.1 — however tempting loopback looks.
+        //
+        // Next's standalone server derives the request URL from HOSTNAME when
+        // it is a concrete address. Set to 127.0.0.1 it stops honouring the
+        // Host header, so next-intl's locale rewrite becomes the absolute
+        // `https://localhost:PORT/en-CA` instead of the relative `/en-CA`.
+        // Next then proxies to itself over TLS on a plaintext port and every
+        // page 500s:
+        //
+        //   Failed to proxy https://localhost:4101/en-CA
+        //   Error: write EPROTO ... packet length too long
+        //
+        // These ports are not publicly reachable anyway — the host firewall
+        // drops them from outside, and nginx reaches them over loopback.
+        HOSTNAME: '0.0.0.0',
       },
 
       log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
