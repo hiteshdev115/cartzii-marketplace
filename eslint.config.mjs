@@ -16,6 +16,15 @@ const eslintConfig = defineConfig([
     "deploy/**",
     "fresh-deploy/**",
   ]),
+    {
+      // ecosystem.config.js is a pm2 config. pm2 reads it with require(), so it
+      // must be CommonJS — `import` there is not an option. Only the CommonJS
+      // rule is switched off; the file is still linted for everything else.
+      files: ["ecosystem.config.js"],
+      rules: {
+        "@typescript-eslint/no-require-imports": "off",
+      },
+    },
 ]);
 
 export default eslintConfig;
