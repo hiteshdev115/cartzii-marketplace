@@ -30,7 +30,9 @@ export function CheckoutPageContent() {
   const locale = useLocale();
   const t = useTranslations('Checkout');
   const tCommon = useTranslations('Common');
-  const { currency } = getCountryConfig(locale); // 'CAD' for /ca, 'USD' for /us
+  // CAD on cartzii.ca, USD on cartzii.com — the country is the domain now,
+  // not a path segment.
+  const { currency } = getCountryConfig(locale);
 
   // Derive subtotal from live cart
   const cartItems = useCartStore((s) => s.items);

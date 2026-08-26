@@ -70,7 +70,7 @@ function resolvePricing(item: CategoryProduct, countryCode: string) {
       : undefined;
 
   if (!priceSrc) {
-    return { origPrice: 0, salePrice: undefined as number | undefined, discountPct: 0, currency: 'USD' };
+    return { origPrice: 0, salePrice: undefined as number | undefined, discountPct: 0, currency: currentCurrency };
   }
 
   // Shared resolver — see lib/pricing.ts. The listing carried the same

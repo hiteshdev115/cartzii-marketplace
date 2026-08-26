@@ -1,6 +1,7 @@
 import { api } from './client';
 import { resolvePrice } from '@/lib/pricing';
 import type { Product, ProductVariant, DetailVariant, Review } from '@/types';
+import { currentCurrency } from '@/config/countries';
 
 // ---- API response shapes --------------------------------------------------
 
@@ -356,7 +357,7 @@ function mapProduct(raw: APIProduct, country: string): Product {
       : raw.stockquantity;
 
   // -- currency from pricing ------------------------------------------------
-  const currency = priceSrc?.currencycode || 'CAD';
+  const currency = priceSrc?.currencycode || currentCurrency;
 
   const isNew =
     !!raw.releaseat &&

@@ -1,4 +1,5 @@
 import { api } from './client';
+import { currentCurrency } from '@/config/countries';
 
 // ---- API response shapes --------------------------------------------------
 
@@ -135,7 +136,7 @@ export async function addCartItemAPI(
 
 const EMPTY_CART_RESULT = {
   cart: [] as CartAPIItem[],
-  summary: { totalItems: 0, totalAmount: '0.00', currencycode: 'USD' } as CartAPISummary,
+  summary: { totalItems: 0, totalAmount: '0.00', currencycode: currentCurrency } as CartAPISummary,
 };
 
 export async function fetchCartItemsAPI(
