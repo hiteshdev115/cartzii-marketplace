@@ -134,7 +134,20 @@
     "new": "NOUVEAU",
     "sale": "SOLDE",
     "soldOut": "ÉPUISÉ",
-    "off": "-{percent}%"
+    "off": "-{percent}%",
+    "filterDeals": "Promotions",
+    "filterDiscount": "Remise",
+    "onSaleOnly": "En promotion seulement",
+    "discountMin": "Remise minimale",
+    "discountMax": "Remise maximale",
+    "priceMin": "Min",
+    "priceMax": "Max",
+    "priceAny": "Tous",
+    "ratingAndUp": "{rating}+ étoiles",
+    "activeFilters": "Filtres actifs :",
+    "noResultsTitle": "Aucun produit ne correspond à vos filtres",
+    "noResultsBody": "Essayez de retirer un filtre ou d'élargir la fourchette de prix.",
+    "close": "Fermer"
   },
   "ProductDetail": {
     "description": "Description",

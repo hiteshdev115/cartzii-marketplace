@@ -202,6 +202,13 @@ export interface CategoryProductVariant {
   stockquantity: number;
   isactive: boolean;
   pricing: CategoryVariantPricing[];
+  attributes?: { attributeName: string; value: string; colorcode: string | null }[];
+}
+
+/** Product-level attribute as returned by the category products endpoint. */
+export interface CategoryProductAttribute {
+  attributename: string;
+  attributevalues: { value: string; colorcode: string | null }[];
 }
 
 /** Product item returned by /categories/slug/{slug}/products */
@@ -216,6 +223,9 @@ export interface CategoryProduct {
   tags?: string;
   status?: string;
   categoryName?: string;
+  categorySlug?: string;
+  /** Drives the category page's filters — see lib/filters/productFilters.ts. */
+  productattributes?: CategoryProductAttribute[];
   productimages: CategoryProductImage[];
   productcountries: CategoryProductCountry[];
   productvariants?: CategoryProductVariant[];

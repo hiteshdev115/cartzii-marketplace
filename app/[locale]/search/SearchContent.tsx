@@ -75,6 +75,9 @@ export function SearchContent() {
       isFeatured: false,
       isBestSeller: false,
       specifications: {},
+    // Rebuilt from a cart line / search hit, not the catalogue: this shape is
+    // only used to add to cart, and carries no attribute data to begin with.
+    attributes: {},
       createdAt: '',
       // TODO: PR 2B follow-up — API missing sellerid on some search responses.
       sellerId: item.sellerid ?? 0,

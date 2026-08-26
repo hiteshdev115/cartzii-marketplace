@@ -83,19 +83,22 @@ interface APIReview {
   user?: { firstname?: string; lastname?: string; avatar?: string };
 }
 
+// The list endpoints select a narrower shape than getProductBySlug — they
+// already filter to active rows and sort by sortorder server-side, so the
+// bookkeeping fields are optional rather than a second interface.
 interface APIAttributeValue {
-  valueid: number;
+  valueid?: number;
   value: string;
   colorcode: string | null;
-  sortorder: number;
-  isactive: boolean;
+  sortorder?: number;
+  isactive?: boolean;
 }
 
 interface APIProductAttribute {
-  attributeid: number;
+  attributeid?: number;
   attributename: string;
-  sortorder: number;
-  isactive: boolean;
+  sortorder?: number;
+  isactive?: boolean;
   attributevalues: APIAttributeValue[];
 }
 
@@ -137,11 +140,14 @@ interface APIProduct {
   productvariants: APIVariant[];
   productcountries: APIProductCountry[];
   categoryName?: string;
+  categorySlug?: string;
   averageRating?: number | string | null;
+  // Product-level attributes ship on the list endpoints too, so the storefront
+  // can build its filter facets without a request per product.
+  productattributes?: APIProductAttribute[];
   // Fields present only in getProductBySlug response
   reviews?: APIReview[];
   reviewCount?: number;
-  productattributes?: APIProductAttribute[];
   category?: APICategory;
   seller?: APISeller | null;
   storename?: string | null;
@@ -338,7 +344,25 @@ function mapProduct(raw: APIProduct, country: string): Product {
   }
   const sizes = sizeSet.size > 0 ? Array.from(sizeSet) : undefined;
 
-  // -- brand from variant attributes ----------------------------------------
+  // -- product-level attributes ---------------------------------------------
+  // Keyed by name and de-duplicated. Drives every attribute filter, including
+  // Age Group and whatever is scoped to this product's category.
+  const attributes: Record<string, string[]> = {};
+  for (const attr of raw.productattributes ?? []) {
+    if (attr.isactive === false) continue;
+    const name = attr.attributename?.trim();
+    if (!name) continue;
+    const values = (attr.attributevalues ?? [])
+      .filter((v) => v.isactive !== false)
+      .map((v) => v.value?.trim())
+      .filter((v): v is string => !!v);
+    if (values.length === 0) continue;
+    attributes[name] = Array.from(new Set([...(attributes[name] ?? []), ...values]));
+  }
+
+  // -- brand ----------------------------------------------------------------
+  // Variant attributes first (where sellers have historically set it), falling
+  // back to the product-level "Brand" attribute.
   let brand = '';
   for (const v of activeVariants) {
     const brandAttr = v.attributes.find(
@@ -348,6 +372,10 @@ function mapProduct(raw: APIProduct, country: string): Product {
       brand = brandAttr.value;
       break;
     }
+  }
+  if (!brand) {
+    const brandKey = Object.keys(attributes).find((k) => k.toLowerCase() === 'brand');
+    if (brandKey) brand = attributes[brandKey][0] ?? '';
   }
 
   // -- stock from variants --------------------------------------------------
@@ -375,7 +403,8 @@ function mapProduct(raw: APIProduct, country: string): Product {
     currency,
     images,
     category: raw.category?.categoryname || raw.categoryName || '',
-    categorySlug: raw.category?.categoryslug || '',
+    // `category` is detail-only; `categorySlug` is what the list endpoints send.
+    categorySlug: raw.category?.categoryslug || raw.categorySlug || '',
     brand,
     rating: raw.averageRating ? parseFloat(String(raw.averageRating)) : 0,
     reviewCount: raw.reviewCount ?? 0,
@@ -390,6 +419,7 @@ function mapProduct(raw: APIProduct, country: string): Product {
     isFeatured: false,
     isBestSeller: false,
     specifications: {},
+    attributes,
     createdAt: raw.createdat,
     detailVariants: buildDetailVariants(activeVariants, country),
     sellerId: raw.sellerid,
@@ -464,10 +494,12 @@ export async function fetchProductBySlug(
     const specifications: Record<string, string> = {};
     if (raw.productattributes) {
       for (const attr of raw.productattributes) {
-        if (!attr.isactive) continue;
+        // `!== false` rather than a truthy test: the list endpoints omit
+        // isactive/sortorder entirely, having already filtered and sorted.
+        if (attr.isactive === false) continue;
         const values = attr.attributevalues
-          .filter((v) => v.isactive)
-          .sort((a, b) => a.sortorder - b.sortorder)
+          .filter((v) => v.isactive !== false)
+          .sort((a, b) => (a.sortorder ?? 0) - (b.sortorder ?? 0))
           .map((v) => v.value)
           .join(', ');
         if (values) specifications[attr.attributename] = values;

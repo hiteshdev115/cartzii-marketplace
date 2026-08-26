@@ -1,95 +1,137 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useFilterStore } from '@/stores/filterStore';
-import { fetchRootCategories } from '@/lib/api';
-import { Category } from '@/types';
+import { useLocale, useTranslations } from 'next-intl';
 import { X, Star } from 'lucide-react';
+import { useFilterStore } from '@/stores/filterStore';
+import { formatPrice } from '@/lib/utils';
+import {
+  DISCOUNT_MIN,
+  DISCOUNT_MAX,
+  countActiveFilters,
+  type Facets,
+} from '@/lib/filters/productFilters';
 
-export function ActiveFilterChips() {
+/**
+ * One removable chip per applied filter.
+ *
+ * Category names come from `facets` rather than a second categories fetch —
+ * the chips previously loaded the root categories themselves, which meant a
+ * subcategory slug had no name to show and rendered as the raw slug.
+ */
+export function ActiveFilterChips({ facets }: { facets: Facets }) {
+  const t = useTranslations('Products');
+  const locale = useLocale();
   const filters = useFilterStore();
-  const [categories, setCategories] = useState<Category[]>([]);
 
-  useEffect(() => {
-    fetchRootCategories()
-      .then(setCategories)
-      .catch(() => setCategories([]));
-  }, []);
-
-  const hasPriceFilter = filters.priceRange[0] > 0 || filters.priceRange[1] < 500;
-  const activeCount =
-    filters.categories.length +
-    filters.brands.length +
-    filters.ratings.length +
-    (hasPriceFilter ? 1 : 0);
-
+  const activeCount = countActiveFilters(filters);
   if (activeCount === 0) return null;
+
+  const [minPrice, maxPrice] = filters.priceRange;
+  const [minDiscount, maxDiscount] = filters.discountRange;
+  const hasPrice = minPrice !== null || maxPrice !== null;
+  const hasDiscount = minDiscount > DISCOUNT_MIN || maxDiscount < DISCOUNT_MAX;
+
+  const chip =
+    'group inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-full transition-colors';
 
   return (
     <div className="flex items-center gap-2 flex-wrap py-3">
       <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider mr-1">
-        Active filters:
+        {t('activeFilters')}
       </span>
 
-      {/* Category chips */}
-      {filters.categories.map((slug) => {
-        const cat = categories.find((c) => c.slug === slug);
-        return (
-          <button
-            key={`cat-${slug}`}
-            onClick={() => filters.setCategories(filters.categories.filter((c) => c !== slug))}
-            className="group inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 text-primary text-sm font-medium rounded-full hover:bg-primary/20 transition-colors"
-          >
-            {cat?.name || slug}
-            <X className="w-3.5 h-3.5 opacity-60 group-hover:opacity-100" />
-          </button>
-        );
-      })}
+      {filters.categories.map((slug) => (
+        <button
+          key={`cat-${slug}`}
+          onClick={() =>
+            filters.setCategories(filters.categories.filter((c) => c !== slug))
+          }
+          className={`${chip} bg-primary/10 text-primary hover:bg-primary/20`}
+        >
+          {facets.categories.find((c) => c.slug === slug)?.name ?? slug}
+          <X className="w-3.5 h-3.5 opacity-60 group-hover:opacity-100" />
+        </button>
+      ))}
 
-      {/* Brand chips */}
       {filters.brands.map((brand) => (
         <button
           key={`brand-${brand}`}
           onClick={() => filters.setBrands(filters.brands.filter((b) => b !== brand))}
-          className="group inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-700 text-sm font-medium rounded-full hover:bg-blue-100 transition-colors"
+          className={`${chip} bg-blue-50 text-blue-700 hover:bg-blue-100`}
         >
           {brand}
           <X className="w-3.5 h-3.5 opacity-60 group-hover:opacity-100" />
         </button>
       ))}
 
-      {/* Rating chips */}
       {filters.ratings.map((rating) => (
         <button
           key={`rating-${rating}`}
           onClick={() => filters.setRatings(filters.ratings.filter((r) => r !== rating))}
-          className="group inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 text-amber-700 text-sm font-medium rounded-full hover:bg-amber-100 transition-colors"
+          className={`${chip} bg-amber-50 text-amber-700 hover:bg-amber-100`}
         >
           <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
-          {rating}+ Stars
+          {t('ratingAndUp', { rating })}
           <X className="w-3.5 h-3.5 opacity-60 group-hover:opacity-100" />
         </button>
       ))}
 
-      {/* Price range chip */}
-      {hasPriceFilter && (
+      {/* Attribute chips — Age Group, Colour, Screen Size, whatever applies */}
+      {Object.entries(filters.attributes).flatMap(([name, values]) =>
+        values.map((value) => (
+          <button
+            key={`attr-${name}-${value}`}
+            onClick={() => filters.toggleAttribute(name, value)}
+            className={`${chip} bg-slate-100 text-slate-700 hover:bg-slate-200`}
+          >
+            <span className="text-slate-500">{name}:</span> {value}
+            <X className="w-3.5 h-3.5 opacity-60 group-hover:opacity-100" />
+          </button>
+        )),
+      )}
+
+      {hasPrice && (
         <button
-          onClick={() => filters.setPriceRange([0, 500])}
-          className="group inline-flex items-center gap-1.5 px-3 py-1.5 bg-green-50 text-green-700 text-sm font-medium rounded-full hover:bg-green-100 transition-colors"
+          onClick={() => filters.setPriceRange([null, null])}
+          className={`${chip} bg-green-50 text-green-700 hover:bg-green-100`}
         >
-          ${filters.priceRange[0]} – ${filters.priceRange[1]}
+          {/* Formatted in the deployment's own currency — CAD on cartzii.ca,
+              USD on cartzii.com — rather than a hardcoded dollar sign. */}
+          {minPrice !== null ? formatPrice(minPrice, locale) : t('priceAny')}
+          {' – '}
+          {maxPrice !== null ? formatPrice(maxPrice, locale) : t('priceAny')}
           <X className="w-3.5 h-3.5 opacity-60 group-hover:opacity-100" />
         </button>
       )}
 
-      {/* Clear all */}
+      {filters.onSaleOnly && (
+        <button
+          onClick={() => filters.setOnSaleOnly(false)}
+          className={`${chip} bg-rose-50 text-rose-700 hover:bg-rose-100`}
+        >
+          {t('onSaleOnly')}
+          <X className="w-3.5 h-3.5 opacity-60 group-hover:opacity-100" />
+        </button>
+      )}
+
+      {hasDiscount && (
+        <button
+          onClick={() => filters.setDiscountRange([DISCOUNT_MIN, DISCOUNT_MAX])}
+          className={`${chip} bg-rose-50 text-rose-700 hover:bg-rose-100`}
+        >
+          {minDiscount}% – {maxDiscount}%{maxDiscount >= DISCOUNT_MAX ? '+' : ''}{' '}
+          {t('off')}
+          <X className="w-3.5 h-3.5 opacity-60 group-hover:opacity-100" />
+        </button>
+      )}
+
       {activeCount > 1 && (
         <button
-          onClick={() => filters.resetFilters()}
+          onClick={filters.resetFilters}
           className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50 rounded-full transition-colors"
         >
           <X className="w-3.5 h-3.5" />
-          Clear all
+          {t('clearFilters')}
         </button>
       )}
     </div>

@@ -127,7 +127,8 @@ export const allProducts: Product[] = [
       'Weight': '250g',
       'Noise Cancellation': 'Active (ANC)',
     },
-    createdAt: '2024-12-01',
+    attributes: {},
+  createdAt: '2024-12-01',
   },
   {
     id: 'prod-2',
@@ -167,7 +168,8 @@ export const allProducts: Product[] = [
       'Closure': 'Magnetic snap',
       'Interior': '2 main compartments, 1 zip pocket',
     },
-    createdAt: '2025-01-15',
+    attributes: {},
+  createdAt: '2025-01-15',
   },
   {
     id: 'prod-3',
@@ -209,7 +211,8 @@ export const allProducts: Product[] = [
       'Sensors': 'Heart rate, SpO2, GPS',
       'Compatibility': 'iOS 14+ / Android 10+',
     },
-    createdAt: '2024-11-20',
+    attributes: {},
+  createdAt: '2024-11-20',
   },
   {
     id: 'prod-4',
@@ -250,7 +253,8 @@ export const allProducts: Product[] = [
       'Fit': 'Regular',
       'Care': 'Machine wash cold',
     },
-    createdAt: '2025-02-01',
+    attributes: {},
+  createdAt: '2025-02-01',
   },
   {
     id: 'prod-5',
@@ -292,7 +296,8 @@ export const allProducts: Product[] = [
       'Material': 'Aluminum + ABS',
       'Wireless Charging': 'Qi certified, 10W',
     },
-    createdAt: '2024-10-15',
+    attributes: {},
+  createdAt: '2024-10-15',
   },
   {
     id: 'prod-6',
@@ -331,7 +336,8 @@ export const allProducts: Product[] = [
       'Weight': '1.2kg',
       'Surface': 'Double-sided non-slip',
     },
-    createdAt: '2024-09-01',
+    attributes: {},
+  createdAt: '2024-09-01',
   },
   {
     id: 'prod-7',
@@ -374,7 +380,8 @@ export const allProducts: Product[] = [
       'Water Resistance': 'IPX7',
       'Weight': '560g',
     },
-    createdAt: '2024-08-15',
+    attributes: {},
+  createdAt: '2024-08-15',
   },
   {
     id: 'prod-8',
@@ -413,7 +420,8 @@ export const allProducts: Product[] = [
       'Microwave Safe': 'Yes',
       'Dishwasher Safe': 'Yes',
     },
-    createdAt: '2025-01-20',
+    attributes: {},
+  createdAt: '2025-01-20',
   },
   {
     id: 'prod-9',
@@ -455,7 +463,8 @@ export const allProducts: Product[] = [
       'Drop': '10mm',
       'Weight': '310g (size 9)',
     },
-    createdAt: '2024-11-01',
+    attributes: {},
+  createdAt: '2024-11-01',
   },
   {
     id: 'prod-10',
@@ -491,7 +500,8 @@ export const allProducts: Product[] = [
       'Cruelty Free': 'Yes',
       'Vegan': 'Yes',
     },
-    createdAt: '2025-02-10',
+    attributes: {},
+  createdAt: '2025-02-10',
   },
   {
     id: 'prod-11',
@@ -530,7 +540,8 @@ export const allProducts: Product[] = [
       'Connection': 'USB-C (detachable)',
       'Frame': 'Aircraft-grade aluminum',
     },
-    createdAt: '2024-10-01',
+    attributes: {},
+  createdAt: '2024-10-01',
   },
   {
     id: 'prod-12',
@@ -566,7 +577,8 @@ export const allProducts: Product[] = [
       'Wick': 'Cotton (lead-free)',
       'Set Contents': '3 candles (200g each)',
     },
-    createdAt: '2024-09-15',
+    attributes: {},
+  createdAt: '2024-09-15',
   },
 ];
 
@@ -756,7 +768,7 @@ export const mockOrders: Order[] = [
       country: 'US',
     },
     paymentMethod: 'Credit Card',
-    createdAt: '2025-01-05',
+  createdAt: '2025-01-05',
     estimatedDelivery: '2025-01-10',
   },
   {
@@ -783,7 +795,7 @@ export const mockOrders: Order[] = [
       country: 'US',
     },
     paymentMethod: 'PayPal',
-    createdAt: '2025-02-15',
+  createdAt: '2025-02-15',
     estimatedDelivery: '2025-02-22',
   },
 ];

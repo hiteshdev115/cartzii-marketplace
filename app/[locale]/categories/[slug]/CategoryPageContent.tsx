@@ -1,13 +1,13 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { resolvePrice } from '@/lib/pricing';
 import Image from 'next/image';
 import { Link } from '@/i18n/navigation';
 import { useLocale } from 'next-intl';
 import { ShoppingCart, Heart, SlidersHorizontal, ChevronDown, PackageSearch } from 'lucide-react';
 import { fetchCategoryProductsBySlug } from '@/lib/api';
-import type { CategoryProduct, CategoryProductCountry, CategoryVariantPricing, CategoryProductsResult } from '@/lib/api';
+import type { CategoryProduct, CategoryProductCountry, CategoryVariantPricing } from '@/lib/api';
 import { buildPath, getCountryFromLocale, currentCurrency } from '@/config/countries';
 import { formatPrice } from '@/lib/utils';
 import { useCartStore } from '@/stores/cartStore';
@@ -16,7 +16,11 @@ import { useAuthStore } from '@/stores/authStore';
 import { useLoginModalStore } from '@/stores/loginModalStore';
 import { useHydrated } from '@/hooks/useHydration';
 import { Pagination } from '@/components/ui/Pagination';
-import type { Product } from '@/types';
+import { ProductFilters } from '@/components/products/ProductFilters';
+import { ActiveFilterChips } from '@/components/products/ActiveFilterChips';
+import { useFilterStore } from '@/stores/filterStore';
+import { applyFilters, deriveFacets } from '@/lib/filters/productFilters';
+import type { Product, SortOption } from '@/types';
 
 const IMAGE_CDN =
   process.env.NEXT_PUBLIC_IMAGE_CDN_URL ||
@@ -88,9 +92,40 @@ function getPrimaryImage(item: CategoryProduct): string {
   return buildProductImageUrl(primary?.imageurl);
 }
 
+/**
+ * Product-level attributes, keyed by name. Same normalisation as
+ * lib/api/products.ts mapProduct — the filters read one shape regardless of
+ * which endpoint the product arrived from.
+ */
+function mapAttributes(item: CategoryProduct): Record<string, string[]> {
+  const attributes: Record<string, string[]> = {};
+  for (const attr of item.productattributes ?? []) {
+    const name = attr.attributename?.trim();
+    if (!name) continue;
+    const values = (attr.attributevalues ?? [])
+      .map((v) => v.value?.trim())
+      .filter((v): v is string => !!v);
+    if (values.length === 0) continue;
+    attributes[name] = Array.from(new Set([...(attributes[name] ?? []), ...values]));
+  }
+  return attributes;
+}
+
+function resolveBrand(item: CategoryProduct, attributes: Record<string, string[]>): string {
+  for (const v of item.productvariants ?? []) {
+    const brandAttr = (v.attributes ?? []).find(
+      (a) => a.attributeName.toLowerCase() === 'brand',
+    );
+    if (brandAttr?.value) return brandAttr.value;
+  }
+  const key = Object.keys(attributes).find((k) => k.toLowerCase() === 'brand');
+  return key ? (attributes[key][0] ?? '') : '';
+}
+
 function mapToProduct(item: CategoryProduct, countryCode: string): Product {
   const { origPrice, salePrice, discountPct, currency } = resolvePricing(item, countryCode);
   const rating = item.averageRating != null ? parseFloat(String(item.averageRating)) || 0 : 0;
+  const attributes = mapAttributes(item);
   return {
     id: String(item.productid),
     name: item.productname,
@@ -103,8 +138,8 @@ function mapToProduct(item: CategoryProduct, countryCode: string): Product {
     currency,
     images: [getPrimaryImage(item)],
     category: item.categoryName || '',
-    categorySlug: '',
-    brand: '',
+    categorySlug: item.categorySlug || '',
+    brand: resolveBrand(item, attributes),
     rating,
     reviewCount: item.reviewCount || 0,
     sku: item.sku || '',
@@ -116,6 +151,7 @@ function mapToProduct(item: CategoryProduct, countryCode: string): Product {
     isFeatured: false,
     isBestSeller: false,
     specifications: {},
+    attributes,
     createdAt: '',
     // TODO: PR 2B follow-up — API missing sellerid on some category responses.
     sellerId: item.sellerid ?? 0,
@@ -281,51 +317,98 @@ interface CategoryPageContentProps {
   categoryDescription?: string | null;
 }
 
-const SORT_OPTIONS = [
-  { value: 'featured', label: 'Featured' },
+// Values are the SortOption union, not the old ad-hoc strings: those were sent
+// to the API as `sortby`, which the endpoint never read, so sorting silently
+// did nothing. Sorting now happens here, alongside filtering.
+const SORT_OPTIONS: { value: SortOption; label: string }[] = [
+  { value: 'relevance', label: 'Featured' },
   { value: 'newest', label: 'Newest' },
-  { value: 'price-asc', label: 'Price: Low to High' },
-  { value: 'price-desc', label: 'Price: High to Low' },
-  { value: 'rating', label: 'Top Rated' },
+  { value: 'price-low', label: 'Price: Low to High' },
+  { value: 'price-high', label: 'Price: High to Low' },
+  { value: 'top-rated', label: 'Top Rated' },
 ];
 
 const PAGE_SIZE = 20;
+
+// The API caps `limit` at 100. Filtering has to see the whole category or it
+// would only ever filter the page already on screen, so pages are pulled until
+// the category is exhausted — bounded so a runaway catalogue cannot spin here.
+const FETCH_LIMIT = 100;
+const MAX_FETCH_PAGES = 20;
 
 export function CategoryPageContent({ slug, categoryName, categoryDescription }: CategoryPageContentProps) {
   const locale = useLocale();
   const countryCode = getCountryFromLocale(locale).toUpperCase();
 
-  const [data, setData] = useState<CategoryProductsResult | null>(null);
+  const [allItems, setAllItems] = useState<CategoryProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
-  const [sortby, setSortby] = useState('featured');
 
-  const loadProducts = useCallback(
-    async (pg: number, sort: string) => {
-      setLoading(true);
-      try {
+  const filters = useFilterStore();
+  const resetFilters = useFilterStore((s) => s.resetFilters);
+
+  const loadProducts = useCallback(async () => {
+    setLoading(true);
+    try {
+      const collected: CategoryProduct[] = [];
+      for (let pg = 1; pg <= MAX_FETCH_PAGES; pg++) {
         const result = await fetchCategoryProductsBySlug(slug, {
           countryCode,
           page: pg,
-          limit: PAGE_SIZE,
-          sortby: sort,
+          limit: FETCH_LIMIT,
         });
-        setData(result);
-      } catch {
-        setData(null);
-      } finally {
-        setLoading(false);
+        collected.push(...(result?.products ?? []));
+        if (!result?.pagination?.hasNext) break;
       }
-    },
-    [slug, countryCode],
-  );
+      setAllItems(collected);
+    } catch {
+      setAllItems([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [slug, countryCode]);
 
   useEffect(() => {
-    loadProducts(page, sortby);
-  }, [page, sortby, loadProducts]);
+    loadProducts();
+  }, [loadProducts]);
 
-  const handleSort = (value: string) => {
-    setSortby(value);
+  // Filters are global state, so a selection made on another listing would
+  // otherwise arrive here still applied, silently hiding most of the category.
+  useEffect(() => {
+    resetFilters();
+    setPage(1);
+  }, [slug, resetFilters]);
+
+  // Each item is paired with its mapped Product: the filters read the mapped
+  // shape while the cards still render the raw API item.
+  const paired = useMemo(
+    () => allItems.map((item) => ({ item, product: mapToProduct(item, countryCode) })),
+    [allItems, countryCode],
+  );
+
+  // No category facet: the URL already fixes the category, so offering it again
+  // would let a shopper filter a category page down to a different category.
+  const facets = useMemo(
+    () => deriveFacets(paired.map((p) => p.product), { includeCategories: false }),
+    [paired],
+  );
+
+  // applyFilters returns the surviving products already sorted; mapping back
+  // through this index preserves that order for the cards.
+  const filtered = useMemo(() => {
+    const byId = new Map(paired.map((p) => [p.product.id, p.item]));
+    return applyFilters(paired.map((p) => p.product), filters)
+      .map((p) => byId.get(p.id))
+      .filter((item): item is CategoryProduct => item !== undefined);
+  }, [paired, filters]);
+
+  const totalProducts = filtered.length;
+  const totalPages = Math.max(1, Math.ceil(totalProducts / PAGE_SIZE));
+  const safePage = Math.min(page, totalPages);
+  const products = filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
+
+  const handleSort = (value: SortOption) => {
+    filters.setSortBy(value);
     setPage(1);
   };
 
@@ -333,10 +416,6 @@ export function CategoryPageContent({ slug, categoryName, categoryDescription }:
     setPage(pg);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
-
-  const products = data?.products ?? [];
-  const pagination = data?.pagination;
-  const totalProducts = pagination?.total ?? 0;
 
   return (
     <div className="space-y-6">
@@ -357,19 +436,23 @@ export function CategoryPageContent({ slug, categoryName, categoryDescription }:
         <div className="absolute -right-4 -bottom-8 w-28 h-28 bg-primary/5 rounded-full blur-2xl" />
       </div>
 
-      {/* ---- Sort bar ---- */}
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2 text-sm text-slate-500">
-          <SlidersHorizontal className="w-4 h-4" />
-          <span className="hidden sm:inline">
-            {loading ? 'Loading…' : `${totalProducts.toLocaleString()} results`}
-          </span>
-        </div>
+      {/* ---- Filter + sort bar ---- */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        {/* Category facet suppressed — the URL already fixes the category. */}
+        <ProductFilters facets={facets} showCategories={false} />
 
-        <div className="relative">
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 text-sm text-slate-500">
+            <SlidersHorizontal className="w-4 h-4 hidden sm:block" />
+            <span className="hidden sm:inline">
+              {loading ? 'Loading…' : `${totalProducts.toLocaleString()} results`}
+            </span>
+          </div>
+
+          <div className="relative">
           <select
-            value={sortby}
-            onChange={(e) => handleSort(e.target.value)}
+            value={filters.sortBy}
+            onChange={(e) => handleSort(e.target.value as SortOption)}
             className="appearance-none bg-white border border-slate-200 text-slate-700 text-sm font-medium pl-3 pr-8 py-2 rounded-xl cursor-pointer hover:border-primary/40 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all"
             aria-label="Sort products"
           >
@@ -380,8 +463,11 @@ export function CategoryPageContent({ slug, categoryName, categoryDescription }:
             ))}
           </select>
           <ChevronDown className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+          </div>
         </div>
       </div>
+
+      <ActiveFilterChips facets={facets} />
 
       {/* ---- Grid ---- */}
       {loading ? (
@@ -398,15 +484,28 @@ export function CategoryPageContent({ slug, categoryName, categoryDescription }:
           <div>
             <p className="text-lg font-semibold text-slate-700">No products found</p>
             <p className="text-sm text-slate-500 mt-1">
-              There are no products in this category yet.
+              {/* An empty category and an over-narrow filter look identical on
+                  screen but need opposite actions, so they are told apart. */}
+              {allItems.length > 0
+                ? 'No products match the filters you selected.'
+                : 'There are no products in this category yet.'}
             </p>
           </div>
-          <Link
-            href={buildPath('/products')}
-            className="mt-2 inline-flex items-center gap-2 bg-primary text-white text-sm font-semibold px-5 py-2.5 rounded-xl hover:bg-primary/90 transition-colors"
-          >
-            Browse all products
-          </Link>
+          {allItems.length > 0 ? (
+            <button
+              onClick={resetFilters}
+              className="mt-2 inline-flex items-center gap-2 bg-primary text-white text-sm font-semibold px-5 py-2.5 rounded-xl hover:bg-primary/90 transition-colors"
+            >
+              Clear filters
+            </button>
+          ) : (
+            <Link
+              href={buildPath('/products')}
+              className="mt-2 inline-flex items-center gap-2 bg-primary text-white text-sm font-semibold px-5 py-2.5 rounded-xl hover:bg-primary/90 transition-colors"
+            >
+              Browse all products
+            </Link>
+          )}
         </div>
       ) : (
         <>
@@ -417,11 +516,13 @@ export function CategoryPageContent({ slug, categoryName, categoryDescription }:
           </div>
 
           {/* ---- Pagination ---- */}
-          {pagination && pagination.totalPages > 1 && (
+          {/* Paging the filtered set, not the raw one: server pagination would
+              have counted products the active filters exclude. */}
+          {totalPages > 1 && (
             <div className="pt-4">
               <Pagination
-                currentPage={pagination.page}
-                totalPages={pagination.totalPages}
+                currentPage={safePage}
+                totalPages={totalPages}
                 onPageChange={handlePageChange}
               />
             </div>

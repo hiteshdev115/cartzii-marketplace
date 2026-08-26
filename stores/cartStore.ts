@@ -132,6 +132,9 @@ function mapAPIItemToCartItem(item: CartAPIItem): CartItem {
     isFeatured: false,
     isBestSeller: false,
     specifications: {},
+    // Rebuilt from a cart line / search hit, not the catalogue: this shape is
+    // only used to add to cart, and carries no attribute data to begin with.
+    attributes: {},
     createdAt: item.addedat,
     // Seller info — required for multi-seller shipping-rate grouping.
     // Prefer the value on the product object; fall back to the item-level
@@ -237,6 +240,9 @@ function mapBackendItemToCartItem(item: BackendCartItem): CartItem {
     isFeatured: false,
     isBestSeller: false,
     specifications: {},
+    // Rebuilt from a cart line / search hit, not the catalogue: this shape is
+    // only used to add to cart, and carries no attribute data to begin with.
+    attributes: {},
     createdAt: new Date().toISOString(),
     sellerId: item.product.sellerid ?? item.sellerid,
     sellerName: item.product.sellername,
