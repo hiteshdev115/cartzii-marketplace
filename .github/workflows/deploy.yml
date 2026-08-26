@@ -63,6 +63,14 @@ jobs:
     strategy:
       matrix:
         country: [ca, us]
+      # One country at a time. Both deploys land on the SAME box, and a Next
+      # build peaks at a couple of GB — two at once exhausted 7.8 GB of RAM
+      # (2.4 GB of which the pm2 processes already hold) and the kernel killed
+      # the second build: `Killed`, exit 137, no error of its own.
+      #
+      # This does not weaken fail-fast: false below. That governs whether one
+      # country's FAILURE aborts the other, which it still must not.
+      max-parallel: 1
       # A US deploy failing must never abort the Canadian one. That
       # independence is the whole reason for two deployments rather than two
       # codebases.

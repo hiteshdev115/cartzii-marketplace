@@ -4,15 +4,12 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "dev:qa": "dotenv -e .env.qa -- next dev",
     "build": "next build",
     "build:prod:ca": "dotenv -e .env.prod.ca -- next build && npm run standalone:assets",
     "build:prod:us": "dotenv -e .env.prod.us -- next build && npm run standalone:assets",
     "build:qa:ca": "dotenv -e .env.qa.ca -- next build && npm run standalone:assets",
     "build:qa:us": "dotenv -e .env.qa.us -- next build && npm run standalone:assets",
     "standalone:assets": "cp -r public .next/standalone/ && cp -r .next/static .next/standalone/.next/",
-    "build:qa": "dotenv -e .env.qa -- next build",
-    "build:production": "dotenv -e .env.production -- next build",
     "start": "next start",
     "lint": "eslint"
   },
