@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { CartItem, DetailVariant, Product } from '@/types';
-import { getCountryConfig } from '@/config/countries';
+import { getCountryConfig, currentCurrency } from '@/config/countries';
 import { addToGuestCart } from '@/lib/guestCart';
 import {
   addCartItemAPI,
@@ -114,7 +114,9 @@ function mapAPIItemToCartItem(item: CartAPIItem): CartItem {
     description: item.product.shortdescription || '',
     shortDescription: item.product.shortdescription || '',
     price,
-    currency: item.currencycode || 'USD',
+    // Falls back to this deployment's currency, not USD: on cartzii.ca a
+    // missing currency code meant a Canadian cart quietly priced in USD.
+    currency: item.currencycode || currentCurrency,
     images: [imageUrl],
     category: item.product.category?.categoryname || '',
     categorySlug: item.product.category?.categoryslug || '',
@@ -217,7 +219,7 @@ function mapBackendItemToCartItem(item: BackendCartItem): CartItem {
     description: item.product.shortdescription ?? '',
     shortDescription: item.product.shortdescription ?? '',
     price,
-    currency: item.currencycode ?? 'USD',
+    currency: item.currencycode ?? currentCurrency,
     // Use the resolved image directly — do NOT re-fetch or fall back to a
     // product-level default image.
     images: [imageUrl],

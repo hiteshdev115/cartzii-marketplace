@@ -82,6 +82,24 @@ export const localePathPrefixes: Record<string, string> = {
   'fr-CA': '/fr',
 };
 
+/** ISO code of this deployment's country, as addresses and the API spell it. */
+export const currentCountryIso: string = currentCountry.toUpperCase();
+
+/** The only currency this deployment prices, charges and settles in. */
+export const currentCurrency: string = countries[currentCountry].currency;
+
+/**
+ * Options for every country dropdown on this site — which is exactly one.
+ *
+ * A storefront that can only ship, tax and settle in one country should not
+ * offer another in a form. Offering both is how an address that checkout
+ * cannot fulfil gets entered in the first place; the fix is to not present the
+ * choice, rather than to validate it afterwards.
+ */
+export const countrySelectOptions: ReadonlyArray<{ value: string; label: string }> = [
+  { value: currentCountryIso, label: countries[currentCountry].name },
+];
+
 /** Locales this deployment serves — its own country's, and no others. */
 export const deploymentLocales: string[] = countries[currentCountry].locales;
 

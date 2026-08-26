@@ -8,7 +8,7 @@ import { useLocale } from 'next-intl';
 import { ShoppingCart, Heart, SlidersHorizontal, ChevronDown, PackageSearch } from 'lucide-react';
 import { fetchCategoryProductsBySlug } from '@/lib/api';
 import type { CategoryProduct, CategoryProductCountry, CategoryVariantPricing, CategoryProductsResult } from '@/lib/api';
-import { buildPath, getCountryFromLocale } from '@/config/countries';
+import { buildPath, getCountryFromLocale, currentCurrency } from '@/config/countries';
 import { formatPrice } from '@/lib/utils';
 import { useCartStore } from '@/stores/cartStore';
 import { useWishlistStore } from '@/stores/wishlistStore';
@@ -77,7 +77,7 @@ function resolvePricing(item: CategoryProduct, countryCode: string) {
   // inverted assumption as the product page, so a discounted product showed
   // its full price here too.
   const { origPrice, salePrice, discountPct, currency } = resolvePrice(priceSrc);
-  return { origPrice, salePrice, discountPct, currency: currency || 'USD' };
+  return { origPrice, salePrice, discountPct, currency: currency || currentCurrency };
 }
 
 function getPrimaryImage(item: CategoryProduct): string {

@@ -12,7 +12,7 @@ import type { Product } from '@/types';
 import type { SearchProductResult, SearchPagination } from '@/lib/api';
 import { Breadcrumb } from '@/components/layout/Breadcrumb';
 import { Pagination } from '@/components/ui/Pagination';
-import { buildPath, getCountryFromLocale } from '@/config/countries';
+import { buildPath, getCountryFromLocale, currentCurrency } from '@/config/countries';
 import { formatPrice } from '@/lib/utils';
 import { useWishlistStore } from '@/stores/wishlistStore';
 import { useAuthStore } from '@/stores/authStore';
@@ -59,7 +59,7 @@ export function SearchContent() {
       price: item.pricing ? parseFloat(item.pricing.price) : 0,
       salePrice: item.pricing?.discountprice ? parseFloat(item.pricing.discountprice) : undefined,
       discount: item.pricing?.discount ? parseFloat(item.pricing.discount) : undefined,
-      currency: item.pricing?.currencycode || 'USD',
+      currency: item.pricing?.currencycode || currentCurrency,
       images: [buildImageUrl(item.primaryImage?.imageurl)],
       category: item.categoryname || '',
       categorySlug: '',

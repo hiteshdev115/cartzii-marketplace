@@ -14,6 +14,7 @@ import {
 } from '@/lib/api/returns';
 import { ApiError } from '@/lib/api/client';
 import { RETURN_STATUS } from '@/lib/returnConstants';
+import { currentCurrency } from '@/config/countries';
 
 /**
  * One line of the order, as the return picker needs to see it.
@@ -139,7 +140,7 @@ export function RequestReturnModal({
   if (!isOpen) return null;
 
   const money = (cents: number) => {
-    const currency = preview?.currency || 'USD';
+    const currency = preview?.currency || currentCurrency;
     return new Intl.NumberFormat(undefined, { style: 'currency', currency }).format(cents / 100);
   };
 

@@ -7,7 +7,7 @@ import { Select } from '@/components/ui/Select';
 import { Button } from '@/components/ui/Button';
 import { addressSchema, type AddressFormData } from '@/lib/validators';
 import { fetchStatesByCountry } from '@/lib/api';
-import { getCountryFromLocale } from '@/config/countries';
+import { getCountryFromLocale, countrySelectOptions, currentCountryIso } from '@/config/countries';
 import type { ApiAddress } from '@/types';
 import { X } from 'lucide-react';
 
@@ -25,13 +25,14 @@ export function AddressForm({ address, onSubmit, onCancel, loading }: AddressFor
   const t = useTranslations('Account');
   const locale = useLocale();
   const portalCountry = getCountryFromLocale(locale); // "ca" | "us"
-  const defaultIso = PORTAL_TO_ISO[portalCountry] ?? 'CA';
+  // The only country this site serves, so it is preselected rather than
+  // left blank for the visitor to 'choose'.
+  const defaultIso = currentCountryIso;
 
-  const countryOptions = [
-    { value: '', label: t('selectCountry') },
-    { value: 'CA', label: 'Canada' },
-    { value: 'US', label: 'United States' },
-  ];
+// Only this deployment's country. cartzii.ca ships, taxes and settles in
+// Canada alone, so offering the United States here produces an address the
+// checkout cannot fulfil. See config/countries.ts.
+  const countryOptions = countrySelectOptions.map((o) => ({ ...o }));
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [stateOptions, setStateOptions] = useState<{ value: string; label: string }[]>([]);

@@ -1,4 +1,4 @@
-import { getCountryConfig } from '@/config/countries';
+import { getCountryConfig, currentCurrency } from '@/config/countries';
 import { type ClassValue, clsx } from 'clsx';
 
 export function cn(...inputs: ClassValue[]) {
@@ -66,7 +66,13 @@ export function generateOrderNumber(): string {
  * component, takes down the whole page rather than one price label. A money
  * string is never worth a white screen, so anything malformed falls back.
  */
-export function safeCurrencyCode(currency: string | null | undefined, fallback = 'USD'): string {
+export function safeCurrencyCode(
+  currency: string | null | undefined,
+  // This deployment's currency, not USD. On cartzii.ca a malformed code
+  // used to render Canadian money with a US symbol, which is worse than
+  // the RangeError this guard exists to prevent.
+  fallback = currentCurrency,
+): string {
   const code = String(currency ?? '').trim().toUpperCase();
   return /^[A-Z]{3}$/.test(code) ? code : fallback;
 }
