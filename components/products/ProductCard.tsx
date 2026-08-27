@@ -2,8 +2,8 @@
 
 import Image from 'next/image';
 import { Link } from '@/i18n/navigation';
-import { Heart } from 'lucide-react';
-import { useLocale } from 'next-intl';
+import { Heart, Clock, Sparkles } from 'lucide-react';
+import { useLocale, useTranslations } from 'next-intl';
 import { buildPath } from '@/config/countries';
 import { formatPrice } from '@/lib/utils';
 import { StarRating } from '@/components/ui/StarRating';
@@ -15,6 +15,10 @@ import { Product } from '@/types';
 import { useHydrated } from '@/hooks/useHydration';
 import { isOutOfStock } from '@/lib/stock';
 import { OutOfStockButton } from './OutOfStockButton';
+import { CountdownTimer } from '@/components/ui/CountdownTimer';
+import { useDealActive } from '@/hooks/useDealActive';
+import { SPECIAL_DISCOUNT_MIN } from '@/lib/deals';
+import { discountPercent } from '@/lib/filters/productFilters';
 
 interface ProductCardProps {
   product: Product;
@@ -23,6 +27,11 @@ interface ProductCardProps {
 export function ProductCard({ product }: ProductCardProps) {
   const outOfStock = isOutOfStock(product);
   const locale = useLocale();
+  const t = useTranslations('Home');
+  const tProducts = useTranslations('Products');
+  // Recomputed when the window closes, so the card swaps itself over live.
+  const dealActive = useDealActive(product.deal?.endsAt);
+  const specialDiscount = !dealActive && discountPercent(product) >= SPECIAL_DISCOUNT_MIN;
   const toggleWishlist = useWishlistStore((s) => s.toggleItem);
   const isInWishlist = useWishlistStore((s) => s.isInWishlist(Number(product.id)));
   const addToCart = useCartStore((s) => s.addItem);
@@ -95,6 +104,25 @@ export function ProductCard({ product }: ProductCardProps) {
             </span>
           )}
         </div>
+        {/* While a flash deal runs, a countdown. Once its window closes — which
+            can happen with the card on screen — the countdown goes and the
+            saving is highlighted instead, for as long as it stays worth
+            highlighting. The old behaviour left "Expired" sitting on the card,
+            which reads as the product being over rather than the promotion. */}
+        {dealActive && product.deal ? (
+          <div className="mt-2 flex items-center gap-1.5 text-xs text-slate-600">
+            <Clock className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+            <span>{t('endsIn')}</span>
+            <CountdownTimer endDate={product.deal.endsAt} compact tone="mono" />
+          </div>
+        ) : specialDiscount ? (
+          <div className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-amber-50 border border-amber-200 px-2.5 py-1">
+            <Sparkles className="w-3.5 h-3.5 text-amber-600 shrink-0" aria-hidden="true" />
+            <span className="text-xs font-semibold text-amber-800">
+              {tProducts('specialOffer', { percent: discountPercent(product) })}
+            </span>
+          </div>
+        ) : null}
         {outOfStock ? (
           <OutOfStockButton className="mt-3 text-xs py-2" />
         ) : (

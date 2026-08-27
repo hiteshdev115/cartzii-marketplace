@@ -1,20 +1,22 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import Image from 'next/image';
 import { useLocale, useTranslations } from 'next-intl';
 import { buildPath, getCountryFromLocale } from '@/config/countries';
 import { fetchAllProducts } from '@/lib/api/products';
 import { discountPercent } from '@/lib/filters/productFilters';
-import { PriceTag } from '@/components/ui/PriceTag';
-import { CountdownTimer } from '@/components/ui/CountdownTimer';
-import { Badge } from '@/components/ui/Badge';
+import { SPECIAL_DISCOUNT_MIN, isDealActive } from '@/lib/deals';
+import { ProductCard } from '@/components/products/ProductCard';
 import { ProductCardSkeleton } from '@/components/ui/Skeleton';
 import { Link } from '@/i18n/navigation';
 import type { Product } from '@/types';
 
-/** Minimum saving to qualify as a flash deal. */
-export const FLASH_DEAL_MIN_DISCOUNT = 20;
+/**
+ * Minimum saving to qualify. Re-exported from lib/deals so the section and the
+ * card cannot disagree — a product listed here whose own card declined to
+ * highlight it would look broken.
+ */
+export const FLASH_DEAL_MIN_DISCOUNT = SPECIAL_DISCOUNT_MIN;
 
 const MAX_DEALS = 4;
 
@@ -32,10 +34,12 @@ export function selectFlashDeals(products: Product[]): Product[] {
     .map((product) => ({ product, percent: discountPercent(product) }))
     .filter(({ percent }) => percent >= FLASH_DEAL_MIN_DISCOUNT)
     // A live flash deal outranks an equally-deep standing markdown: it is the
-    // one with a clock on it, and the section is called Flash Deals.
+    // one with a clock on it, and the section is called Flash Deals. Checked
+    // against the window rather than the field's presence — a product fetched
+    // mid-promotion still carries `deal` after its window has closed.
     .sort(
       (a, b) =>
-        Number(!!b.product.deal) - Number(!!a.product.deal) ||
+        Number(isDealActive(b.product)) - Number(isDealActive(a.product)) ||
         b.percent - a.percent ||
         a.product.name.localeCompare(b.product.name),
     )
@@ -91,48 +95,14 @@ export function FlashDeals() {
           </Link>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        {/* Same grid and same card as every other product listing. The bespoke
+            card this replaced had its own image ratio, its own price markup and
+            no add-to-cart or wishlist — a deal is a product, not a different
+            kind of thing. */}
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
           {loading
             ? Array.from({ length: MAX_DEALS }).map((_, i) => <ProductCardSkeleton key={i} />)
-            : deals.map((product) => (
-                <Link
-                  key={product.id}
-                  href={buildPath(`/products/${product.slug}`)}
-                  className="card-interactive group"
-                >
-                  <div className="relative aspect-square overflow-hidden">
-                    <Image
-                      src={product.images[0]}
-                      alt={product.name}
-                      fill
-                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-                      className="object-cover group-hover:scale-105 transition-transform duration-500"
-                    />
-                    {/* The saving the prices below actually show. Using the
-                        stored percentage would badge one product -10% inside a
-                        section that promises 20% or more. */}
-                    <Badge variant="sale" className="absolute top-3 left-3">
-                      -{discountPercent(product)}%
-                    </Badge>
-                  </div>
-                  <div className="p-4">
-                    <h3 className="text-sm font-semibold text-slate-900 line-clamp-2 mb-2">
-                      {product.name}
-                    </h3>
-                    <PriceTag price={product.price} salePrice={product.salePrice} size="sm" />
-                    {/* Only for products actually on a timed deal. The section
-                        also carries deeply-discounted products with no window,
-                        and a countdown on those would be inventing an end time
-                        that does not exist. */}
-                    {product.deal && (
-                      <div className="mt-3">
-                        <p className="text-xs text-slate-500 mb-1">{t('endsIn')}</p>
-                        <CountdownTimer endDate={product.deal.endsAt} compact />
-                      </div>
-                    )}
-                  </div>
-                </Link>
-              ))}
+            : deals.map((product) => <ProductCard key={product.id} product={product} />)}
         </div>
       </div>
     </section>

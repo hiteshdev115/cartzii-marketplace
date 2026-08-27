@@ -150,7 +150,8 @@
     "noResultsBody": "Essayez de retirer un filtre ou d'élargir la fourchette de prix.",
     "close": "Fermer",
     "backInStockSoon": "Bientôt de retour",
-    "onlyLeft": "Plus que {count}"
+    "onlyLeft": "Plus que {count}",
+    "specialOffer": "Offre spéciale · {percent}% de réduction"
   },
   "ProductDetail": {
     "description": "Description",

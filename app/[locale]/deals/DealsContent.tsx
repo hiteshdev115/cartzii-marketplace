@@ -1,20 +1,16 @@
 'use client';
 
 import { useTranslations, useLocale } from 'next-intl';
-import Image from 'next/image';
 import { Link } from '@/i18n/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { fetchAllProducts } from '@/lib/api/products';
 import { getCountryFromLocale } from '@/config/countries';
-import { discountPercent } from '@/lib/filters/productFilters';
+import { ProductCard } from '@/components/products/ProductCard';
 import { ProductCardSkeleton } from '@/components/ui/Skeleton';
 import type { Product } from '@/types';
 import { Breadcrumb } from '@/components/layout/Breadcrumb';
-import { CountdownTimer } from '@/components/ui/CountdownTimer';
-import { Badge } from '@/components/ui/Badge';
 import { buildPath } from '@/config/countries';
-import { formatPrice } from '@/lib/utils';
-import { Flame, ArrowRight } from 'lucide-react';
+import { Flame } from 'lucide-react';
 
 export function DealsContent() {
   const t = useTranslations('Deals');
@@ -58,8 +54,8 @@ export function DealsContent() {
       </div>
 
       {loading ? (
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {Array.from({ length: 6 }).map((_, i) => <ProductCardSkeleton key={i} />)}
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-6">
+          {Array.from({ length: 10 }).map((_, i) => <ProductCardSkeleton key={i} />)}
         </div>
       ) : deals.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 gap-3 text-center">
@@ -70,49 +66,13 @@ export function DealsContent() {
           </Link>
         </div>
       ) : (
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+      // The same card and grid as /products. The bespoke deal card this
+      // replaced used a 4:3 image, its own price markup and had neither
+      // add-to-cart nor wishlist — so a shopper browsing deals could not do
+      // the one thing the page exists for.
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-6">
         {deals.map((product) => (
-          <Link
-            key={product.id}
-            href={buildPath(`/products/${product.slug}`)}
-            className="group card-interactive overflow-hidden"
-          >
-            <div className="relative aspect-[4/3] overflow-hidden">
-              <Image
-                src={product.images[0]}
-                alt={product.name}
-                fill
-                className="object-cover group-hover:scale-105 transition-transform duration-500"
-                sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
-              />
-              <div className="absolute top-3 left-3">
-                <Badge variant="sale">-{discountPercent(product)}%</Badge>
-              </div>
-            </div>
-            <div className="p-4">
-              <h3 className="font-semibold text-slate-900 group-hover:text-primary transition-colors mb-2">
-                {product.name}
-              </h3>
-              <p className="text-sm text-slate-500 mb-3">{product.shortDescription}</p>
-              <div className="flex items-center gap-2 mb-3">
-                <span className="text-lg font-bold text-primary">
-                  {formatPrice(product.salePrice ?? product.price, locale)}
-                </span>
-                <span className="text-sm text-slate-400 line-through">
-                  {formatPrice(product.price, locale)}
-                </span>
-              </div>
-              {/* A real end time now — the seller's own window, not a
-                  fabricated one. */}
-              <CountdownTimer endDate={product.deal!.endsAt} />
-              <div className="flex items-center justify-between mt-3">
-                <span className="text-xs text-slate-500">{t('flashDeal')}</span>
-                <span className="text-sm text-primary font-medium flex items-center gap-1">
-                  {t('shopNow')} <ArrowRight className="w-4 h-4" />
-                </span>
-              </div>
-            </div>
-          </Link>
+          <ProductCard key={product.id} product={product} />
         ))}
       </div>
       )}

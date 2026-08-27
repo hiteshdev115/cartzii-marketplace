@@ -150,7 +150,8 @@
     "noResultsBody": "Try removing a filter or widening the price range.",
     "close": "Close",
     "backInStockSoon": "Back in stock soon",
-    "onlyLeft": "Only {count} left"
+    "onlyLeft": "Only {count} left",
+    "specialOffer": "Special offer · {percent}% off"
   },
   "ProductDetail": {
     "description": "Description",

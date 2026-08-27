@@ -7,9 +7,16 @@ import { getTimeRemaining } from '@/lib/utils';
 interface CountdownTimerProps {
   endDate: string;
   compact?: boolean;
+  /**
+   * `accent` is the red urgency treatment used on the deals page hero.
+   * `mono` is plain black-on-white, for the product card — a card already
+   * carries a red sale badge, and a second red element beside it competes with
+   * the price rather than supporting it.
+   */
+  tone?: 'accent' | 'mono';
 }
 
-export function CountdownTimer({ endDate, compact }: CountdownTimerProps) {
+export function CountdownTimer({ endDate, compact, tone = 'accent' }: CountdownTimerProps) {
   const t = useTranslations('Deals');
   const [time, setTime] = useState<ReturnType<typeof getTimeRemaining> | null>(null);
 
@@ -23,9 +30,11 @@ export function CountdownTimer({ endDate, compact }: CountdownTimerProps) {
     };
   }, [endDate]);
 
+  const compactTone = tone === 'mono' ? 'text-slate-900' : 'text-red-600';
+
   if (!time) {
     if (compact) {
-      return <span className="font-mono text-sm font-semibold text-red-600">--:--:--</span>;
+      return <span className={`font-mono text-sm font-semibold ${compactTone}`}>--:--:--</span>;
     }
     return (
       <div className="flex gap-2">
@@ -39,7 +48,13 @@ export function CountdownTimer({ endDate, compact }: CountdownTimerProps) {
     );
   }
 
-  if (time.total <= 0) return <span className="text-red-600 font-semibold text-sm">Expired</span>;
+  if (time.total <= 0) {
+    return (
+      <span className={`font-semibold text-sm ${tone === 'mono' ? 'text-slate-500' : 'text-red-600'}`}>
+        Expired
+      </span>
+    );
+  }
 
   const units = [
     { label: t('days'), value: time.days },
@@ -49,9 +64,16 @@ export function CountdownTimer({ endDate, compact }: CountdownTimerProps) {
   ];
 
   if (compact) {
+    // Days are shown when there are any. Without this a three-day deal read as
+    // "21:00:00" — indistinguishable from twenty-one hours, and the clock
+    // appeared to jump backwards each midnight.
+    const clock =
+      `${String(time.hours).padStart(2, '0')}:` +
+      `${String(time.minutes).padStart(2, '0')}:` +
+      `${String(time.seconds).padStart(2, '0')}`;
     return (
-      <span className="font-mono text-sm font-semibold text-red-600">
-        {String(time.hours).padStart(2, '0')}:{String(time.minutes).padStart(2, '0')}:{String(time.seconds).padStart(2, '0')}
+      <span className={`font-mono text-sm font-semibold ${compactTone}`}>
+        {time.days > 0 ? `${time.days}d ${clock}` : clock}
       </span>
     );
   }
