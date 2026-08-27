@@ -25,8 +25,17 @@ interface APIVariantImage {
   sortorder: number;
 }
 
+/** Attached by the API to a price row it discounted for an active deal. */
+interface APIDeal {
+  dealid: number;
+  discountpct: number;
+  startsat: string;
+  endsat: string;
+}
+
 interface APIVariantPricing {
   pricingid: number;
+  deal?: APIDeal | null;
   countrycode: string;
   currencycode: string;
   price: string;
@@ -61,6 +70,7 @@ interface APIVariant {
 
 interface APIProductCountry {
   id: number;
+  deal?: APIDeal | null;
   countrycode: string;
   currencycode: string;
   price: string;
@@ -279,9 +289,13 @@ function mapProduct(raw: APIProduct, country: string): Product {
         discountprice: variantPricing!.discountprice,
         discount: variantPricing!.discount,
         currencycode: variantPricing!.currencycode,
+        // Carried alongside the figures it produced, so the deal shown always
+        // belongs to the row the price came from.
+        deal: variantPricing!.deal ?? null,
       }
     : countryPricing && parseFloat(countryPricing.price) > 0
       ? {
+          deal: countryPricing.deal ?? null,
           price: countryPricing.price,
           discountprice: countryPricing.discountprice,
           discount: countryPricing.discount,
@@ -293,6 +307,18 @@ function mapProduct(raw: APIProduct, country: string): Product {
   // `discountprice` was the higher compare-at price; it is the LOWER, reduced
   // one, which is why discounted products rendered at full price.
   const { origPrice: originalPrice, salePrice, discountPct } = resolvePrice(priceSrc);
+
+  // Read from the row the price came from, so a deal on the variant row and a
+  // deal on the country row cannot be confused for one another.
+  const rawDeal = priceSrc?.deal ?? null;
+  const deal = rawDeal
+    ? {
+        dealId: rawDeal.dealid,
+        discountPercent: rawDeal.discountpct,
+        startsAt: String(rawDeal.startsat),
+        endsAt: String(rawDeal.endsat),
+      }
+    : undefined;
 
   let discount: number | undefined = discountPct || undefined;
   if (!discount && salePrice !== undefined && originalPrice > 0) {
@@ -420,6 +446,7 @@ function mapProduct(raw: APIProduct, country: string): Product {
     isBestSeller: false,
     specifications: {},
     attributes,
+    deal,
     createdAt: raw.createdat,
     detailVariants: buildDetailVariants(activeVariants, country),
     sellerId: raw.sellerid,

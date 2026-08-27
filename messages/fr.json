@@ -582,7 +582,11 @@
     "shopNow": "Achetez Maintenant",
     "hotDeals": "Offres Brûlantes",
     "dealOfTheDay": "Offre du Jour",
-    "limitedTime": "Offre à Durée Limitée"
+    "limitedTime": "Offre à Durée Limitée",
+    "flashDeal": "Vente éclair",
+    "noDealsTitle": "Aucune vente éclair en cours",
+    "noDealsBody": "Revenez bientôt — les vendeurs ajoutent régulièrement de nouvelles offres.",
+    "browseAll": "Voir tous les produits"
   },
   "Footer": {
     "company": "Entreprise",

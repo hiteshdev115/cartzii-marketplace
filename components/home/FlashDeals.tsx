@@ -7,6 +7,7 @@ import { buildPath, getCountryFromLocale } from '@/config/countries';
 import { fetchAllProducts } from '@/lib/api/products';
 import { discountPercent } from '@/lib/filters/productFilters';
 import { PriceTag } from '@/components/ui/PriceTag';
+import { CountdownTimer } from '@/components/ui/CountdownTimer';
 import { Badge } from '@/components/ui/Badge';
 import { ProductCardSkeleton } from '@/components/ui/Skeleton';
 import { Link } from '@/i18n/navigation';
@@ -30,8 +31,13 @@ export function selectFlashDeals(products: Product[]): Product[] {
   return products
     .map((product) => ({ product, percent: discountPercent(product) }))
     .filter(({ percent }) => percent >= FLASH_DEAL_MIN_DISCOUNT)
+    // A live flash deal outranks an equally-deep standing markdown: it is the
+    // one with a clock on it, and the section is called Flash Deals.
     .sort(
-      (a, b) => b.percent - a.percent || a.product.name.localeCompare(b.product.name),
+      (a, b) =>
+        Number(!!b.product.deal) - Number(!!a.product.deal) ||
+        b.percent - a.percent ||
+        a.product.name.localeCompare(b.product.name),
     )
     .map(({ product }) => product);
 }
@@ -114,6 +120,16 @@ export function FlashDeals() {
                       {product.name}
                     </h3>
                     <PriceTag price={product.price} salePrice={product.salePrice} size="sm" />
+                    {/* Only for products actually on a timed deal. The section
+                        also carries deeply-discounted products with no window,
+                        and a countdown on those would be inventing an end time
+                        that does not exist. */}
+                    {product.deal && (
+                      <div className="mt-3">
+                        <p className="text-xs text-slate-500 mb-1">{t('endsIn')}</p>
+                        <CountdownTimer endDate={product.deal.endsAt} compact />
+                      </div>
+                    )}
                   </div>
                 </Link>
               ))}

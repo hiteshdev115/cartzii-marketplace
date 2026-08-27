@@ -582,7 +582,11 @@
     "shopNow": "Shop Now",
     "hotDeals": "Hot Deals",
     "dealOfTheDay": "Deal of the Day",
-    "limitedTime": "Limited Time Offer"
+    "limitedTime": "Limited Time Offer",
+    "flashDeal": "Flash deal",
+    "noDealsTitle": "No flash deals running right now",
+    "noDealsBody": "Check back soon — sellers add new deals all the time.",
+    "browseAll": "Browse all products"
   },
   "Footer": {
     "company": "Company",

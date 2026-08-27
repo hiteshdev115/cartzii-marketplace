@@ -34,6 +34,18 @@ export interface Product {
    */
   attributes: Record<string, string[]>;
   createdAt: string;
+  /**
+   * The flash deal behind this product's price, when one is running.
+   *
+   * Present only while the window is open — the API attaches it to the price
+   * row it discounted, so its absence means the price is the ordinary one.
+   */
+  deal?: {
+    dealId: number;
+    discountPercent: number;
+    startsAt: string;
+    endsAt: string;
+  };
   /** Full variant details – populated on detail page only */
   detailVariants?: DetailVariant[];
   /**
