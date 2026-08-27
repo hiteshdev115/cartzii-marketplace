@@ -165,6 +165,11 @@ export function CheckoutPageContent() {
         const price = item.product.salePrice || item.product.price;
         return {
           productId: Number(item.product.id),
+          // The cart has always known which variant this is; checkout used to
+          // drop it. Without it the server cannot tell Red/S from Blue/M, so
+          // it has no variant to take stock from — and orderPricing falls back
+          // to accepting any of the product's prices instead of that variant's.
+          ...(item.variantId ? { variantId: item.variantId } : {}),
           quantity: item.quantity,
           unitPrice: Math.round(price * 100),
           totalPrice: Math.round(price * item.quantity * 100),

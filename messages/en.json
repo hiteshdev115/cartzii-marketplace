@@ -124,7 +124,7 @@
     "filterSize": "Size",
     "filterAvailability": "Availability",
     "inStock": "In Stock",
-    "outOfStock": "Out of Stock",
+    "outOfStock": "Out of stock",
     "onSale": "On Sale",
     "loadMore": "Load More Products",
     "addToCart": "Add to Cart",
@@ -148,7 +148,9 @@
     "activeFilters": "Active filters:",
     "noResultsTitle": "No products match your filters",
     "noResultsBody": "Try removing a filter or widening the price range.",
-    "close": "Close"
+    "close": "Close",
+    "backInStockSoon": "Back in stock soon",
+    "onlyLeft": "Only {count} left"
   },
   "ProductDetail": {
     "description": "Description",

@@ -21,6 +21,8 @@ import { ActiveFilterChips } from '@/components/products/ActiveFilterChips';
 import { useFilterStore } from '@/stores/filterStore';
 import { applyFilters, deriveFacets } from '@/lib/filters/productFilters';
 import type { Product, SortOption } from '@/types';
+import { isOutOfStock } from '@/lib/stock';
+import { OutOfStockButton } from '@/components/products/OutOfStockButton';
 
 const IMAGE_CDN =
   process.env.NEXT_PUBLIC_IMAGE_CDN_URL ||
@@ -297,13 +299,17 @@ function ProductCardItem({ item, countryCode }: ProductCardItemProps) {
           )}
         </div>
 
-        <button
-          onClick={handleAddToCart}
-          className="w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 text-white text-xs font-semibold py-2.5 rounded-xl transition-all duration-200 hover:shadow-md active:scale-95"
-        >
-          <ShoppingCart className="w-3.5 h-3.5" />
-          Add to Cart
-        </button>
+        {isOutOfStock(mapToProduct(item, countryCode)) ? (
+          <OutOfStockButton className="text-xs py-2.5" />
+        ) : (
+          <button
+            onClick={handleAddToCart}
+            className="w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 text-white text-xs font-semibold py-2.5 rounded-xl transition-all duration-200 hover:shadow-md active:scale-95"
+          >
+            <ShoppingCart className="w-3.5 h-3.5" />
+            Add to Cart
+          </button>
+        )}
       </div>
     </article>
   );

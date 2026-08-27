@@ -13,12 +13,15 @@ import { useAuthStore } from '@/stores/authStore';
 import { useLoginModalStore } from '@/stores/loginModalStore';
 import { Product } from '@/types';
 import { useHydrated } from '@/hooks/useHydration';
+import { isOutOfStock } from '@/lib/stock';
+import { OutOfStockButton } from './OutOfStockButton';
 
 interface ProductCardProps {
   product: Product;
 }
 
 export function ProductCard({ product }: ProductCardProps) {
+  const outOfStock = isOutOfStock(product);
   const locale = useLocale();
   const toggleWishlist = useWishlistStore((s) => s.toggleItem);
   const isInWishlist = useWishlistStore((s) => s.isInWishlist(Number(product.id)));
@@ -92,12 +95,16 @@ export function ProductCard({ product }: ProductCardProps) {
             </span>
           )}
         </div>
-        <button
-          onClick={() => addToCart(product, 1, undefined, undefined, locale)}
-          className="mt-3 w-full btn-primary text-xs py-2"
-        >
-          Add to Cart
-        </button>
+        {outOfStock ? (
+          <OutOfStockButton className="mt-3 text-xs py-2" />
+        ) : (
+          <button
+            onClick={() => addToCart(product, 1, undefined, undefined, locale)}
+            className="mt-3 w-full btn-primary text-xs py-2"
+          >
+            Add to Cart
+          </button>
+        )}
       </div>
     </article>
   );

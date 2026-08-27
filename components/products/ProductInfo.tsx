@@ -14,6 +14,8 @@ import { useAuthStore } from '@/stores/authStore';
 import { useLoginModalStore } from '@/stores/loginModalStore';
 import { cn } from '@/lib/utils';
 import { useHydrated } from '@/hooks/useHydration';
+import { isLowStock, isOutOfStock, maxPurchasable } from '@/lib/stock';
+import { OutOfStockButton } from './OutOfStockButton';
 
 interface ProductInfoProps {
   product: Product;
@@ -42,6 +44,7 @@ export function ProductInfo({ product, onVariantChange, onShowReviews, onWriteRe
   const t = useTranslations('ProductDetail');
   const locale = useLocale();
   const addToCart = useCartStore((s) => s.addItem);
+  const outOfStock = isOutOfStock(product);
   const toggleWishlist = useWishlistStore((s) => s.toggleItem);
   const isInWishlist = useWishlistStore((s) => s.isInWishlist(Number(product.id)));
   const userId = useAuthStore((s) => s.userId);
@@ -205,11 +208,19 @@ export function ProductInfo({ product, onVariantChange, onShowReviews, onWriteRe
 
       {/* Quantity & Add to cart */}
       <div className="flex flex-wrap items-center gap-3 sm:gap-4">
-        <QuantitySelector value={quantity} onChange={setQuantity} max={product.stockCount} />
-        <button onClick={handleAddToCart} className="btn-primary flex-1 min-w-[10rem] flex items-center justify-center gap-2">
-          <ShoppingCart className="w-5 h-5" />
-          {t('addToCart')}
-        </button>
+        {/* Capped at what exists, so a shopper cannot build a cart the
+            checkout will then refuse for stock. */}
+        {!outOfStock && (
+          <QuantitySelector value={quantity} onChange={setQuantity} max={maxPurchasable(product)} />
+        )}
+        {outOfStock ? (
+          <OutOfStockButton className="flex-1 min-w-[10rem] py-3 text-sm" />
+        ) : (
+          <button onClick={handleAddToCart} className="btn-primary flex-1 min-w-[10rem] flex items-center justify-center gap-2">
+            <ShoppingCart className="w-5 h-5" />
+            {t('addToCart')}
+          </button>
+        )}
         <button
           onClick={handleWishlistToggle}
           className={cn('p-3 rounded-xl border transition-colors shrink-0', wishlisted ? 'border-red-200 bg-red-50' : 'border-gray-200 hover:border-red-200')}
@@ -221,10 +232,12 @@ export function ProductInfo({ product, onVariantChange, onShowReviews, onWriteRe
 
       {/* Stock status */}
       <div>
-        {product.inStock ? (
-          <Badge variant="stock">✓ {product.stockCount} in stock</Badge>
+        {outOfStock ? (
+          <span className="text-red-600 text-sm font-semibold">{t('outOfStock')}</span>
+        ) : isLowStock(product) ? (
+          <Badge variant="stock">{t('onlyLeft', { count: product.stockCount })}</Badge>
         ) : (
-          <span className="text-red-600 text-sm font-semibold">Out of Stock</span>
+          <Badge variant="stock">✓ {product.stockCount} in stock</Badge>
         )}
       </div>
 

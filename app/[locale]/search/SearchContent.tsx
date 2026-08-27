@@ -18,6 +18,7 @@ import { useWishlistStore } from '@/stores/wishlistStore';
 import { useAuthStore } from '@/stores/authStore';
 import { useLoginModalStore } from '@/stores/loginModalStore';
 import { useHydrated } from '@/hooks/useHydration';
+import { OutOfStockButton } from '@/components/products/OutOfStockButton';
 
 const IMAGE_CDN_URL =
   process.env.NEXT_PUBLIC_IMAGE_CDN_URL ||
@@ -199,13 +200,17 @@ export function SearchContent() {
                         </div>
                       </Link>
                       <div className="px-3 pb-3">
-                        <button
-                          onClick={() => handleAddToCart(item)}
-                          className="w-full btn-primary text-xs py-2 flex items-center justify-center gap-1.5"
-                        >
-                          <ShoppingCart className="w-3.5 h-3.5" />
-                          Add to Cart
-                        </button>
+                        {(item.stockquantity ?? 1) <= 0 ? (
+                          <OutOfStockButton className="text-xs py-2" />
+                        ) : (
+                          <button
+                            onClick={() => handleAddToCart(item)}
+                            className="w-full btn-primary text-xs py-2 flex items-center justify-center gap-1.5"
+                          >
+                            <ShoppingCart className="w-3.5 h-3.5" />
+                            Add to Cart
+                          </button>
+                        )}
                       </div>
                     </div>
                   );

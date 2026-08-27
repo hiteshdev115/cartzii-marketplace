@@ -12,6 +12,8 @@ import { useAuthStore } from '@/stores/authStore';
 import { useLoginModalStore } from '@/stores/loginModalStore';
 import { buildPath } from '@/config/countries';
 import { Link } from '@/i18n/navigation';
+import { isOutOfStock } from '@/lib/stock';
+import { OutOfStockButton } from './OutOfStockButton';
 interface QuickViewProps {
   product: Product;
   onClose: () => void;
@@ -74,9 +76,13 @@ export function QuickView({ product, onClose }: QuickViewProps) {
             </div>
             <p className="text-sm text-slate-600">{product.shortDescription}</p>
             <div className="flex gap-3 pt-4">
+              {isOutOfStock(product) ? (
+                <OutOfStockButton className="flex-1 py-2.5 text-sm" />
+              ) : (
               <button onClick={() => { addToCart(product, 1, undefined, undefined, locale); onClose(); }} className="btn-primary flex-1 flex items-center justify-center gap-2">
                 <ShoppingCart className="w-4 h-4" /> {t('addToCart')}
               </button>
+              )}
               <button
                 onClick={handleWishlistToggle}
                 className="p-3 border rounded-xl hover:bg-slate-50"

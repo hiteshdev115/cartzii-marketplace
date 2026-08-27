@@ -124,7 +124,7 @@
     "filterSize": "Taille",
     "filterAvailability": "Disponibilité",
     "inStock": "En Stock",
-    "outOfStock": "Rupture de Stock",
+    "outOfStock": "Rupture de stock",
     "onSale": "En Solde",
     "loadMore": "Charger Plus de Produits",
     "addToCart": "Ajouter au Panier",
@@ -148,7 +148,9 @@
     "activeFilters": "Filtres actifs :",
     "noResultsTitle": "Aucun produit ne correspond à vos filtres",
     "noResultsBody": "Essayez de retirer un filtre ou d'élargir la fourchette de prix.",
-    "close": "Fermer"
+    "close": "Fermer",
+    "backInStockSoon": "Bientôt de retour",
+    "onlyLeft": "Plus que {count}"
   },
   "ProductDetail": {
     "description": "Description",
