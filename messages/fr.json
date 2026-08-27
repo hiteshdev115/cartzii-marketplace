@@ -94,7 +94,8 @@
     "benefit3Title": "Retours Faciles",
     "benefit3Desc": "Politique de retour sans tracas de 30 jours sur toutes les commandes.",
     "benefit4Title": "Support 24/7",
-    "benefit4Desc": "Notre équipe de support est là pour vous à tout moment."
+    "benefit4Desc": "Notre équipe de support est là pour vous à tout moment.",
+    "flashDealsMinDiscount": "Économisez {percent}% ou plus, jusqu'à épuisement des stocks"
   },
   "Products": {
     "allProducts": "Tous les Produits",

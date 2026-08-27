@@ -94,7 +94,8 @@
     "benefit3Title": "Easy Returns",
     "benefit3Desc": "Hassle-free 30-day return policy on all orders.",
     "benefit4Title": "24/7 Support",
-    "benefit4Desc": "Our support team is here for you around the clock."
+    "benefit4Desc": "Our support team is here for you around the clock.",
+    "flashDealsMinDiscount": "Save {percent}% or more, while stock lasts"
   },
   "Products": {
     "allProducts": "All Products",
