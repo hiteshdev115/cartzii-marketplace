@@ -3,6 +3,12 @@ import { api } from './client';
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://staging-api.cartzii.com';
 const BANNER_CDN = `${API_BASE}/assets/upload/bannerImages`;
 
+/** How the artwork fills its frame. */
+export type BannerImageFit = 'cover' | 'contain';
+
+/** Which side the copy sits on. */
+export type BannerContentAlign = 'left' | 'center' | 'right';
+
 /** A hero slide, as configured in the super admin panel. */
 export interface HomeBanner {
   bannerid: number;
@@ -13,6 +19,13 @@ export interface HomeBanner {
   ctaHref: string | null;
   heightPx: number;
   sortOrder: number;
+  /** 'cover' crops the overflow; 'contain' shows the whole image. */
+  imageFit: BannerImageFit;
+  /** CSS object-position keyword — which part survives a crop. */
+  focalPoint: string;
+  contentAlign: BannerContentAlign;
+  /** Behind the letterboxing that 'contain' produces. */
+  backdropColor: string;
 }
 
 export interface HomeBannerFeed {
@@ -37,6 +50,40 @@ interface APIBanner {
   ctahref: string | null;
   heightpx: number;
   sortorder: number;
+  imagefit?: string;
+  focalpoint?: string;
+  contentalign?: string;
+  backdropcolor?: string;
+}
+
+/**
+ * The nine focal points the admin can choose, and the two fits.
+ *
+ * Re-checked here even though the database constrains the column: these values
+ * are written straight into an inline style, and a storefront that trusted
+ * whatever arrived would put an unvalidated string into the page's CSS if the
+ * API were ever misconfigured or swapped.
+ */
+const FOCAL_POINTS = new Set([
+  'left top', 'center top', 'right top',
+  'left center', 'center', 'right center',
+  'left bottom', 'center bottom', 'right bottom',
+]);
+
+function safeFit(value: string | undefined): BannerImageFit {
+  return value === 'contain' ? 'contain' : 'cover';
+}
+
+function safeFocalPoint(value: string | undefined): string {
+  return value && FOCAL_POINTS.has(value) ? value : 'center';
+}
+
+function safeAlign(value: string | undefined): BannerContentAlign {
+  return value === 'center' || value === 'right' ? value : 'left';
+}
+
+function safeColor(value: string | undefined): string {
+  return value && /^#[0-9a-f]{6}([0-9a-f]{2})?$/i.test(value) ? value : '#0f172a';
 }
 
 function buildBannerImageUrl(url: string | undefined): string {
@@ -71,6 +118,10 @@ export async function fetchHomeBanners(): Promise<HomeBannerFeed> {
         ctaHref: b.ctahref,
         heightPx: b.heightpx,
         sortOrder: b.sortorder,
+        imageFit: safeFit(b.imagefit),
+        focalPoint: safeFocalPoint(b.focalpoint),
+        contentAlign: safeAlign(b.contentalign),
+        backdropColor: safeColor(b.backdropcolor),
       })),
       carouselHeight: Number(payload.carouselHeight) || empty.carouselHeight,
     };

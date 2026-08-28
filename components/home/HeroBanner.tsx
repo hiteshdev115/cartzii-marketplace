@@ -14,6 +14,38 @@ const SLIDE_INTERVAL = 5000;
 /** Used until banners load, and whenever none are configured. */
 const FALLBACK_HEIGHT = 480;
 
+/**
+ * The viewport width at which an admin's chosen height is honoured exactly.
+ * Below it the banner scales down proportionally rather than cropping harder.
+ */
+const DESIGN_WIDTH = 1440;
+
+/** The banner never collapses below this, however narrow the screen. */
+const MIN_HEIGHT = 200;
+
+/** Where the copy sits, and the scrim that keeps it readable. */
+const ALIGNMENT: Record<string, { row: string; text: string; scrim: string }> = {
+  left: {
+    row: 'justify-start',
+    text: 'text-left',
+    scrim: 'bg-gradient-to-r from-slate-900/80 via-slate-900/45 to-transparent',
+  },
+  right: {
+    row: 'justify-end',
+    text: 'text-right',
+    // Mirrored, so the dark end is always BEHIND the copy rather than opposite
+    // it — a left-side gradient under right-aligned text leaves the words on
+    // the bright edge of the photograph, which is where they become unreadable.
+    scrim: 'bg-gradient-to-l from-slate-900/80 via-slate-900/45 to-transparent',
+  },
+  center: {
+    row: 'justify-center',
+    text: 'text-center',
+    // Centre copy has no single side to shade, so the whole frame is dimmed.
+    scrim: 'bg-slate-900/55',
+  },
+};
+
 const fallbackStyles = [
   'from-slate-900 via-slate-800 to-orange-900',
   'from-indigo-900 via-purple-900 to-slate-900',
@@ -65,16 +97,32 @@ export function HeroBanner() {
   const slideCount = usingBanners ? feed.banners.length : fallbackSlides.length;
 
   /**
-   * ONE height for the whole carousel.
+   * ONE height for the whole carousel — but one that scales with the viewport.
    *
-   * The old version left the active slide in normal flow and absolutely
-   * positioned the rest, so the section was exactly as tall as whichever slide
-   * was showing. Slide 1 had two buttons and a longer subtitle, slides 2 and 3
-   * had one — so every auto-advance re-measured the section and shoved the
-   * whole page up or down. Fixing the height here is what stops that, and it
-   * is why every slide below is absolutely positioned, including the active one.
+   * Two separate problems live here.
+   *
+   * The first is the squeeze: the old version left the active slide in normal
+   * flow and absolutely positioned the rest, so the section was exactly as tall
+   * as whichever slide was showing, and every auto-advance re-measured it and
+   * shoved the page. That is why every slide below is absolutely positioned,
+   * including the active one, and why this is a single value rather than a
+   * per-slide one.
+   *
+   * The second is the crop. Holding the admin's pixel height at EVERY viewport
+   * width is what made banners look stretched on a phone: `object-cover`
+   * preserves aspect ratio and crops, so a 1920x600 artwork forced into a
+   * 390x480 frame was scaled ~3x and had most of its width thrown away.
+   *
+   * So the height is expressed as a clamp: honoured exactly at the design
+   * width, scaled DOWN proportionally on narrower screens — which keeps the
+   * frame's aspect ratio close to the artwork's and removes most of the crop —
+   * and floored so it never collapses to a strip.
+   *
+   * It stays viewport-derived, never slide-derived, so the squeeze cannot come
+   * back: every slide in the rotation resolves to the identical height.
    */
   const height = usingBanners ? feed.carouselHeight : FALLBACK_HEIGHT;
+  const responsiveHeight = `clamp(${MIN_HEIGHT}px, calc(100vw * ${height} / ${DESIGN_WIDTH}), ${height}px)`;
 
   const goTo = useCallback(
     (index: number) => setCurrent(((index % slideCount) + slideCount) % slideCount),
@@ -103,64 +151,81 @@ export function HeroBanner() {
       className="relative overflow-hidden bg-slate-900"
       // Inline because the value is configured per deployment; a Tailwind class
       // cannot express an arbitrary pixel height set by an admin.
-      style={{ height }}
+      style={{ height: responsiveHeight }}
       aria-roledescription="carousel"
       aria-label={t('heroTitle')}
     >
       {usingBanners
-        ? feed.banners.map((banner, i) => (
-            <div
-              key={banner.bannerid}
-              className={cn(
-                'absolute inset-0 transition-opacity duration-700 ease-in-out',
-                i === current ? 'opacity-100' : 'opacity-0 pointer-events-none',
-              )}
-              role="group"
-              aria-roledescription="slide"
-              aria-label={`${i + 1} / ${slideCount}`}
-              aria-hidden={i !== current}
-            >
-              <Image
-                src={banner.imageUrl}
-                alt={banner.title ?? `Banner ${i + 1}`}
-                fill
-                sizes="100vw"
-                // The first banner is the page's largest contentful paint.
-                priority={i === 0}
-                className="object-cover"
-              />
+        ? feed.banners.map((banner, i) => {
+            const align = ALIGNMENT[banner.contentAlign] ?? ALIGNMENT.left;
+            const hasCopy = Boolean(banner.title || banner.subtitle || banner.ctaText);
 
-              {(banner.title || banner.subtitle || banner.ctaText) && (
-                <>
-                  {/* Only drawn when there is copy to make readable — an
-                      image-only banner should not be dimmed for nothing. */}
-                  <div className="absolute inset-0 bg-gradient-to-r from-slate-900/75 via-slate-900/40 to-transparent" />
-                  <div className="relative h-full max-w-[var(--container-max)] mx-auto px-4 sm:px-6 flex items-center">
-                    <div className="max-w-xl">
-                      {banner.title && (
-                        <h2 className="text-3xl md:text-5xl font-bold text-white leading-tight tracking-tight">
-                          {banner.title}
-                        </h2>
+            return (
+              <div
+                key={banner.bannerid}
+                className={cn(
+                  'absolute inset-0 transition-opacity duration-700 ease-in-out',
+                  i === current ? 'opacity-100' : 'opacity-0 pointer-events-none',
+                )}
+                // Only visible where 'contain' letterboxes the artwork. Set per
+                // banner so the bars are a chosen colour rather than whatever
+                // happens to sit behind the section.
+                style={{ backgroundColor: banner.backdropColor }}
+                role="group"
+                aria-roledescription="slide"
+                aria-label={`${i + 1} / ${slideCount}`}
+                aria-hidden={i !== current}
+              >
+                <Image
+                  src={banner.imageUrl}
+                  alt={banner.title ?? `Banner ${i + 1}`}
+                  fill
+                  sizes="100vw"
+                  // The first banner is the page's largest contentful paint.
+                  priority={i === 0}
+                  className={banner.imageFit === 'contain' ? 'object-contain' : 'object-cover'}
+                  // Which part of the artwork survives a crop. Only meaningful
+                  // for 'cover'; harmless for 'contain', which crops nothing.
+                  style={{ objectPosition: banner.focalPoint }}
+                />
+
+                {hasCopy && (
+                  <>
+                    {/* Only drawn when there is copy to make readable — an
+                        image-only banner should not be dimmed for nothing. */}
+                    <div className={cn('absolute inset-0', align.scrim)} />
+                    <div
+                      className={cn(
+                        'relative h-full max-w-[var(--container-max)] mx-auto px-4 sm:px-6 flex items-center',
+                        align.row,
                       )}
-                      {banner.subtitle && (
-                        <p className="mt-4 text-base md:text-lg text-slate-200 leading-relaxed">
-                          {banner.subtitle}
-                        </p>
-                      )}
-                      {banner.ctaText && (
-                        <Link
-                          href={banner.ctaHref || buildPath('/products')}
-                          className="btn-primary mt-6 inline-block text-base px-8 py-3.5"
-                        >
-                          {banner.ctaText}
-                        </Link>
-                      )}
+                    >
+                      <div className={cn('max-w-xl', align.text)}>
+                        {banner.title && (
+                          <h2 className="text-2xl sm:text-3xl md:text-5xl font-bold text-white leading-tight tracking-tight">
+                            {banner.title}
+                          </h2>
+                        )}
+                        {banner.subtitle && (
+                          <p className="mt-3 md:mt-4 text-sm sm:text-base md:text-lg text-slate-200 leading-relaxed">
+                            {banner.subtitle}
+                          </p>
+                        )}
+                        {banner.ctaText && (
+                          <Link
+                            href={banner.ctaHref || buildPath('/products')}
+                            className="btn-primary mt-4 md:mt-6 inline-block text-sm sm:text-base px-6 sm:px-8 py-3 sm:py-3.5"
+                          >
+                            {banner.ctaText}
+                          </Link>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                </>
-              )}
-            </div>
-          ))
+                  </>
+                )}
+              </div>
+            );
+          })
         : fallbackSlides.map((slide, i) => (
             <div
               key={i}
