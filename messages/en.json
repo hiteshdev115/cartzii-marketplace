@@ -61,16 +61,7 @@
     "contact": "Contact"
   },
   "Home": {
-    "heroTitle": "Discover Products You'll Love",
-    "heroSubtitle": "Explore thousands of curated products from trusted sellers with fast shipping and easy returns.",
-    "shopNow": "Shop Now",
-    "exploreDeals": "Explore Deals",
-    "slide2Title": "Up to 40% Off — Summer Sale",
-    "slide2Subtitle": "Don't miss our biggest sale of the season. Premium brands at unbeatable prices, limited time only.",
-    "slide2Cta": "Shop the Sale",
-    "slide3Title": "New Arrivals Every Week",
-    "slide3Subtitle": "Stay ahead of the trends with fresh drops from top sellers. Quality guaranteed with free returns.",
-    "slide3Cta": "See What's New",
+    "bannerCarousel": "Featured banners",
     "featuredCategories": "Shop by Category",
     "featuredCategoriesSubtitle": "Browse our most popular categories",
     "trending": "Trending Now",
