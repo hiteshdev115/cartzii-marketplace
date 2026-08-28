@@ -20,12 +20,15 @@ function buildCategoryImageUrl(url: string | undefined): string {
   return `${CATEGORY_CDN}/${url}`;
 }
 
+/** Mirrors the tile's real layout, so nothing shifts when the data lands. */
 function CategorySkeleton() {
   return (
-    <div className="rounded-2xl bg-white border border-slate-100 p-5 animate-pulse">
-      <div className="w-14 h-14 rounded-2xl bg-slate-200 mb-4" />
-      <div className="h-4 bg-slate-200 rounded w-3/4 mb-2" />
-      <div className="h-3 bg-slate-100 rounded w-1/2" />
+    <div className="flex items-center gap-3 rounded-2xl bg-white border border-slate-100 p-3 animate-pulse">
+      <div className="w-14 h-14 rounded-xl bg-slate-200 shrink-0" />
+      <div className="min-w-0 flex-1">
+        <div className="h-4 bg-slate-200 rounded w-3/4 mb-2" />
+        <div className="h-3 bg-slate-100 rounded w-1/2" />
+      </div>
     </div>
   );
 }
@@ -74,10 +77,12 @@ export function FeaturedCategories() {
                   <Link
                     key={cat.id}
                     href={buildPath(`/categories/${cat.slug}`)}
-                    className="group flex flex-col bg-white border border-slate-100 rounded-2xl p-5 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300"
+                    className="group flex items-center gap-3 bg-white border border-slate-100 rounded-2xl p-3 hover:shadow-md hover:border-primary/20 transition-all duration-300"
                   >
-                    {/* Icon / Image box */}
-                    <div className="relative w-14 h-14 rounded-2xl overflow-hidden mb-4 flex-shrink-0">
+                    {/* Icon / Image box. Same 56px as before — the logo was
+                        never the problem; the tile around it was a vertical
+                        stack that left most of its height empty. */}
+                    <div className="relative w-14 h-14 rounded-xl overflow-hidden shrink-0">
                       {imgSrc ? (
                         <Image
                           src={imgSrc}
@@ -93,24 +98,25 @@ export function FeaturedCategories() {
                       )}
                     </div>
 
-                    {/* Name */}
-                    <p className="text-sm font-bold text-slate-900 leading-snug group-hover:text-primary transition-colors">
-                      {cat.name}
-                    </p>
-
-                    {/* Meta */}
-                    <p className="mt-1 text-xs text-slate-400 leading-tight">
-                      {subCount > 0
-                        ? `${subCount} subcategor${subCount === 1 ? 'y' : 'ies'}`
-                        : cat.productCount > 0
-                        ? `${cat.productCount.toLocaleString()} products`
-                        : 'Explore →'}
-                    </p>
-
-                    {/* Arrow */}
-                    <div className="mt-3 flex items-center gap-1 text-xs font-semibold text-primary opacity-0 group-hover:opacity-100 -translate-x-1 group-hover:translate-x-0 transition-all duration-300">
-                      Browse <ArrowRight className="w-3 h-3" />
+                    <div className="min-w-0 flex-1">
+                      {/* truncate, so a long category name cannot wrap the
+                          tile taller than its own icon. */}
+                      <p className="text-sm font-bold text-slate-900 leading-snug truncate group-hover:text-primary transition-colors">
+                        {cat.name}
+                      </p>
+                      <p className="text-xs text-slate-400 leading-tight truncate">
+                        {subCount > 0
+                          ? `${subCount} subcategor${subCount === 1 ? 'y' : 'ies'}`
+                          : cat.productCount > 0
+                          ? `${cat.productCount.toLocaleString()} products`
+                          : 'Explore'}
+                      </p>
                     </div>
+
+                    {/* Sits in the row rather than below it. The old one was
+                        opacity-0 until hover but still took a line of height
+                        on every tile, always. */}
+                    <ArrowRight className="w-4 h-4 shrink-0 text-primary opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300" />
                   </Link>
                 );
               })}
