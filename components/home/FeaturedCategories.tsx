@@ -23,12 +23,10 @@ function buildCategoryImageUrl(url: string | undefined): string {
 /** Mirrors the tile's real layout, so nothing shifts when the data lands. */
 function CategorySkeleton() {
   return (
-    <div className="flex items-center gap-3 rounded-2xl bg-white border border-slate-100 p-3 animate-pulse">
-      <div className="w-14 h-14 rounded-xl bg-slate-200 shrink-0" />
-      <div className="min-w-0 flex-1">
-        <div className="h-4 bg-slate-200 rounded w-3/4 mb-2" />
-        <div className="h-3 bg-slate-100 rounded w-1/2" />
-      </div>
+    <div className="flex flex-col items-center animate-pulse">
+      <div className="w-20 h-20 rounded-2xl bg-slate-200" />
+      <div className="h-3.5 bg-slate-200 rounded w-16 mt-2.5" />
+      <div className="h-3 bg-slate-100 rounded w-10 mt-1.5" />
     </div>
   );
 }
@@ -66,7 +64,10 @@ export function FeaturedCategories() {
         </div>
 
         {/* Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+        {/* More columns than before: eight 80px squares spread across a
+            four-column grid would sit marooned in whitespace, which is the
+            problem this was meant to remove. */}
+        <div className="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-8 gap-3 sm:gap-4">
           {loading
             ? Array.from({ length: 8 }).map((_, i) => <CategorySkeleton key={i} />)
             : categories.map((cat) => {
@@ -77,46 +78,42 @@ export function FeaturedCategories() {
                   <Link
                     key={cat.id}
                     href={buildPath(`/categories/${cat.slug}`)}
-                    className="group flex items-center gap-3 bg-white border border-slate-100 rounded-2xl p-3 hover:shadow-md hover:border-primary/20 transition-all duration-300"
+                    className="group flex flex-col items-center text-center"
                   >
-                    {/* Icon / Image box. Same 56px as before — the logo was
-                        never the problem; the tile around it was a vertical
-                        stack that left most of its height empty. */}
-                    <div className="relative w-14 h-14 rounded-xl overflow-hidden shrink-0">
+                    {/* A fixed 80px square, not an aspect-ratio box: the tile
+                        has to stay square at every breakpoint, and a box that
+                        sizes to its grid column grows into a large rectangle
+                        on wide screens. The 56px logo sits inside with even
+                        padding on all four sides. */}
+                    <div className="relative w-20 h-20 rounded-2xl overflow-hidden bg-white border border-slate-100 flex items-center justify-center group-hover:shadow-md group-hover:border-primary/25 transition-all duration-300">
                       {imgSrc ? (
                         <Image
                           src={imgSrc}
                           alt={cat.name}
-                          fill
+                          width={56}
+                          height={56}
                           sizes="56px"
-                          className="object-cover group-hover:scale-110 transition-transform duration-300"
+                          className="w-14 h-14 object-cover rounded-xl group-hover:scale-110 transition-transform duration-300"
                         />
                       ) : (
-                        <div className={`absolute inset-0 bg-gradient-to-br ${gradient} flex items-center justify-center group-hover:scale-105 transition-transform duration-300`}>
+                        <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${gradient} flex items-center justify-center group-hover:scale-105 transition-transform duration-300`}>
                           <Icon className="w-7 h-7 text-white drop-shadow" />
                         </div>
                       )}
                     </div>
 
-                    <div className="min-w-0 flex-1">
-                      {/* truncate, so a long category name cannot wrap the
-                          tile taller than its own icon. */}
-                      <p className="text-sm font-bold text-slate-900 leading-snug truncate group-hover:text-primary transition-colors">
-                        {cat.name}
-                      </p>
-                      <p className="text-xs text-slate-400 leading-tight truncate">
-                        {subCount > 0
-                          ? `${subCount} subcategor${subCount === 1 ? 'y' : 'ies'}`
-                          : cat.productCount > 0
-                          ? `${cat.productCount.toLocaleString()} products`
-                          : 'Explore'}
-                      </p>
-                    </div>
-
-                    {/* Sits in the row rather than below it. The old one was
-                        opacity-0 until hover but still took a line of height
-                        on every tile, always. */}
-                    <ArrowRight className="w-4 h-4 shrink-0 text-primary opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300" />
+                    {/* Below the square rather than beside it — anything beside
+                        a 56px logo makes the tile a wide rectangle again. */}
+                    <p className="mt-2.5 w-full text-xs sm:text-sm font-semibold text-slate-900 leading-snug truncate group-hover:text-primary transition-colors">
+                      {cat.name}
+                    </p>
+                    <p className="w-full text-[11px] text-slate-400 leading-tight truncate">
+                      {subCount > 0
+                        ? `${subCount} subcategor${subCount === 1 ? 'y' : 'ies'}`
+                        : cat.productCount > 0
+                        ? `${cat.productCount.toLocaleString()} products`
+                        : 'Explore'}
+                    </p>
                   </Link>
                 );
               })}
