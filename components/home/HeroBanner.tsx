@@ -1,13 +1,13 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, type CSSProperties } from 'react';
 import Image from 'next/image';
 import { useTranslations } from 'next-intl';
 import { buildPath } from '@/config/countries';
 import { Link } from '@/i18n/navigation';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { fetchHomeBanners, type HomeBanner } from '@/lib/api/banners';
+import { fetchHomeBanners, type HomeBannerFeed } from '@/lib/api/banners';
 
 const SLIDE_INTERVAL = 5000;
 
@@ -55,9 +55,10 @@ const fallbackStyles = [
 export function HeroBanner() {
   const t = useTranslations('Home');
   const [current, setCurrent] = useState(0);
-  const [feed, setFeed] = useState<{ banners: HomeBanner[]; carouselHeight: number }>({
+  const [feed, setFeed] = useState<HomeBannerFeed>({
     banners: [],
     carouselHeight: FALLBACK_HEIGHT,
+    frame: { mode: 'fixed', heightPx: FALLBACK_HEIGHT, aspectRatio: null },
   });
 
   useEffect(() => {
@@ -122,7 +123,29 @@ export function HeroBanner() {
    * back: every slide in the rotation resolves to the identical height.
    */
   const height = usingBanners ? feed.carouselHeight : FALLBACK_HEIGHT;
-  const responsiveHeight = `clamp(${MIN_HEIGHT}px, calc(100vw * ${height} / ${DESIGN_WIDTH}), ${height}px)`;
+
+  /**
+   * The frame every slide is drawn in.
+   *
+   * 'auto' sizes it by ASPECT RATIO rather than by pixels, so the artwork's own
+   * proportions decide the shape and nothing has to be cropped to fit. That is
+   * the setting that answers "the image shows as half": with `contain` there
+   * are no bars either, because the frame already matches the picture.
+   *
+   * `maxHeight` still applies — without it a square banner would be as tall as
+   * the viewport is wide, which is 2560px of hero on a large monitor.
+   *
+   * 'fixed' keeps the pixel height, expressed as a clamp so it scales DOWN on
+   * narrow screens instead of cropping harder there.
+   *
+   * Either way the value is derived from the VIEWPORT and the feed, never from
+   * the active slide — so the section cannot re-measure as slides advance,
+   * which is what made the page squeeze.
+   */
+  const frameStyle: CSSProperties =
+    usingBanners && feed.frame.mode === 'auto' && feed.frame.aspectRatio
+      ? { aspectRatio: String(feed.frame.aspectRatio), maxHeight: `${feed.frame.heightPx}px`, width: '100%' }
+      : { height: `clamp(${MIN_HEIGHT}px, calc(100vw * ${height} / ${DESIGN_WIDTH}), ${height}px)` };
 
   const goTo = useCallback(
     (index: number) => setCurrent(((index % slideCount) + slideCount) % slideCount),
@@ -151,7 +174,7 @@ export function HeroBanner() {
       className="relative overflow-hidden bg-slate-900"
       // Inline because the value is configured per deployment; a Tailwind class
       // cannot express an arbitrary pixel height set by an admin.
-      style={{ height: responsiveHeight }}
+      style={frameStyle}
       aria-roledescription="carousel"
       aria-label={t('heroTitle')}
     >

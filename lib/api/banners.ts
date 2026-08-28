@@ -3,8 +3,8 @@ import { api } from './client';
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://staging-api.cartzii.com';
 const BANNER_CDN = `${API_BASE}/assets/upload/bannerImages`;
 
-/** How the artwork fills its frame. */
-export type BannerImageFit = 'cover' | 'contain';
+/** CSS object-fit. 'fill' stretches and will distort the image. */
+export type BannerImageFit = 'cover' | 'contain' | 'fill' | 'scale-down' | 'none';
 
 /** Which side the copy sits on. */
 export type BannerContentAlign = 'left' | 'center' | 'right';
@@ -28,6 +28,20 @@ export interface HomeBanner {
   backdropColor: string;
 }
 
+/**
+ * The shape every slide is drawn in — one frame for the whole rotation.
+ *
+ * 'auto' means the frame takes the artwork's own proportions, so the image
+ * shows whole with neither a crop nor bars. `heightPx` is the cap in that mode
+ * (a square image would otherwise be as tall as the viewport is wide) and the
+ * height outright in 'fixed'.
+ */
+export interface CarouselFrame {
+  mode: 'fixed' | 'auto';
+  heightPx: number;
+  aspectRatio: number | null;
+}
+
 export interface HomeBannerFeed {
   banners: HomeBanner[];
   /**
@@ -39,6 +53,25 @@ export interface HomeBannerFeed {
    * the page, which is exactly what this replaced.
    */
   carouselHeight: number;
+  /** How to shape the frame. Decided server-side, never per slide. */
+  frame: CarouselFrame;
+}
+
+/**
+ * Only trust a frame that is internally coherent.
+ *
+ * 'auto' without a usable ratio would render a section with no height at all —
+ * a blank strip where the hero should be — so it falls back to the fixed
+ * height rather than to nothing.
+ */
+function safeFrame(frame: CarouselFrame | undefined, fallbackHeight: number): CarouselFrame {
+  const heightPx = Number(frame?.heightPx) || fallbackHeight;
+  const ratio = Number(frame?.aspectRatio);
+
+  if (frame?.mode === 'auto' && Number.isFinite(ratio) && ratio > 0) {
+    return { mode: 'auto', heightPx, aspectRatio: ratio };
+  }
+  return { mode: 'fixed', heightPx, aspectRatio: null };
 }
 
 interface APIBanner {
@@ -51,6 +84,7 @@ interface APIBanner {
   heightpx: number;
   sortorder: number;
   imagefit?: string;
+  heightmode?: string;
   focalpoint?: string;
   contentalign?: string;
   backdropcolor?: string;
@@ -64,6 +98,8 @@ interface APIBanner {
  * whatever arrived would put an unvalidated string into the page's CSS if the
  * API were ever misconfigured or swapped.
  */
+const IMAGE_FITS = new Set(['cover', 'contain', 'fill', 'scale-down', 'none']);
+
 const FOCAL_POINTS = new Set([
   'left top', 'center top', 'right top',
   'left center', 'center', 'right center',
@@ -71,7 +107,7 @@ const FOCAL_POINTS = new Set([
 ]);
 
 function safeFit(value: string | undefined): BannerImageFit {
-  return value === 'contain' ? 'contain' : 'cover';
+  return value && IMAGE_FITS.has(value) ? (value as BannerImageFit) : 'cover';
 }
 
 function safeFocalPoint(value: string | undefined): string {
@@ -100,11 +136,17 @@ function buildBannerImageUrl(url: string | undefined): string {
  * stops the home page rendering.
  */
 export async function fetchHomeBanners(): Promise<HomeBannerFeed> {
-  const empty: HomeBannerFeed = { banners: [], carouselHeight: 480 };
+  const empty: HomeBannerFeed = {
+    banners: [],
+    carouselHeight: 480,
+    frame: { mode: 'fixed', heightPx: 480, aspectRatio: null },
+  };
 
   try {
     const res = await api.get<unknown>('/api/v1/banners');
-    const raw = res as { data?: { banners?: APIBanner[]; carouselHeight?: number } };
+    const raw = res as {
+      data?: { banners?: APIBanner[]; carouselHeight?: number; carouselFrame?: CarouselFrame };
+    };
     const payload = raw?.data;
     if (!payload || !Array.isArray(payload.banners)) return empty;
 
@@ -124,6 +166,7 @@ export async function fetchHomeBanners(): Promise<HomeBannerFeed> {
         backdropColor: safeColor(b.backdropcolor),
       })),
       carouselHeight: Number(payload.carouselHeight) || empty.carouselHeight,
+      frame: safeFrame(payload.carouselFrame, Number(payload.carouselHeight) || empty.carouselHeight),
     };
   } catch {
     return empty;
