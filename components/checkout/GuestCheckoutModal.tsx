@@ -1,9 +1,9 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
-import { useLocale, useTranslations } from 'next-intl';
+import { useRouter } from '@/i18n/navigation';
+import { useTranslations } from 'next-intl';
 import { X, User, LogIn } from 'lucide-react';
-import { buildCountryPath } from '@/config/countries';
+import { buildPath } from '@/config/countries';
 import { useAuthStore } from '@/stores/authStore';
 import { useCartStore } from '@/stores/cartStore';
 
@@ -14,7 +14,6 @@ interface GuestCheckoutModalProps {
 
 export function GuestCheckoutModal({ isOpen, onClose }: GuestCheckoutModalProps) {
   const t = useTranslations('Cart');
-  const locale = useLocale();
   const router = useRouter();
   const setGuestCheckout = useAuthStore((s) => s.setGuestCheckout);
   const closeCartDrawer = useCartStore((s) => s.closeDrawer);
@@ -25,15 +24,15 @@ export function GuestCheckoutModal({ isOpen, onClose }: GuestCheckoutModalProps)
     setGuestCheckout(true);
     onClose();
     closeCartDrawer();
-    router.push(buildCountryPath(locale, '/checkout'));
+    router.push(buildPath('/checkout'));
   };
 
   const handleSignIn = () => {
     onClose();
     closeCartDrawer();
-    const cartPath = buildCountryPath(locale, '/cart');
+    const cartPath = buildPath('/cart');
     router.push(
-      `${buildCountryPath(locale, '/auth/login')}?redirect=${encodeURIComponent(cartPath)}`
+      `${buildPath('/auth/login')}?redirect=${encodeURIComponent(cartPath)}`
     );
   };
 

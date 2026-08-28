@@ -1,10 +1,9 @@
 'use client';
 
 import { ChevronRight, Home } from 'lucide-react';
-import { useLocale, useTranslations } from 'next-intl';
-import { buildCountryPath } from '@/config/countries';
-import Link from 'next/link';
-
+import { useTranslations } from 'next-intl';
+import { buildPath } from '@/config/countries';
+import { Link } from '@/i18n/navigation';
 interface BreadcrumbItem {
   label: string;
   href?: string;
@@ -15,7 +14,6 @@ interface BreadcrumbProps {
 }
 
 export function Breadcrumb({ items }: BreadcrumbProps) {
-  const locale = useLocale();
   const t = useTranslations('Accessibility');
 
   return (
@@ -23,7 +21,7 @@ export function Breadcrumb({ items }: BreadcrumbProps) {
       <ol className="flex items-center gap-1.5 text-sm text-slate-600 flex-wrap">
         <li>
           <Link
-            href={buildCountryPath(locale, '/')}
+            href={buildPath('/')}
             className="flex items-center gap-1 hover:text-primary transition-colors"
           >
             <Home className="w-3.5 h-3.5" />

@@ -1,6 +1,7 @@
 import { api } from './client';
 import { resolvePrice } from '@/lib/pricing';
 import type { Product, ProductVariant, DetailVariant, Review } from '@/types';
+import { currentCurrency } from '@/config/countries';
 
 // ---- API response shapes --------------------------------------------------
 
@@ -24,8 +25,17 @@ interface APIVariantImage {
   sortorder: number;
 }
 
+/** Attached by the API to a price row it discounted for an active deal. */
+interface APIDeal {
+  dealid: number;
+  discountpct: number;
+  startsat: string;
+  endsat: string;
+}
+
 interface APIVariantPricing {
   pricingid: number;
+  deal?: APIDeal | null;
   countrycode: string;
   currencycode: string;
   price: string;
@@ -60,6 +70,7 @@ interface APIVariant {
 
 interface APIProductCountry {
   id: number;
+  deal?: APIDeal | null;
   countrycode: string;
   currencycode: string;
   price: string;
@@ -82,19 +93,22 @@ interface APIReview {
   user?: { firstname?: string; lastname?: string; avatar?: string };
 }
 
+// The list endpoints select a narrower shape than getProductBySlug — they
+// already filter to active rows and sort by sortorder server-side, so the
+// bookkeeping fields are optional rather than a second interface.
 interface APIAttributeValue {
-  valueid: number;
+  valueid?: number;
   value: string;
   colorcode: string | null;
-  sortorder: number;
-  isactive: boolean;
+  sortorder?: number;
+  isactive?: boolean;
 }
 
 interface APIProductAttribute {
-  attributeid: number;
+  attributeid?: number;
   attributename: string;
-  sortorder: number;
-  isactive: boolean;
+  sortorder?: number;
+  isactive?: boolean;
   attributevalues: APIAttributeValue[];
 }
 
@@ -136,11 +150,14 @@ interface APIProduct {
   productvariants: APIVariant[];
   productcountries: APIProductCountry[];
   categoryName?: string;
+  categorySlug?: string;
   averageRating?: number | string | null;
+  // Product-level attributes ship on the list endpoints too, so the storefront
+  // can build its filter facets without a request per product.
+  productattributes?: APIProductAttribute[];
   // Fields present only in getProductBySlug response
   reviews?: APIReview[];
   reviewCount?: number;
-  productattributes?: APIProductAttribute[];
   category?: APICategory;
   seller?: APISeller | null;
   storename?: string | null;
@@ -272,9 +289,13 @@ function mapProduct(raw: APIProduct, country: string): Product {
         discountprice: variantPricing!.discountprice,
         discount: variantPricing!.discount,
         currencycode: variantPricing!.currencycode,
+        // Carried alongside the figures it produced, so the deal shown always
+        // belongs to the row the price came from.
+        deal: variantPricing!.deal ?? null,
       }
     : countryPricing && parseFloat(countryPricing.price) > 0
       ? {
+          deal: countryPricing.deal ?? null,
           price: countryPricing.price,
           discountprice: countryPricing.discountprice,
           discount: countryPricing.discount,
@@ -286,6 +307,18 @@ function mapProduct(raw: APIProduct, country: string): Product {
   // `discountprice` was the higher compare-at price; it is the LOWER, reduced
   // one, which is why discounted products rendered at full price.
   const { origPrice: originalPrice, salePrice, discountPct } = resolvePrice(priceSrc);
+
+  // Read from the row the price came from, so a deal on the variant row and a
+  // deal on the country row cannot be confused for one another.
+  const rawDeal = priceSrc?.deal ?? null;
+  const deal = rawDeal
+    ? {
+        dealId: rawDeal.dealid,
+        discountPercent: rawDeal.discountpct,
+        startsAt: String(rawDeal.startsat),
+        endsAt: String(rawDeal.endsat),
+      }
+    : undefined;
 
   let discount: number | undefined = discountPct || undefined;
   if (!discount && salePrice !== undefined && originalPrice > 0) {
@@ -337,7 +370,25 @@ function mapProduct(raw: APIProduct, country: string): Product {
   }
   const sizes = sizeSet.size > 0 ? Array.from(sizeSet) : undefined;
 
-  // -- brand from variant attributes ----------------------------------------
+  // -- product-level attributes ---------------------------------------------
+  // Keyed by name and de-duplicated. Drives every attribute filter, including
+  // Age Group and whatever is scoped to this product's category.
+  const attributes: Record<string, string[]> = {};
+  for (const attr of raw.productattributes ?? []) {
+    if (attr.isactive === false) continue;
+    const name = attr.attributename?.trim();
+    if (!name) continue;
+    const values = (attr.attributevalues ?? [])
+      .filter((v) => v.isactive !== false)
+      .map((v) => v.value?.trim())
+      .filter((v): v is string => !!v);
+    if (values.length === 0) continue;
+    attributes[name] = Array.from(new Set([...(attributes[name] ?? []), ...values]));
+  }
+
+  // -- brand ----------------------------------------------------------------
+  // Variant attributes first (where sellers have historically set it), falling
+  // back to the product-level "Brand" attribute.
   let brand = '';
   for (const v of activeVariants) {
     const brandAttr = v.attributes.find(
@@ -348,6 +399,10 @@ function mapProduct(raw: APIProduct, country: string): Product {
       break;
     }
   }
+  if (!brand) {
+    const brandKey = Object.keys(attributes).find((k) => k.toLowerCase() === 'brand');
+    if (brandKey) brand = attributes[brandKey][0] ?? '';
+  }
 
   // -- stock from variants --------------------------------------------------
   const totalStock =
@@ -356,7 +411,7 @@ function mapProduct(raw: APIProduct, country: string): Product {
       : raw.stockquantity;
 
   // -- currency from pricing ------------------------------------------------
-  const currency = priceSrc?.currencycode || 'CAD';
+  const currency = priceSrc?.currencycode || currentCurrency;
 
   const isNew =
     !!raw.releaseat &&
@@ -374,7 +429,8 @@ function mapProduct(raw: APIProduct, country: string): Product {
     currency,
     images,
     category: raw.category?.categoryname || raw.categoryName || '',
-    categorySlug: raw.category?.categoryslug || '',
+    // `category` is detail-only; `categorySlug` is what the list endpoints send.
+    categorySlug: raw.category?.categoryslug || raw.categorySlug || '',
     brand,
     rating: raw.averageRating ? parseFloat(String(raw.averageRating)) : 0,
     reviewCount: raw.reviewCount ?? 0,
@@ -389,6 +445,8 @@ function mapProduct(raw: APIProduct, country: string): Product {
     isFeatured: false,
     isBestSeller: false,
     specifications: {},
+    attributes,
+    deal,
     createdAt: raw.createdat,
     detailVariants: buildDetailVariants(activeVariants, country),
     sellerId: raw.sellerid,
@@ -463,10 +521,12 @@ export async function fetchProductBySlug(
     const specifications: Record<string, string> = {};
     if (raw.productattributes) {
       for (const attr of raw.productattributes) {
-        if (!attr.isactive) continue;
+        // `!== false` rather than a truthy test: the list endpoints omit
+        // isactive/sortorder entirely, having already filtered and sorted.
+        if (attr.isactive === false) continue;
         const values = attr.attributevalues
-          .filter((v) => v.isactive)
-          .sort((a, b) => a.sortorder - b.sortorder)
+          .filter((v) => v.isactive !== false)
+          .sort((a, b) => (a.sortorder ?? 0) - (b.sortorder ?? 0))
           .map((v) => v.value)
           .join(', ');
         if (values) specifications[attr.attributename] = values;

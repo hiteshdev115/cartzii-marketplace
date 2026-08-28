@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import { useSearchParams } from 'next/navigation';
 import Image from 'next/image';
-import Link from 'next/link';
+import { Link } from '@/i18n/navigation';
 import { Search as SearchIcon, Loader2, Heart, ShoppingCart } from 'lucide-react';
 import { searchProductsAPI } from '@/lib/api';
 import { useCartStore } from '@/stores/cartStore';
@@ -12,12 +12,13 @@ import type { Product } from '@/types';
 import type { SearchProductResult, SearchPagination } from '@/lib/api';
 import { Breadcrumb } from '@/components/layout/Breadcrumb';
 import { Pagination } from '@/components/ui/Pagination';
-import { buildCountryPath, getCountryFromLocale } from '@/config/countries';
+import { buildPath, getCountryFromLocale, currentCurrency } from '@/config/countries';
 import { formatPrice } from '@/lib/utils';
 import { useWishlistStore } from '@/stores/wishlistStore';
 import { useAuthStore } from '@/stores/authStore';
 import { useLoginModalStore } from '@/stores/loginModalStore';
 import { useHydrated } from '@/hooks/useHydration';
+import { OutOfStockButton } from '@/components/products/OutOfStockButton';
 
 const IMAGE_CDN_URL =
   process.env.NEXT_PUBLIC_IMAGE_CDN_URL ||
@@ -59,7 +60,7 @@ export function SearchContent() {
       price: item.pricing ? parseFloat(item.pricing.price) : 0,
       salePrice: item.pricing?.discountprice ? parseFloat(item.pricing.discountprice) : undefined,
       discount: item.pricing?.discount ? parseFloat(item.pricing.discount) : undefined,
-      currency: item.pricing?.currencycode || 'USD',
+      currency: item.pricing?.currencycode || currentCurrency,
       images: [buildImageUrl(item.primaryImage?.imageurl)],
       category: item.categoryname || '',
       categorySlug: '',
@@ -75,6 +76,9 @@ export function SearchContent() {
       isFeatured: false,
       isBestSeller: false,
       specifications: {},
+    // Rebuilt from a cart line / search hit, not the catalogue: this shape is
+    // only used to add to cart, and carries no attribute data to begin with.
+    attributes: {},
       createdAt: '',
       // TODO: PR 2B follow-up — API missing sellerid on some search responses.
       sellerId: item.sellerid ?? 0,
@@ -161,7 +165,7 @@ export function SearchContent() {
                       >
                         <Heart className={`w-4 h-4 ${isWishlisted ? 'fill-red-500 text-red-500' : 'text-slate-600'}`} />
                       </button>
-                      <Link href={buildCountryPath(locale, `/products/${item.slug}`)}>
+                      <Link href={buildPath(`/products/${item.slug}`)}>
                         <div className="aspect-square bg-slate-50 overflow-hidden">
                           <Image
                             src={buildImageUrl(item.primaryImage?.imageurl)}
@@ -196,13 +200,17 @@ export function SearchContent() {
                         </div>
                       </Link>
                       <div className="px-3 pb-3">
-                        <button
-                          onClick={() => handleAddToCart(item)}
-                          className="w-full btn-primary text-xs py-2 flex items-center justify-center gap-1.5"
-                        >
-                          <ShoppingCart className="w-3.5 h-3.5" />
-                          Add to Cart
-                        </button>
+                        {(item.stockquantity ?? 1) <= 0 ? (
+                          <OutOfStockButton className="text-xs py-2" />
+                        ) : (
+                          <button
+                            onClick={() => handleAddToCart(item)}
+                            className="w-full btn-primary text-xs py-2 flex items-center justify-center gap-1.5"
+                          >
+                            <ShoppingCart className="w-3.5 h-3.5" />
+                            Add to Cart
+                          </button>
+                        )}
                       </div>
                     </div>
                   );

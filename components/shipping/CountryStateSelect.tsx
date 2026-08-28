@@ -1,3 +1,4 @@
+import { countrySelectOptions } from '@/config/countries';
 'use client';
 
 import { useTranslations } from 'next-intl';
@@ -16,11 +17,10 @@ interface CountryStateSelectProps {
   disabled?: boolean;
 }
 
-const COUNTRY_OPTIONS = [
-  { value: '', label: 'Select Country' },
-  { value: 'CA', label: 'Canada' },
-  { value: 'US', label: 'United States' },
-];
+// Only this deployment's country. cartzii.ca ships, taxes and settles in
+// Canada alone, so offering the United States here produces an address the
+// checkout cannot fulfil. See config/countries.ts.
+const COUNTRY_OPTIONS = countrySelectOptions.map((o) => ({ ...o }));
 
 export function CountryStateSelect({
   country,

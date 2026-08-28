@@ -10,6 +10,8 @@ export interface SearchProductResult {
   shortdescription: string;
   tags: string;
   status: string;
+  /** Rolled up across active variants, or the product's own when it has none. */
+  stockquantity?: number;
   categoryname: string;
   primaryImage: {
     imageurl: string;

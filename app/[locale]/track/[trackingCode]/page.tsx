@@ -1,11 +1,11 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
+import { Link } from '@/i18n/navigation';
 import { useSearchParams } from 'next/navigation';
-import { useLocale, useTranslations } from 'next-intl';
+import { useTranslations } from 'next-intl';
 import { ArrowLeft, Loader2, Package } from 'lucide-react';
-import { buildCountryPath } from '@/config/countries';
+import { buildPath } from '@/config/countries';
 import { getTracking, subscribeToTracking } from '@/lib/shippingApi';
 import { StatusBadge } from '@/components/shipping/StatusBadge';
 import { TrackingTimeline } from '@/components/shipping/TrackingTimeline';
@@ -28,7 +28,6 @@ function formatDate(iso?: string | null): string {
 
 function TrackingDetailContent({ trackingCode }: { trackingCode: string }) {
   const t = useTranslations('Tracking');
-  const locale = useLocale();
   const searchParams = useSearchParams();
   const cameFromOrders = searchParams.get('from') === 'orders';
   const returnId = searchParams.get('from') === 'return' ? searchParams.get('returnId') : null;
@@ -74,10 +73,10 @@ function TrackingDetailContent({ trackingCode }: { trackingCode: string }) {
   }, [trackingCode]);
 
   const backHref = returnId
-    ? buildCountryPath(locale, `/account/returns/${returnId}`)
+    ? buildPath(`/account/returns/${returnId}`)
     : cameFromOrders
-      ? buildCountryPath(locale, '/account/orders')
-      : buildCountryPath(locale, '/track');
+      ? buildPath('/account/orders')
+      : buildPath('/track');
   const backLabel = returnId ? t('backToReturn') : cameFromOrders ? t('backToOrders') : t('backToLookup');
 
   if (loading) {

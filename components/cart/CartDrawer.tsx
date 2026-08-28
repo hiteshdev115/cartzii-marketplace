@@ -2,15 +2,15 @@
 
 import { X, ShoppingBag, ArrowRight, Trash2, ShoppingCart } from 'lucide-react';
 import Image from 'next/image';
-import Link from 'next/link';
+import { Link } from '@/i18n/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import { useCartStore } from '@/stores/cartStore';
 import { useAuthStore } from '@/stores/authStore';
-import { buildCountryPath } from '@/config/countries';
+import { buildPath } from '@/config/countries';
 import { formatPrice, cn } from '@/lib/utils';
 import { QuantitySelector } from '@/components/ui/QuantitySelector';
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter } from '@/i18n/navigation';
 import { GuestCheckoutModal } from '@/components/checkout/GuestCheckoutModal';
 
 export function CartDrawer() {
@@ -89,7 +89,7 @@ export function CartDrawer() {
                   className="flex gap-2.5 p-2.5 bg-slate-50 rounded-xl"
                 >
                   <Link
-                    href={buildCountryPath(locale, `/products/${item.product.slug}`)}
+                    href={buildPath(`/products/${item.product.slug}`)}
                     onClick={closeDrawer}
                     className="relative w-14 h-14 rounded-lg overflow-hidden shrink-0 bg-slate-100"
                   >
@@ -102,7 +102,7 @@ export function CartDrawer() {
                     />
                   </Link>
                   <div className="flex-1 min-w-0">
-                    <Link href={buildCountryPath(locale, `/products/${item.product.slug}`)} onClick={closeDrawer}>
+                    <Link href={buildPath(`/products/${item.product.slug}`)} onClick={closeDrawer}>
                       <h3 className="text-xs font-semibold text-slate-900 truncate leading-snug hover:text-primary transition-colors">
                         {item.product.name}
                       </h3>
@@ -158,7 +158,7 @@ export function CartDrawer() {
             </div>
             <p className="text-[10px] text-slate-400">{t('shippingNote')}</p>
             <Link
-              href={buildCountryPath(locale, '/cart')}
+              href={buildPath('/cart')}
               onClick={closeDrawer}
               className="btn-secondary w-full flex items-center justify-center text-sm py-2"
             >
@@ -168,7 +168,7 @@ export function CartDrawer() {
               onClick={() => {
                 if (token) {
                   closeDrawer();
-                  router.push(buildCountryPath(locale, '/checkout'));
+                  router.push(buildPath('/checkout'));
                 } else {
                   setShowCheckoutModal(true);
                 }

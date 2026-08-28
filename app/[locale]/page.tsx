@@ -3,8 +3,6 @@ import { HeroBanner } from '@/components/home/HeroBanner';
 import { FeaturedCategories } from '@/components/home/FeaturedCategories';
 import { TrendingProducts } from '@/components/home/TrendingProducts';
 import { FlashDeals } from '@/components/home/FlashDeals';
-import { BrandShowcase } from '@/components/home/BrandShowcase';
-import { Testimonials } from '@/components/home/Testimonials';
 import { Newsletter } from '@/components/home/Newsletter';
 import { WhyChooseUs } from '@/components/home/WhyChooseUs';
 
@@ -25,8 +23,6 @@ export default function HomePage() {
       <TrendingProducts />
       <FlashDeals />
       <WhyChooseUs />
-      <BrandShowcase />
-      <Testimonials />
       <Newsletter />
     </main>
   );

@@ -25,7 +25,6 @@
     "showLess": "Show Less",
     "search": "Search",
     "noResults": "No results found",
-    "currency": "USD",
     "addToCart": "Add to Cart",
     "buyNow": "Buy Now",
     "learnMore": "Learn More"
@@ -62,16 +61,7 @@
     "contact": "Contact"
   },
   "Home": {
-    "heroTitle": "Discover Products You'll Love",
-    "heroSubtitle": "Explore thousands of curated products from trusted sellers with fast shipping and easy returns.",
-    "shopNow": "Shop Now",
-    "exploreDeals": "Explore Deals",
-    "slide2Title": "Up to 40% Off — Summer Sale",
-    "slide2Subtitle": "Don't miss our biggest sale of the season. Premium brands at unbeatable prices, limited time only.",
-    "slide2Cta": "Shop the Sale",
-    "slide3Title": "New Arrivals Every Week",
-    "slide3Subtitle": "Stay ahead of the trends with fresh drops from top sellers. Quality guaranteed with free returns.",
-    "slide3Cta": "See What's New",
+    "bannerCarousel": "Featured banners",
     "featuredCategories": "Shop by Category",
     "featuredCategoriesSubtitle": "Browse our most popular categories",
     "trending": "Trending Now",
@@ -95,7 +85,8 @@
     "benefit3Title": "Easy Returns",
     "benefit3Desc": "Hassle-free 30-day return policy on all orders.",
     "benefit4Title": "24/7 Support",
-    "benefit4Desc": "Our support team is here for you around the clock."
+    "benefit4Desc": "Our support team is here for you around the clock.",
+    "flashDealsMinDiscount": "Save {percent}% or more, while stock lasts"
   },
   "Products": {
     "allProducts": "All Products",
@@ -124,7 +115,7 @@
     "filterSize": "Size",
     "filterAvailability": "Availability",
     "inStock": "In Stock",
-    "outOfStock": "Out of Stock",
+    "outOfStock": "Out of stock",
     "onSale": "On Sale",
     "loadMore": "Load More Products",
     "addToCart": "Add to Cart",
@@ -135,7 +126,23 @@
     "new": "NEW",
     "sale": "SALE",
     "soldOut": "SOLD OUT",
-    "off": "-{percent}%"
+    "off": "-{percent}%",
+    "filterDeals": "Deals",
+    "filterDiscount": "Discount",
+    "onSaleOnly": "On sale only",
+    "discountMin": "Minimum discount",
+    "discountMax": "Maximum discount",
+    "priceMin": "Min",
+    "priceMax": "Max",
+    "priceAny": "Any",
+    "ratingAndUp": "{rating}+ stars",
+    "activeFilters": "Active filters:",
+    "noResultsTitle": "No products match your filters",
+    "noResultsBody": "Try removing a filter or widening the price range.",
+    "close": "Close",
+    "backInStockSoon": "Back in stock soon",
+    "onlyLeft": "Only {count} left",
+    "specialOffer": "Special offer · {percent}% off"
   },
   "ProductDetail": {
     "description": "Description",
@@ -567,7 +574,11 @@
     "shopNow": "Shop Now",
     "hotDeals": "Hot Deals",
     "dealOfTheDay": "Deal of the Day",
-    "limitedTime": "Limited Time Offer"
+    "limitedTime": "Limited Time Offer",
+    "flashDeal": "Flash deal",
+    "noDealsTitle": "No flash deals running right now",
+    "noDealsBody": "Check back soon — sellers add new deals all the time.",
+    "browseAll": "Browse all products"
   },
   "Footer": {
     "company": "Company",

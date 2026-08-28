@@ -1,12 +1,10 @@
 import { generateAlternates } from '@/lib/seo';
 import { DollarStreetPageClient } from './DollarStreetPageClient';
 
-export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
-  const { locale } = await params;
-  const alternates = generateAlternates(
+export async function generateMetadata() {
+  const alternates = await generateAlternates(
     process.env.NEXT_PUBLIC_BASE_URL || 'https://cartzii.com',
     '/dollar-street',
-    locale,
   );
   return {
     title: 'Dollar Street — Products Under $5 | Cartzii',

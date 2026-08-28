@@ -2,8 +2,9 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useLocale } from 'next-intl';
-import { usePathname } from 'next/navigation';
-import { countries, getCountryFromLocale, buildCountryPath, extractPagePath } from '@/config/countries';
+import { usePathname, useRouter } from '@/i18n/navigation';
+import { useSearchParams } from 'next/navigation';
+import { countries, getCountryFromLocale } from '@/config/countries';
 import { ChevronDown, Check, Globe } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -17,6 +18,8 @@ export function CountrySelector() {
   const locale = useLocale();
   const currentCountry = getCountryFromLocale(locale);
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -28,18 +31,27 @@ export function CountrySelector() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // US only has English — no need to show country/language selector
-  if (currentCountry === 'us') return null;
+  // Hidden where there is nothing to choose: the United States serves English
+  // only. The country itself is the domain now, so this control switches
+  // LANGUAGE — going to the other country means going to the other site.
+  if (countries[currentCountry].locales.length <= 1) return null;
 
   const switchTo = (targetLocale: string) => {
     if (targetLocale === locale) {
       setOpen(false);
       return;
     }
-    window.location.assign(buildCountryPath(targetLocale, extractPagePath(pathname, locale)));
+    // `pathname` from @/i18n/navigation has no language prefix, and router
+    // adds the right one for the target locale — /products becomes
+    // /fr/products going into French, and back again coming out. Doing this
+    // by hand is how a language switch ends up on the wrong page.
+    const query = searchParams.toString();
+    router.replace(`${pathname}${query ? `?${query}` : ''}`, { locale: targetLocale });
+    setOpen(false);
   };
 
   const currentLangLabel = localeLabels[locale] ?? 'English';
+  const countryFlag = currentCountry === 'ca' ? '🇨🇦' : '🇺🇸';
 
   return (
     <div className="relative" ref={ref}>
@@ -50,8 +62,8 @@ export function CountrySelector() {
         aria-label={`Language: ${currentLangLabel}`}
       >
         <Globe className="w-4 h-4" aria-hidden="true" />
-        <span className="hidden sm:inline">🇨🇦 {currentLangLabel}</span>
-        <span className="sm:hidden">🇨🇦</span>
+        <span className="hidden sm:inline">{countryFlag} {currentLangLabel}</span>
+        <span className="sm:hidden">{countryFlag}</span>
         <ChevronDown className={cn('w-3.5 h-3.5 transition-transform', open && 'rotate-180')} aria-hidden="true" />
       </button>
 

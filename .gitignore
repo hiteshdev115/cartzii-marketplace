@@ -34,6 +34,23 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
+# Local and legacy env files. These used to be committed, which meant every
+# deployment shipped a file naming the OLD api host. Next loads .env.local and
+# .env.production during a build, so they only lost to the per-slot file by
+# precedence — one plain `next build` instead of `build:{env}:{country}` and
+# the wrong API would be baked in silently.
+.env.local
+.env.production
+.env.qa
+
+# Per-slot environment files for the four storefront deployments. These
+# carry the guest token and Stripe publishable key; the tracked
+# `.example` next to each documents the shape.
+.env.prod.ca
+.env.prod.us
+.env.qa.ca
+.env.qa.us
+
 # # env files (can opt-in for committing if needed)
 # .env.local
 # .env.qa

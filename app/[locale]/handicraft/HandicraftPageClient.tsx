@@ -1,14 +1,14 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Link from 'next/link';
+import { Link } from '@/i18n/navigation';
 import Image from 'next/image';
-import { useLocale } from 'next-intl';
+
 import {
   ArrowRight, Scissors, Paintbrush2, Hammer, Gem, Leaf, BookOpen,
-  Shirt, Star, Sparkles, ChevronRight, Search,
+  Shirt, Star, Sparkles, Search,
 } from 'lucide-react';
-import { buildCountryPath } from '@/config/countries';
+import { buildPath } from '@/config/countries';
 import { fetchCategoryTree } from '@/lib/api';
 import { getCategoryIconConfig } from '@/lib/categoryIcons';
 import { Breadcrumb } from '@/components/layout/Breadcrumb';
@@ -117,54 +117,62 @@ const CRAFT_SPOTLIGHTS = [
 
 function CardSkeleton() {
   return (
-    <div className="rounded-2xl bg-white border border-slate-100 p-5 animate-pulse">
-      <div className="w-14 h-14 rounded-2xl bg-slate-200 mb-4" />
-      <div className="h-4 bg-slate-200 rounded w-3/4 mb-2" />
-      <div className="h-3 bg-slate-100 rounded w-1/2" />
+    <div className="flex flex-col items-center animate-pulse">
+      <div className="w-20 h-20 rounded-2xl bg-slate-200" />
+      <div className="mt-2.5 h-3 bg-slate-200 rounded w-3/4" />
+      <div className="mt-1 h-2.5 bg-slate-100 rounded w-1/2" />
     </div>
   );
 }
 
 // ─── Category Card ────────────────────────────────────────────────────────────
 
-function CategoryCard({ cat, locale }: { cat: Category; locale: string }) {
+function CategoryCard({ cat }: { cat: Category }) {
   const imgSrc = buildCategoryImageUrl(cat.image);
   const { icon: Icon, gradient } = getCategoryIconConfig(cat.slug, cat.name);
   const subCount = cat.subcategories?.length ?? 0;
 
   return (
     <Link
-      href={buildCountryPath(locale, `/categories/${cat.slug}`)}
-      className="group flex flex-col bg-white border border-slate-100 rounded-2xl p-5 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300"
+      href={buildPath(`/categories/${cat.slug}`)}
+      className="group flex flex-col items-center text-center"
     >
-      <div className="relative w-14 h-14 rounded-2xl overflow-hidden mb-4 flex-shrink-0">
+      {/* A fixed 80px square, not a padded card and not an aspect-ratio box:
+          the tile has to stay square at every breakpoint, and a box that sizes
+          to its grid column becomes a wide rectangle on desktop — which is
+          what made these look like big boxes around a small icon.
+
+          The logo inside is unchanged at 56px; only the box around it shrank,
+          leaving 12px of even padding on all four sides. */}
+      <div className="relative w-20 h-20 rounded-2xl overflow-hidden bg-white border border-slate-100 flex items-center justify-center group-hover:shadow-md group-hover:border-primary/25 transition-all duration-300">
         {imgSrc ? (
           <Image
             src={imgSrc}
             alt={cat.name}
-            fill
+            width={56}
+            height={56}
             sizes="56px"
-            className="object-cover group-hover:scale-110 transition-transform duration-300"
+            className="w-14 h-14 object-cover rounded-xl group-hover:scale-110 transition-transform duration-300"
           />
         ) : (
-          <div className={`absolute inset-0 bg-gradient-to-br ${gradient} flex items-center justify-center`}>
+          <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${gradient} flex items-center justify-center group-hover:scale-105 transition-transform duration-300`}>
             <Icon className="w-7 h-7 text-white drop-shadow" />
           </div>
         )}
       </div>
-      <p className="text-sm font-bold text-slate-900 leading-snug group-hover:text-primary transition-colors">
+
+      {/* Below the square rather than inside it — text sharing the box is what
+          forced the box to be tall. */}
+      <p className="mt-2.5 w-full text-xs sm:text-sm font-semibold text-slate-900 leading-snug truncate group-hover:text-primary transition-colors">
         {cat.name}
       </p>
-      <p className="mt-1 text-xs text-slate-400 leading-tight">
+      <p className="w-full text-[11px] text-slate-400 leading-tight truncate">
         {subCount > 0
           ? `${subCount} subcategor${subCount === 1 ? 'y' : 'ies'}`
           : cat.productCount > 0
           ? `${cat.productCount.toLocaleString()} products`
-          : 'Explore →'}
+          : 'Explore'}
       </p>
-      <div className="mt-3 flex items-center gap-1 text-xs font-semibold text-primary opacity-0 group-hover:opacity-100 -translate-x-1 group-hover:translate-x-0 transition-all duration-300">
-        Browse <ArrowRight className="w-3 h-3" />
-      </div>
     </Link>
   );
 }
@@ -177,7 +185,6 @@ interface Props {
 }
 
 export function HandicraftPageClient({ initialHandicraftCategories, initialAllCategories }: Props) {
-  const locale = useLocale();
   const [handicraftCategories, setHandicraftCategories] = useState<Category[]>(initialHandicraftCategories);
   const [allCategories, setAllCategories] = useState<Category[]>(initialAllCategories);
   const [loading, setLoading] = useState(
@@ -239,13 +246,13 @@ export function HandicraftPageClient({ initialHandicraftCategories, initialAllCa
             </p>
             <div className="flex flex-wrap gap-3">
               <Link
-                href={buildCountryPath(locale, '/search?q=handmade')}
+                href={buildPath('/search?q=handmade')}
                 className="inline-flex items-center gap-2 bg-white text-slate-900 font-bold px-6 py-3 rounded-xl hover:bg-white/90 transition-all shadow-lg"
               >
                 Shop Handmade <ArrowRight className="w-4 h-4" />
               </Link>
               <Link
-                href={buildCountryPath(locale, '/products')}
+                href={buildPath('/products')}
                 className="inline-flex items-center gap-2 bg-white/10 border border-white/20 text-white font-semibold px-6 py-3 rounded-xl hover:bg-white/20 transition-all"
               >
                 All Products
@@ -272,23 +279,26 @@ export function HandicraftPageClient({ initialHandicraftCategories, initialAllCa
               <h2 className="text-2xl font-extrabold text-slate-900">Popular Craft Types</h2>
             </div>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4">
+          <div className="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-8 gap-3 sm:gap-4">
             {CRAFT_SPOTLIGHTS.map((craft) => (
               <Link
                 key={craft.title}
-                href={buildCountryPath(locale, `/search?q=${encodeURIComponent(craft.query)}`)}
-                className="group flex flex-col bg-white border border-slate-100 rounded-2xl p-5 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300"
+                href={buildPath(`/search?q=${encodeURIComponent(craft.query)}`)}
+                className="group flex flex-col items-center text-center"
+                // The description still reaches anyone who wants it, without
+                // costing the tile the height it needed to display it.
+                title={craft.desc}
               >
-                <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${craft.gradient} flex items-center justify-center mb-4 group-hover:scale-105 transition-transform duration-300 shadow-md`}>
-                  <craft.icon className="w-7 h-7 text-white drop-shadow" />
+                {/* Same 80px square as the categories below, so the two grids
+                    read as one system. The 56px icon inside is unchanged. */}
+                <div className="w-20 h-20 rounded-2xl bg-white border border-slate-100 flex items-center justify-center group-hover:shadow-md group-hover:border-primary/25 transition-all duration-300">
+                  <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${craft.gradient} flex items-center justify-center group-hover:scale-105 transition-transform duration-300 shadow-md`}>
+                    <craft.icon className="w-7 h-7 text-white drop-shadow" />
+                  </div>
                 </div>
-                <p className="text-sm font-bold text-slate-900 group-hover:text-primary transition-colors leading-snug">
+                <p className="mt-2.5 w-full text-xs sm:text-sm font-semibold text-slate-900 leading-snug truncate group-hover:text-primary transition-colors">
                   {craft.title}
                 </p>
-                <p className="mt-1 text-xs text-slate-400 leading-snug line-clamp-2">{craft.desc}</p>
-                <div className="mt-3 flex items-center gap-1 text-xs font-semibold text-primary opacity-0 group-hover:opacity-100 -translate-x-1 group-hover:translate-x-0 transition-all duration-300">
-                  Search <ChevronRight className="w-3 h-3" />
-                </div>
               </Link>
             ))}
           </div>
@@ -324,7 +334,7 @@ export function HandicraftPageClient({ initialHandicraftCategories, initialAllCa
             </div>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4">
+          <div className="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-8 gap-3 sm:gap-4">
             {loading
               ? Array.from({ length: 12 }).map((_, i) => <CardSkeleton key={i} />)
               : filtered.length === 0
@@ -340,7 +350,7 @@ export function HandicraftPageClient({ initialHandicraftCategories, initialAllCa
                 </div>
               )
               : filtered.map((cat) => (
-                  <CategoryCard key={cat.id} cat={cat} locale={locale} />
+                  <CategoryCard key={cat.id} cat={cat} />
                 ))}
           </div>
         </section>
@@ -362,7 +372,7 @@ export function HandicraftPageClient({ initialHandicraftCategories, initialAllCa
               Shop authentic handicrafts and support independent artisans on Cartzii.
             </p>
             <Link
-              href={buildCountryPath(locale, '/search?q=handmade artisan')}
+              href={buildPath('/search?q=handmade artisan')}
               className="inline-flex items-center gap-2 bg-gradient-to-r from-rose-500 to-pink-600 text-white font-bold px-8 py-3.5 rounded-2xl hover:opacity-90 transition-all shadow-lg shadow-rose-900/40"
             >
               Discover Handmade <ArrowRight className="w-4 h-4" />

@@ -1,22 +1,22 @@
 'use client';
 
-import { useTranslations, useLocale } from 'next-intl';
+import { useTranslations } from 'next-intl';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { registerSchema, RegisterFormData } from '@/lib/validators';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { Breadcrumb } from '@/components/layout/Breadcrumb';
-import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { buildCountryPath } from '@/config/countries';
+import { Link } from '@/i18n/navigation';
+import { useSearchParams } from 'next/navigation';
+import { useRouter } from '@/i18n/navigation';
+import { buildPath } from '@/config/countries';
 import { api, ApiError } from '@/lib/api/client';
 import { UserPlus, Eye, EyeOff, Phone, CheckCircle } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 export function RegisterForm() {
   const t = useTranslations('Auth');
-  const locale = useLocale();
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirectTo = searchParams.get('redirect');
@@ -26,7 +26,7 @@ export function RegisterForm() {
 
   // Build the login URL, carrying the redirect param forward if present
   const loginUrl =
-    buildCountryPath(locale, '/auth/login') +
+    buildPath('/auth/login') +
     (redirectTo
       ? `?redirect=${encodeURIComponent(redirectTo)}`
       : '?registered=true');

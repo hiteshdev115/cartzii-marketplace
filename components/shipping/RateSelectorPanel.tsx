@@ -10,6 +10,7 @@ import { SHIPPING_ERROR_CODES } from '@/lib/shippingConstants';
 import { SellerRateSelector } from './SellerRateSelector';
 import type { ShippingFormData } from '@/lib/validators';
 import type { RatesCartItem, SellerRateQuote, ShippingRate } from '@/lib/shippingApi';
+import { currentCurrency } from '@/config/countries';
 
 interface RateSelectorPanelProps {
   shippingAddress: ShippingFormData;
@@ -101,7 +102,7 @@ export function RateSelectorPanel({
         country: shippingAddress.country,
       },
       currency:
-        shippingAddress.country === 'CA' ? 'CAD' : 'USD',
+        currentCurrency,
       sellerCarts,
     });
 

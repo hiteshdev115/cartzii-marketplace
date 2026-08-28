@@ -1,163 +1,268 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { useTranslations, useLocale } from 'next-intl';
-import { buildCountryPath } from '@/config/countries';
-import Link from 'next/link';
+import { useState, useEffect, useCallback, type CSSProperties } from 'react';
+import Image from 'next/image';
+import { useTranslations } from 'next-intl';
+import { buildPath } from '@/config/countries';
+import { Link } from '@/i18n/navigation';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { fetchHomeBanners, type HomeBannerFeed } from '@/lib/api/banners';
 
 const SLIDE_INTERVAL = 5000;
 
-const slideStyles = [
-  {
-    bg: 'from-slate-900 via-slate-800 to-orange-900',
-    accent: 'bg-primary',
-  },
-  {
-    bg: 'from-indigo-900 via-purple-900 to-slate-900',
-    accent: 'bg-indigo-500',
-  },
-  {
-    bg: 'from-emerald-900 via-teal-800 to-slate-900',
-    accent: 'bg-emerald-500',
-  },
-];
+/**
+ * Space held while the feed is in flight.
+ *
+ * Not a banner and not content — just a reserved box, so the rest of the home
+ * page does not jump downwards the moment the real banners arrive. It is the
+ * common case that a site HAS banners, so reserving is the smaller disruption.
+ */
+const RESERVED_HEIGHT = 480;
 
+/**
+ * The viewport width at which an admin's chosen height is honoured exactly.
+ * Below it the banner scales down proportionally rather than cropping harder.
+ */
+const DESIGN_WIDTH = 1440;
+
+/** The banner never collapses below this, however narrow the screen. */
+const MIN_HEIGHT = 200;
+
+/** Where the copy sits, and the scrim that keeps it readable. */
+const ALIGNMENT: Record<string, { row: string; text: string; scrim: string }> = {
+  left: {
+    row: 'justify-start',
+    text: 'text-left',
+    scrim: 'bg-gradient-to-r from-slate-900/80 via-slate-900/45 to-transparent',
+  },
+  right: {
+    row: 'justify-end',
+    text: 'text-right',
+    // Mirrored, so the dark end is always BEHIND the copy rather than opposite
+    // it — a left-side gradient under right-aligned text leaves the words on
+    // the bright edge of the photograph, which is where they become unreadable.
+    scrim: 'bg-gradient-to-l from-slate-900/80 via-slate-900/45 to-transparent',
+  },
+  center: {
+    row: 'justify-center',
+    text: 'text-center',
+    // Centre copy has no single side to shade, so the whole frame is dimmed.
+    scrim: 'bg-slate-900/55',
+  },
+};
+
+/**
+ * The home page hero.
+ *
+ * Renders ONLY what an admin has published. There are no built-in slides: this
+ * used to fall back to three hard-coded ones, which meant a storefront with no
+ * banners configured advertised products and sales nobody had approved, and an
+ * admin who deactivated every banner still saw a hero they could not edit.
+ *
+ * With nothing published the section renders nothing at all, and the page
+ * simply starts at whatever comes next.
+ */
 export function HeroBanner() {
   const t = useTranslations('Home');
-  const locale = useLocale();
   const [current, setCurrent] = useState(0);
-  const [isTransitioning, setIsTransitioning] = useState(false);
+  // `null` means "not loaded yet", which is deliberately distinct from "loaded
+  // and empty" — the first reserves space, the second renders nothing.
+  const [feed, setFeed] = useState<HomeBannerFeed | null>(null);
 
-  const slides = [
-    {
-      title: t('heroTitle'),
-      subtitle: t('heroSubtitle'),
-      cta: t('shopNow'),
-      ctaHref: buildCountryPath(locale, '/products'),
-      secondaryCta: t('exploreDeals'),
-      secondaryHref: buildCountryPath(locale, '/deals'),
-    },
-    {
-      title: t('slide2Title'),
-      subtitle: t('slide2Subtitle'),
-      cta: t('slide2Cta'),
-      ctaHref: buildCountryPath(locale, '/deals'),
-    },
-    {
-      title: t('slide3Title'),
-      subtitle: t('slide3Subtitle'),
-      cta: t('slide3Cta'),
-      ctaHref: buildCountryPath(locale, '/products'),
-    },
-  ];
-
-  const goTo = useCallback((index: number) => {
-    if (isTransitioning) return;
-    setIsTransitioning(true);
-    setCurrent(index);
-    setTimeout(() => setIsTransitioning(false), 600);
-  }, [isTransitioning]);
-
-  const next = useCallback(() => {
-    goTo((current + 1) % slides.length);
-  }, [current, slides.length, goTo]);
-
-  const prev = useCallback(() => {
-    goTo((current - 1 + slides.length) % slides.length);
-  }, [current, slides.length, goTo]);
-
-  // Auto-play
   useEffect(() => {
+    let cancelled = false;
+    fetchHomeBanners().then((data) => {
+      if (!cancelled) setFeed(data);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const banners = feed?.banners ?? [];
+  const slideCount = banners.length;
+
+  /**
+   * The frame every slide is drawn in.
+   *
+   * 'auto' sizes it by ASPECT RATIO rather than by pixels, so the artwork's own
+   * proportions decide the shape and nothing has to be cropped to fit. With
+   * `contain` there are no bars either, because the frame already matches the
+   * picture.
+   *
+   * `maxHeight` still applies — without it a square banner would be as tall as
+   * the viewport is wide, which is 2560px of hero on a large monitor.
+   *
+   * 'fixed' keeps the pixel height, expressed as a clamp so it scales DOWN on
+   * narrow screens instead of cropping harder there.
+   *
+   * Either way the value is derived from the VIEWPORT and the feed, never from
+   * the active slide — so the section cannot re-measure as slides advance,
+   * which is what made the page squeeze.
+   */
+  const height = feed?.carouselHeight ?? RESERVED_HEIGHT;
+  const frameStyle: CSSProperties =
+    feed?.frame.mode === 'auto' && feed.frame.aspectRatio
+      ? { aspectRatio: String(feed.frame.aspectRatio), maxHeight: `${feed.frame.heightPx}px`, width: '100%' }
+      : { height: `clamp(${MIN_HEIGHT}px, calc(100vw * ${height} / ${DESIGN_WIDTH}), ${height}px)` };
+
+  const goTo = useCallback(
+    (index: number) =>
+      // Guarded: with no slides the modulo below would be a division by zero
+      // and set the index to NaN.
+      setCurrent((currentIndex) =>
+        slideCount > 0 ? ((index % slideCount) + slideCount) % slideCount : currentIndex,
+      ),
+    [slideCount],
+  );
+
+  const next = useCallback(() => goTo(current + 1), [current, goTo]);
+  const prev = useCallback(() => goTo(current - 1), [current, goTo]);
+
+  // Reset when the slide count changes, so a shrinking list cannot leave the
+  // index pointing past the end. Deferred a tick rather than set inline:
+  // setting state synchronously inside an effect cascades a second render.
+  useEffect(() => {
+    const reset = setTimeout(() => setCurrent((c) => (c < slideCount ? c : 0)), 0);
+    return () => clearTimeout(reset);
+  }, [slideCount]);
+
+  useEffect(() => {
+    if (slideCount <= 1) return;
     const timer = setInterval(next, SLIDE_INTERVAL);
     return () => clearInterval(timer);
-  }, [next]);
+  }, [next, slideCount]);
 
-  const style = slideStyles[current];
+  // Still loading: hold the space, show no content. Every hook above has
+  // already run, so this early return cannot change the hook order.
+  if (feed === null) {
+    return <div style={frameStyle} className="bg-slate-100" aria-hidden="true" />;
+  }
+
+  // Loaded, and an admin has published nothing. Render nothing rather than
+  // inventing a slide.
+  if (slideCount === 0) return null;
 
   return (
-    <section className="relative overflow-hidden" aria-roledescription="carousel" aria-label={t('heroTitle')}>
-      {/* Background */}
-      <div className={cn('absolute inset-0 bg-gradient-to-br transition-all duration-700 ease-in-out', style.bg)} />
-      <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMC4wMyI+PHBhdGggZD0iTTM2IDE4YzMuMzE0IDAgNiAyLjY4NiA2IDZzLTIuNjg2IDYtNiA2LTYtMi42ODYtNi02IDIuNjg2LTYgNi02eiIvPjwvZz48L2c+PC9zdmc+')] opacity-30" />
+    <section
+      className="relative overflow-hidden bg-slate-900"
+      // Inline because the value is configured per deployment; a Tailwind class
+      // cannot express an arbitrary pixel height set by an admin.
+      style={frameStyle}
+      aria-roledescription="carousel"
+      aria-label={t('bannerCarousel')}
+    >
+      {banners.map((banner, i) => {
+        const align = ALIGNMENT[banner.contentAlign] ?? ALIGNMENT.left;
+        const hasCopy = Boolean(banner.title || banner.subtitle || banner.ctaText);
 
-      {/* Slides */}
-      <div className="relative max-w-[var(--container-max)] mx-auto px-4 sm:px-6 py-20 md:py-28 lg:py-36">
-        {slides.map((slide, i) => (
+        return (
           <div
-            key={i}
+            key={banner.bannerid}
             className={cn(
-              'transition-all duration-600 ease-in-out',
-              i === current
-                ? 'opacity-100 translate-x-0'
-                : 'opacity-0 absolute inset-0 px-4 sm:px-6 py-20 md:py-28 lg:py-36 pointer-events-none',
-              i < current ? '-translate-x-8' : i > current ? 'translate-x-8' : ''
+              'absolute inset-0 transition-opacity duration-700 ease-in-out',
+              i === current ? 'opacity-100' : 'opacity-0 pointer-events-none',
             )}
+            // Only visible where 'contain' letterboxes the artwork. Set per
+            // banner so the bars are a chosen colour rather than whatever
+            // happens to sit behind the section.
+            style={{ backgroundColor: banner.backdropColor }}
             role="group"
             aria-roledescription="slide"
-            aria-label={`${i + 1} / ${slides.length}`}
+            aria-label={`${i + 1} / ${slideCount}`}
             aria-hidden={i !== current}
           >
-            <div className="max-w-2xl">
-              <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-tight tracking-tight">
-                {slide.title}
-              </h2>
-              <p className="mt-6 text-lg md:text-xl text-slate-300 leading-relaxed max-w-xl">
-                {slide.subtitle}
-              </p>
-              <div className="mt-8 flex flex-col sm:flex-row gap-4">
-                <Link
-                  href={slide.ctaHref}
-                  className="btn-primary text-base px-8 py-4 text-center"
+            <Image
+              src={banner.imageUrl}
+              alt={banner.title ?? `Banner ${i + 1}`}
+              fill
+              sizes="100vw"
+              // The first banner is the page's largest contentful paint.
+              priority={i === 0}
+              className={
+                banner.imageFit === 'contain' ? 'object-contain'
+                : banner.imageFit === 'fill' ? 'object-fill'
+                : banner.imageFit === 'scale-down' ? 'object-scale-down'
+                : banner.imageFit === 'none' ? 'object-none'
+                : 'object-cover'
+              }
+              // Which part of the artwork survives a crop. Only meaningful for
+              // the fits that actually crop; harmless for the rest.
+              style={{ objectPosition: banner.focalPoint }}
+            />
+
+            {hasCopy && (
+              <>
+                {/* Only drawn when there is copy to make readable — an
+                    image-only banner should not be dimmed for nothing. */}
+                <div className={cn('absolute inset-0', align.scrim)} />
+                <div
+                  className={cn(
+                    'relative h-full max-w-[var(--container-max)] mx-auto px-4 sm:px-6 flex items-center',
+                    align.row,
+                  )}
                 >
-                  {slide.cta}
-                </Link>
-                {slide.secondaryCta && (
-                  <Link
-                    href={slide.secondaryHref!}
-                    className="btn-outline border-white text-white hover:bg-white hover:text-slate-900 text-base px-8 py-4 text-center"
-                  >
-                    {slide.secondaryCta}
-                  </Link>
-                )}
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Navigation arrows */}
-      <button
-        onClick={prev}
-        className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-sm flex items-center justify-center text-white transition-colors"
-        aria-label="Previous slide"
-      >
-        <ChevronLeft className="w-5 h-5" />
-      </button>
-      <button
-        onClick={next}
-        className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-sm flex items-center justify-center text-white transition-colors"
-        aria-label="Next slide"
-      >
-        <ChevronRight className="w-5 h-5" />
-      </button>
-
-      {/* Dots */}
-      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2">
-        {slides.map((_, i) => (
-          <button
-            key={i}
-            onClick={() => goTo(i)}
-            className={cn(
-              'h-2 rounded-full transition-all duration-300',
-              i === current ? 'w-8 bg-white' : 'w-2 bg-white/40 hover:bg-white/60'
+                  <div className={cn('max-w-xl', align.text)}>
+                    {banner.title && (
+                      <h2 className="text-2xl sm:text-3xl md:text-5xl font-bold text-white leading-tight tracking-tight">
+                        {banner.title}
+                      </h2>
+                    )}
+                    {banner.subtitle && (
+                      <p className="mt-3 md:mt-4 text-sm sm:text-base md:text-lg text-slate-200 leading-relaxed">
+                        {banner.subtitle}
+                      </p>
+                    )}
+                    {banner.ctaText && (
+                      <Link
+                        href={banner.ctaHref || buildPath('/products')}
+                        className="btn-primary mt-4 md:mt-6 inline-block text-sm sm:text-base px-6 sm:px-8 py-3 sm:py-3.5"
+                      >
+                        {banner.ctaText}
+                      </Link>
+                    )}
+                  </div>
+                </div>
+              </>
             )}
-            aria-label={`Go to slide ${i + 1}`}
-            aria-current={i === current ? 'true' : undefined}
-          />
-        ))}
-      </div>
+          </div>
+        );
+      })}
+
+      {slideCount > 1 && (
+        <>
+          <button
+            onClick={prev}
+            className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/30 hover:bg-black/50 backdrop-blur-sm flex items-center justify-center text-white transition-colors z-10"
+            aria-label="Previous slide"
+          >
+            <ChevronLeft className="w-5 h-5" />
+          </button>
+          <button
+            onClick={next}
+            className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/30 hover:bg-black/50 backdrop-blur-sm flex items-center justify-center text-white transition-colors z-10"
+            aria-label="Next slide"
+          >
+            <ChevronRight className="w-5 h-5" />
+          </button>
+
+          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2 z-10">
+            {Array.from({ length: slideCount }).map((_, i) => (
+              <button
+                key={i}
+                onClick={() => goTo(i)}
+                className={cn(
+                  'h-2 rounded-full transition-all duration-300',
+                  i === current ? 'w-8 bg-white' : 'w-2 bg-white/50 hover:bg-white/70',
+                )}
+                aria-label={`Go to slide ${i + 1}`}
+                aria-current={i === current ? 'true' : undefined}
+              />
+            ))}
+          </div>
+        </>
+      )}
     </section>
   );
 }

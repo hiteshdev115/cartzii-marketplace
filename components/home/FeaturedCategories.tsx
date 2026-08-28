@@ -1,11 +1,11 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useTranslations, useLocale } from 'next-intl';
-import { buildCountryPath } from '@/config/countries';
+import { useTranslations } from 'next-intl';
+import { buildPath } from '@/config/countries';
 import { fetchRootCategories } from '@/lib/api';
 import { Category } from '@/types';
-import Link from 'next/link';
+import { Link } from '@/i18n/navigation';
 import Image from 'next/image';
 import { ArrowRight } from 'lucide-react';
 import { getCategoryIconConfig } from '@/lib/categoryIcons';
@@ -20,19 +20,19 @@ function buildCategoryImageUrl(url: string | undefined): string {
   return `${CATEGORY_CDN}/${url}`;
 }
 
+/** Mirrors the tile's real layout, so nothing shifts when the data lands. */
 function CategorySkeleton() {
   return (
-    <div className="rounded-2xl bg-white border border-slate-100 p-5 animate-pulse">
-      <div className="w-14 h-14 rounded-2xl bg-slate-200 mb-4" />
-      <div className="h-4 bg-slate-200 rounded w-3/4 mb-2" />
-      <div className="h-3 bg-slate-100 rounded w-1/2" />
+    <div className="flex flex-col items-center animate-pulse">
+      <div className="w-20 h-20 rounded-2xl bg-slate-200" />
+      <div className="h-3.5 bg-slate-200 rounded w-16 mt-2.5" />
+      <div className="h-3 bg-slate-100 rounded w-10 mt-1.5" />
     </div>
   );
 }
 
 export function FeaturedCategories() {
   const t = useTranslations('Home');
-  const locale = useLocale();
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -56,7 +56,7 @@ export function FeaturedCategories() {
             <h2 className="text-3xl font-bold text-slate-900">{t('featuredCategories')}</h2>
           </div>
           <Link
-            href={buildCountryPath(locale, '/categories')}
+            href={buildPath('/categories')}
             className="hidden sm:flex items-center gap-1.5 text-sm font-semibold text-primary hover:gap-2.5 transition-all"
           >
             View all <ArrowRight className="w-4 h-4" />
@@ -64,7 +64,10 @@ export function FeaturedCategories() {
         </div>
 
         {/* Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+        {/* More columns than before: eight 80px squares spread across a
+            four-column grid would sit marooned in whitespace, which is the
+            problem this was meant to remove. */}
+        <div className="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-8 gap-3 sm:gap-4">
           {loading
             ? Array.from({ length: 8 }).map((_, i) => <CategorySkeleton key={i} />)
             : categories.map((cat) => {
@@ -74,44 +77,43 @@ export function FeaturedCategories() {
                 return (
                   <Link
                     key={cat.id}
-                    href={buildCountryPath(locale, `/categories/${cat.slug}`)}
-                    className="group flex flex-col bg-white border border-slate-100 rounded-2xl p-5 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300"
+                    href={buildPath(`/categories/${cat.slug}`)}
+                    className="group flex flex-col items-center text-center"
                   >
-                    {/* Icon / Image box */}
-                    <div className="relative w-14 h-14 rounded-2xl overflow-hidden mb-4 flex-shrink-0">
+                    {/* A fixed 80px square, not an aspect-ratio box: the tile
+                        has to stay square at every breakpoint, and a box that
+                        sizes to its grid column grows into a large rectangle
+                        on wide screens. The 56px logo sits inside with even
+                        padding on all four sides. */}
+                    <div className="relative w-20 h-20 rounded-2xl overflow-hidden bg-white border border-slate-100 flex items-center justify-center group-hover:shadow-md group-hover:border-primary/25 transition-all duration-300">
                       {imgSrc ? (
                         <Image
                           src={imgSrc}
                           alt={cat.name}
-                          fill
+                          width={56}
+                          height={56}
                           sizes="56px"
-                          className="object-cover group-hover:scale-110 transition-transform duration-300"
+                          className="w-14 h-14 object-cover rounded-xl group-hover:scale-110 transition-transform duration-300"
                         />
                       ) : (
-                        <div className={`absolute inset-0 bg-gradient-to-br ${gradient} flex items-center justify-center group-hover:scale-105 transition-transform duration-300`}>
+                        <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${gradient} flex items-center justify-center group-hover:scale-105 transition-transform duration-300`}>
                           <Icon className="w-7 h-7 text-white drop-shadow" />
                         </div>
                       )}
                     </div>
 
-                    {/* Name */}
-                    <p className="text-sm font-bold text-slate-900 leading-snug group-hover:text-primary transition-colors">
+                    {/* Below the square rather than beside it — anything beside
+                        a 56px logo makes the tile a wide rectangle again. */}
+                    <p className="mt-2.5 w-full text-xs sm:text-sm font-semibold text-slate-900 leading-snug truncate group-hover:text-primary transition-colors">
                       {cat.name}
                     </p>
-
-                    {/* Meta */}
-                    <p className="mt-1 text-xs text-slate-400 leading-tight">
+                    <p className="w-full text-[11px] text-slate-400 leading-tight truncate">
                       {subCount > 0
                         ? `${subCount} subcategor${subCount === 1 ? 'y' : 'ies'}`
                         : cat.productCount > 0
                         ? `${cat.productCount.toLocaleString()} products`
-                        : 'Explore →'}
+                        : 'Explore'}
                     </p>
-
-                    {/* Arrow */}
-                    <div className="mt-3 flex items-center gap-1 text-xs font-semibold text-primary opacity-0 group-hover:opacity-100 -translate-x-1 group-hover:translate-x-0 transition-all duration-300">
-                      Browse <ArrowRight className="w-3 h-3" />
-                    </div>
                   </Link>
                 );
               })}
@@ -120,7 +122,7 @@ export function FeaturedCategories() {
         {/* Mobile "View all" */}
         <div className="mt-6 text-center sm:hidden">
           <Link
-            href={buildCountryPath(locale, '/categories')}
+            href={buildPath('/categories')}
             className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary"
           >
             View all categories <ArrowRight className="w-4 h-4" />

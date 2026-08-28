@@ -1,10 +1,10 @@
 'use client';
 
-import { useSearchParams, useRouter } from 'next/navigation';
-import { useLocale } from 'next-intl';
+import { useSearchParams } from 'next/navigation';
+import { useRouter } from '@/i18n/navigation';
 import { CheckCircle2, XCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { buildCountryPath } from '@/config/countries';
+import { buildPath } from '@/config/countries';
 
 const EASE = [0.25, 0.1, 0.25, 1] as const;
 
@@ -27,7 +27,6 @@ function fadeUp(delay = 0) {
 export default function CheckoutSuccessPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const locale = useLocale();
 
   const paymentIntent = searchParams.get('payment_intent');
   const redirectStatus = searchParams.get('redirect_status');
@@ -67,7 +66,7 @@ export default function CheckoutSuccessPage() {
             {/* CTA */}
             <motion.div {...fadeUp(0.4)}>
               <button
-                onClick={() => router.push(buildCountryPath(locale, '/'))}
+                onClick={() => router.push(buildPath('/'))}
                 className="btn-primary w-full"
               >
                 Continue Shopping
@@ -94,7 +93,7 @@ export default function CheckoutSuccessPage() {
             {/* CTA */}
             <motion.div {...fadeUp(0.3)}>
               <button
-                onClick={() => router.push(buildCountryPath(locale, '/checkout'))}
+                onClick={() => router.push(buildPath('/checkout'))}
                 className="btn-primary w-full"
               >
                 Try Again

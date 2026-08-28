@@ -1,10 +1,10 @@
 'use client';
 
 import { useState, useRef, useEffect, useCallback } from 'react';
-import Link from 'next/link';
+import { Link } from '@/i18n/navigation';
 import { ChevronDown, ChevronRight, Loader2 } from 'lucide-react';
 import { useTranslations, useLocale } from 'next-intl';
-import { buildCountryPath } from '@/config/countries';
+import { buildPath } from '@/config/countries';
 import { Category } from '@/types';
 import { fetchCategories } from '@/lib/api';
 import { cn } from '@/lib/utils';
@@ -27,7 +27,7 @@ function SubcategoryPanel({
         {categories.map((cat) => (
           <li key={cat.id} onMouseEnter={() => setActiveId(cat.id)}>
             <Link
-              href={buildCountryPath(locale, `/categories/${cat.slug}`)}
+              href={buildPath(`/categories/${cat.slug}`)}
               onClick={onClose}
               className={cn(
                 'flex items-center justify-between px-4 py-2.5 text-sm transition-colors',

@@ -2,13 +2,14 @@
 
 import { useEffect, useState } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
-import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { Link } from '@/i18n/navigation';
+import { useSearchParams } from 'next/navigation';
+import { useRouter } from '@/i18n/navigation';
 import { Mail, KeyRound, ShoppingCart } from 'lucide-react';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { Breadcrumb } from '@/components/layout/Breadcrumb';
-import { buildCountryPath } from '@/config/countries';
+import { buildPath } from '@/config/countries';
 import { api, ApiError } from '@/lib/api/client';
 import { useAuthStore } from '@/stores/authStore';
 import { useHydrated } from '@/hooks/useHydration';
@@ -62,7 +63,7 @@ export function OtpLoginForm() {
 
   useEffect(() => {
     if (shouldBypassOtp) {
-      router.replace(redirectTo ?? buildCountryPath(locale, '/account/orders'));
+      router.replace(redirectTo ?? buildPath('/account/orders'));
     }
   }, [shouldBypassOtp, redirectTo, router, locale]);
 
@@ -122,7 +123,7 @@ export function OtpLoginForm() {
           }
         }
 
-        const destination = redirectTo ?? buildCountryPath(locale, '/account/orders');
+        const destination = redirectTo ?? buildPath('/account/orders');
         router.push(destination);
       }
     } catch (error) {
@@ -228,7 +229,7 @@ export function OtpLoginForm() {
         )}
 
         <p className="text-sm text-slate-500 text-center mt-6">
-          <Link href={buildCountryPath(locale, '/auth/login')} className="text-primary font-medium hover:underline">
+          <Link href={buildPath('/auth/login')} className="text-primary font-medium hover:underline">
             {t('loginWithPasswordInstead')}
           </Link>
         </p>

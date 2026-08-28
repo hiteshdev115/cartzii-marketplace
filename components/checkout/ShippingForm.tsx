@@ -20,6 +20,7 @@ import { useCheckoutStore } from '@/stores/checkoutStore';
 import { AddressAutocompleteInput } from '@/components/checkout/AddressAutocompleteInput';
 import { fetchUserAddresses, createAddress } from '@/lib/api/addresses';
 import { fetchStatesByCountry } from '@/lib/api';
+import { countrySelectOptions, currentCountryIso } from '@/config/countries';
 import { validatePostalCode } from '@/lib/validation/address';
 import type { ApiAddress } from '@/types';
 
@@ -79,12 +80,10 @@ export function ShippingForm({ onSubmit, defaultValues }: ShippingFormProps) {
   const [guestPostalFormatError, setGuestPostalFormatError] = useState<string | null>(null);
   const [newAddrPostalFormatError, setNewAddrPostalFormatError] = useState<string | null>(null);
 
-  // Static country options — CA and US only
-  const COUNTRY_OPTIONS = [
-    { value: '', label: t('selectCountry') },
-    { value: 'CA', label: 'Canada' },
-    { value: 'US', label: 'United States' },
-  ];
+// Only this deployment's country. cartzii.ca ships, taxes and settles in
+// Canada alone, so offering the United States here produces an address the
+// checkout cannot fulfil. See config/countries.ts.
+  const COUNTRY_OPTIONS = countrySelectOptions.map((o) => ({ ...o }));
 
   // Returns conflict message if selected country doesn't match portal
   const getConflictError = (selectedISO: string): string | null => {
@@ -107,7 +106,9 @@ export function ShippingForm({ onSubmit, defaultValues }: ShippingFormProps) {
     formState: { errors },
   } = useForm<ShippingFormData>({
     resolver: zodResolver(shippingSchema),
-    defaultValues: { ...defaultValues, country: defaultValues?.country ?? '' },
+    // Preselected: there is only one option, so an empty value would be a
+    // required field the visitor can only fill one way.
+    defaultValues: { ...defaultValues, country: defaultValues?.country ?? currentCountryIso },
   });
 
   const guestWatchedCountry = watch('country');
@@ -116,7 +117,7 @@ export function ShippingForm({ onSubmit, defaultValues }: ShippingFormProps) {
   // New address form (for logged-in users)
   const newAddressForm = useForm<CheckoutAddressFormData>({
     resolver: zodResolver(checkoutAddressSchema),
-    defaultValues: { country: '' },
+    defaultValues: { country: currentCountryIso },
   });
 
   const newAddrWatchedCountry = newAddressForm.watch('country');

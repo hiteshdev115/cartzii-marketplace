@@ -5,7 +5,7 @@ import { generateAlternates } from '@/lib/seo';
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: 'Deals' });
-  const alternates = generateAlternates(process.env.NEXT_PUBLIC_BASE_URL || 'https://cartzii.com', '/deals', locale);
+  const alternates = await generateAlternates(process.env.NEXT_PUBLIC_BASE_URL || 'https://cartzii.com', '/deals');
   return { title: `${t('title')} - Cartzii`, alternates };
 }
 

@@ -1,19 +1,44 @@
 'use client';
 
 import { useTranslations, useLocale } from 'next-intl';
-import Image from 'next/image';
-import Link from 'next/link';
-import { allDeals } from '@/lib/mockData';
+import { Link } from '@/i18n/navigation';
+import { useEffect, useMemo, useState } from 'react';
+import { fetchAllProducts } from '@/lib/api/products';
+import { getCountryFromLocale } from '@/config/countries';
+import { ProductCard } from '@/components/products/ProductCard';
+import { ProductCardSkeleton } from '@/components/ui/Skeleton';
+import type { Product } from '@/types';
 import { Breadcrumb } from '@/components/layout/Breadcrumb';
-import { CountdownTimer } from '@/components/ui/CountdownTimer';
-import { Badge } from '@/components/ui/Badge';
-import { buildCountryPath } from '@/config/countries';
-import { formatPrice } from '@/lib/utils';
-import { Flame, ArrowRight } from 'lucide-react';
+import { buildPath } from '@/config/countries';
+import { Flame } from 'lucide-react';
 
 export function DealsContent() {
   const t = useTranslations('Deals');
   const locale = useLocale();
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    // Was lib/mockData's `allDeals` — invented products with invented
+    // countdowns. Deals are real now: the API discounts the price row while a
+    // seller's window is open and attaches the window to it.
+    fetchAllProducts(getCountryFromLocale(locale))
+      .then((all) => { if (!cancelled) setProducts(all); })
+      .catch(() => { if (!cancelled) setProducts([]); })
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, [locale]);
+
+  // Only products actually on a flash deal — a `deal` is attached solely while
+  // its window is open, so this needs no date arithmetic of its own.
+  const deals = useMemo(
+    () =>
+      products
+        .filter((p) => !!p.deal)
+        .sort((a, b) => (b.deal!.discountPercent - a.deal!.discountPercent)),
+    [products],
+  );
 
   return (
     <main className="max-w-[var(--container-max)] mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -28,45 +53,29 @@ export function DealsContent() {
         <p className="text-slate-600">{t('subtitle')}</p>
       </div>
 
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {allDeals.map((deal) => (
-          <Link
-            key={deal.id}
-            href={buildCountryPath(locale, `/products/${deal.product.slug}`)}
-            className="group card-interactive overflow-hidden"
-          >
-            <div className="relative aspect-[4/3] overflow-hidden">
-              <Image
-                src={deal.product.images[0]}
-                alt={deal.product.name}
-                fill
-                className="object-cover group-hover:scale-105 transition-transform duration-500"
-                sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
-              />
-              <div className="absolute top-3 left-3">
-                <Badge variant="sale">-{deal.discountPercent}%</Badge>
-              </div>
-            </div>
-            <div className="p-4">
-              <h3 className="font-semibold text-slate-900 group-hover:text-primary transition-colors mb-2">
-                {deal.product.name}
-              </h3>
-              <p className="text-sm text-slate-500 mb-3">{deal.product.shortDescription}</p>
-              <div className="flex items-center gap-2 mb-3">
-                <span className="text-lg font-bold text-primary">{formatPrice(deal.dealPrice, locale)}</span>
-                <span className="text-sm text-slate-400 line-through">{formatPrice(deal.originalPrice, locale)}</span>
-              </div>
-              <CountdownTimer endDate={deal.endsAt} />
-              <div className="flex items-center justify-between mt-3">
-                <span className="text-xs text-slate-500 capitalize">{deal.type}</span>
-                <span className="text-sm text-primary font-medium flex items-center gap-1">
-                  {t('shopNow')} <ArrowRight className="w-4 h-4" />
-                </span>
-              </div>
-            </div>
+      {loading ? (
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-6">
+          {Array.from({ length: 10 }).map((_, i) => <ProductCardSkeleton key={i} />)}
+        </div>
+      ) : deals.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-20 gap-3 text-center">
+          <p className="text-lg font-semibold text-slate-700">{t('noDealsTitle')}</p>
+          <p className="text-sm text-slate-500">{t('noDealsBody')}</p>
+          <Link href={buildPath('/products')} className="btn-secondary mt-2">
+            {t('browseAll')}
           </Link>
+        </div>
+      ) : (
+      // The same card and grid as /products. The bespoke deal card this
+      // replaced used a 4:3 image, its own price markup and had neither
+      // add-to-cart nor wishlist — so a shopper browsing deals could not do
+      // the one thing the page exists for.
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-6">
+        {deals.map((product) => (
+          <ProductCard key={product.id} product={product} />
         ))}
       </div>
+      )}
     </main>
   );
 }

@@ -3,9 +3,10 @@
 import { useCallback, useEffect, useState } from 'react';
 import Image from 'next/image';
 import { useLocale, useTranslations } from 'next-intl';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
+import { useRouter } from '@/i18n/navigation';
 import { CheckCircle2, Mail, Printer, RefreshCw } from 'lucide-react';
-import { buildCountryPath } from '@/config/countries';
+import { buildPath } from '@/config/countries';
 import { getOrderByNumber } from '@/lib/api/orders';
 import type { OrderConfirmation } from '@/types/order';
 import { safeCurrencyCode } from '@/lib/utils';
@@ -104,7 +105,7 @@ export function OrderConfirmationContent({ orderNumber }: OrderConfirmationConte
   const handlePrint = () => window.print();
 
   const handleContinueShopping = () => {
-    router.push(buildCountryPath(locale, '/products'));
+    router.push(buildPath('/products'));
   };
 
   if (loading) {

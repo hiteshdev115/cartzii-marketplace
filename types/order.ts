@@ -148,6 +148,15 @@ export interface PlaceOrderShippingAddress {
 
 export interface PlaceOrderItem {
   productId: number;
+  /**
+   * Which variant, when the product has them.
+   *
+   * Stock is held per variant, so this is what the server takes the units
+   * from. It also narrows price validation: given a variant, the server
+   * accepts only that variant's price instead of any price the product sells
+   * at. Absent for products with no variants.
+   */
+  variantId?: number;
   quantity: number;
   /** Price per unit in smallest currency unit (cents). */
   unitPrice: number;

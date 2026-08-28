@@ -5,11 +5,9 @@ import {
   Package, Headphones, MapPin, Rocket
 } from 'lucide-react';
 import { generateAlternates } from '@/lib/seo';
-import Link from 'next/link';
-
-export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
-  const { locale } = await params;
-  const alternates = generateAlternates(process.env.NEXT_PUBLIC_BASE_URL || 'https://cartzii.com', '/about', locale);
+import { Link } from '@/i18n/navigation';
+export async function generateMetadata() {
+  const alternates = await generateAlternates(process.env.NEXT_PUBLIC_BASE_URL || 'https://cartzii.com', '/about');
   return {
     title: 'About Us - Cartzii | Your Trusted Marketplace',
     description: 'Discover the story behind Cartzii — a next-generation marketplace built on trust, quality, and innovation. Learn about our mission, values, and the team behind your shopping experience.',

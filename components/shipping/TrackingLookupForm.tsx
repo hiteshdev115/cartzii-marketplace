@@ -1,14 +1,13 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { useLocale, useTranslations } from 'next-intl';
+import { useRouter } from '@/i18n/navigation';
+import { useTranslations } from 'next-intl';
 import { Search } from 'lucide-react';
-import { buildCountryPath } from '@/config/countries';
+import { buildPath } from '@/config/countries';
 
 export function TrackingLookupForm() {
   const t = useTranslations('Tracking');
-  const locale = useLocale();
   const router = useRouter();
   const [code, setCode] = useState('');
   const [error, setError] = useState('');
@@ -21,7 +20,7 @@ export function TrackingLookupForm() {
       return;
     }
     setError('');
-    router.push(buildCountryPath(locale, `/track/${encodeURIComponent(trimmed)}`));
+    router.push(buildPath(`/track/${encodeURIComponent(trimmed)}`));
   };
 
   return (

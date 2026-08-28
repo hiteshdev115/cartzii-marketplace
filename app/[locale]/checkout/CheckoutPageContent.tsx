@@ -1,9 +1,9 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter } from '@/i18n/navigation';
 import { useLocale, useTranslations } from 'next-intl';
-import { buildCountryPath, getCountryConfig, getCountryFromLocale } from '@/config/countries';
+import { buildPath, getCountryConfig, getCountryFromLocale } from '@/config/countries';
 import { useCartStore } from '@/stores/cartStore';
 import { useAuthStore } from '@/stores/authStore';
 import { PaymentForm, type PaymentSubmitResult } from '@/components/checkout/PaymentForm';
@@ -30,7 +30,9 @@ export function CheckoutPageContent() {
   const locale = useLocale();
   const t = useTranslations('Checkout');
   const tCommon = useTranslations('Common');
-  const { currency } = getCountryConfig(locale); // 'CAD' for /ca, 'USD' for /us
+  // CAD on cartzii.ca, USD on cartzii.com — the country is the domain now,
+  // not a path segment.
+  const { currency } = getCountryConfig(locale);
 
   // Derive subtotal from live cart
   const cartItems = useCartStore((s) => s.items);
@@ -163,6 +165,11 @@ export function CheckoutPageContent() {
         const price = item.product.salePrice || item.product.price;
         return {
           productId: Number(item.product.id),
+          // The cart has always known which variant this is; checkout used to
+          // drop it. Without it the server cannot tell Red/S from Blue/M, so
+          // it has no variant to take stock from — and orderPricing falls back
+          // to accepting any of the product's prices instead of that variant's.
+          ...(item.variantId ? { variantId: item.variantId } : {}),
           quantity: item.quantity,
           unitPrice: Math.round(price * 100),
           totalPrice: Math.round(price * item.quantity * 100),
@@ -230,7 +237,7 @@ export function CheckoutPageContent() {
       setPlacedOrder(order);
       await useCartStore.getState().clearCart();
       const confirmationQuery = order.accountCreated ? '?newAccount=1' : '';
-      router.push(buildCountryPath(locale, `/order-confirmation/${order.orderNumber}${confirmationQuery}`));
+      router.push(buildPath(`/order-confirmation/${order.orderNumber}${confirmationQuery}`));
     } catch (cause) {
       let message = t('orderPlacementFailed');
       if (cause instanceof ApiError) {
@@ -313,9 +320,7 @@ export function CheckoutPageContent() {
                 currency={currency}
                 onSuccess={(paymentIntentId) => {
                   router.push(
-                    buildCountryPath(
-                      locale,
-                      `/checkout/success?payment_intent=${encodeURIComponent(paymentIntentId)}`,
+                    buildPath(`/checkout/success?payment_intent=${encodeURIComponent(paymentIntentId)}`,
                     ),
                   );
                 }}

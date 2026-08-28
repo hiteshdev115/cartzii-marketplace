@@ -25,7 +25,6 @@
     "showLess": "Voir Moins",
     "search": "Rechercher",
     "noResults": "Aucun résultat trouvé",
-    "currency": "CAD",
     "addToCart": "Ajouter au Panier",
     "buyNow": "Acheter Maintenant",
     "learnMore": "En Savoir Plus"
@@ -62,16 +61,7 @@
     "contact": "Contact"
   },
   "Home": {
-    "heroTitle": "Découvrez des Produits que Vous Allez Adorer",
-    "heroSubtitle": "Explorez des milliers de produits sélectionnés par des vendeurs de confiance avec livraison rapide et retours faciles.",
-    "shopNow": "Acheter Maintenant",
-    "exploreDeals": "Explorer les Offres",
-    "slide2Title": "Jusqu'à 40 % de réduction — Soldes d'été",
-    "slide2Subtitle": "Ne manquez pas notre plus grande vente de la saison. Des marques premium à des prix imbattables, pour un temps limité.",
-    "slide2Cta": "Voir les Soldes",
-    "slide3Title": "Nouveautés Chaque Semaine",
-    "slide3Subtitle": "Restez à la pointe des tendances avec des nouveautés de vendeurs de confiance. Qualité garantie avec retours gratuits.",
-    "slide3Cta": "Voir les Nouveautés",
+    "bannerCarousel": "Bannières en vedette",
     "featuredCategories": "Acheter par Catégorie",
     "featuredCategoriesSubtitle": "Parcourez nos catégories les plus populaires",
     "trending": "Tendances du Moment",
@@ -95,7 +85,8 @@
     "benefit3Title": "Retours Faciles",
     "benefit3Desc": "Politique de retour sans tracas de 30 jours sur toutes les commandes.",
     "benefit4Title": "Support 24/7",
-    "benefit4Desc": "Notre équipe de support est là pour vous à tout moment."
+    "benefit4Desc": "Notre équipe de support est là pour vous à tout moment.",
+    "flashDealsMinDiscount": "Économisez {percent}% ou plus, jusqu'à épuisement des stocks"
   },
   "Products": {
     "allProducts": "Tous les Produits",
@@ -124,7 +115,7 @@
     "filterSize": "Taille",
     "filterAvailability": "Disponibilité",
     "inStock": "En Stock",
-    "outOfStock": "Rupture de Stock",
+    "outOfStock": "Rupture de stock",
     "onSale": "En Solde",
     "loadMore": "Charger Plus de Produits",
     "addToCart": "Ajouter au Panier",
@@ -135,7 +126,23 @@
     "new": "NOUVEAU",
     "sale": "SOLDE",
     "soldOut": "ÉPUISÉ",
-    "off": "-{percent}%"
+    "off": "-{percent}%",
+    "filterDeals": "Promotions",
+    "filterDiscount": "Remise",
+    "onSaleOnly": "En promotion seulement",
+    "discountMin": "Remise minimale",
+    "discountMax": "Remise maximale",
+    "priceMin": "Min",
+    "priceMax": "Max",
+    "priceAny": "Tous",
+    "ratingAndUp": "{rating}+ étoiles",
+    "activeFilters": "Filtres actifs :",
+    "noResultsTitle": "Aucun produit ne correspond à vos filtres",
+    "noResultsBody": "Essayez de retirer un filtre ou d'élargir la fourchette de prix.",
+    "close": "Fermer",
+    "backInStockSoon": "Bientôt de retour",
+    "onlyLeft": "Plus que {count}",
+    "specialOffer": "Offre spéciale · {percent}% de réduction"
   },
   "ProductDetail": {
     "description": "Description",
@@ -567,7 +574,11 @@
     "shopNow": "Achetez Maintenant",
     "hotDeals": "Offres Brûlantes",
     "dealOfTheDay": "Offre du Jour",
-    "limitedTime": "Offre à Durée Limitée"
+    "limitedTime": "Offre à Durée Limitée",
+    "flashDeal": "Vente éclair",
+    "noDealsTitle": "Aucune vente éclair en cours",
+    "noDealsBody": "Revenez bientôt — les vendeurs ajoutent régulièrement de nouvelles offres.",
+    "browseAll": "Voir tous les produits"
   },
   "Footer": {
     "company": "Entreprise",

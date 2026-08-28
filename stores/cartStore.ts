@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { CartItem, DetailVariant, Product } from '@/types';
-import { getCountryConfig } from '@/config/countries';
+import { getCountryConfig, currentCurrency } from '@/config/countries';
 import { addToGuestCart } from '@/lib/guestCart';
 import {
   addCartItemAPI,
@@ -114,7 +114,9 @@ function mapAPIItemToCartItem(item: CartAPIItem): CartItem {
     description: item.product.shortdescription || '',
     shortDescription: item.product.shortdescription || '',
     price,
-    currency: item.currencycode || 'USD',
+    // Falls back to this deployment's currency, not USD: on cartzii.ca a
+    // missing currency code meant a Canadian cart quietly priced in USD.
+    currency: item.currencycode || currentCurrency,
     images: [imageUrl],
     category: item.product.category?.categoryname || '',
     categorySlug: item.product.category?.categoryslug || '',
@@ -130,6 +132,9 @@ function mapAPIItemToCartItem(item: CartAPIItem): CartItem {
     isFeatured: false,
     isBestSeller: false,
     specifications: {},
+    // Rebuilt from a cart line / search hit, not the catalogue: this shape is
+    // only used to add to cart, and carries no attribute data to begin with.
+    attributes: {},
     createdAt: item.addedat,
     // Seller info — required for multi-seller shipping-rate grouping.
     // Prefer the value on the product object; fall back to the item-level
@@ -217,7 +222,7 @@ function mapBackendItemToCartItem(item: BackendCartItem): CartItem {
     description: item.product.shortdescription ?? '',
     shortDescription: item.product.shortdescription ?? '',
     price,
-    currency: item.currencycode ?? 'USD',
+    currency: item.currencycode ?? currentCurrency,
     // Use the resolved image directly — do NOT re-fetch or fall back to a
     // product-level default image.
     images: [imageUrl],
@@ -235,6 +240,9 @@ function mapBackendItemToCartItem(item: BackendCartItem): CartItem {
     isFeatured: false,
     isBestSeller: false,
     specifications: {},
+    // Rebuilt from a cart line / search hit, not the catalogue: this shape is
+    // only used to add to cart, and carries no attribute data to begin with.
+    attributes: {},
     createdAt: new Date().toISOString(),
     sellerId: item.product.sellerid ?? item.sellerid,
     sellerName: item.product.sellername,

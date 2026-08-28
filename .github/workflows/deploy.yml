@@ -1,0 +1,162 @@
+name: Deploy
+
+# Two branches, and every push fans out to both countries in that environment.
+#   feature/dev  →  QA    →  cartzii-qa-ca-marketplace    + cartzii-qa-us-marketplace
+#   main         →  PROD  →  cartzii-prod-ca-marketplace  + cartzii-prod-us-marketplace
+#
+# Layout, ports and process names come from section 04 of
+# cartzii-api-server/docs/architecture/deployment-runbook.md.
+
+on:
+  push:
+    branches: [main, feature/dev]
+  workflow_dispatch:
+
+# Serialised per branch. Two overlapping deploys would race on `git reset
+# --hard` in the same checkout and leave a slot on a half-applied tree.
+concurrency:
+  group: deploy-marketplace-${{ github.ref_name }}
+  cancel-in-progress: false
+
+env:
+  NODE_VERSION: '20'
+
+jobs:
+  # Runs on a GitHub runner BEFORE anything touches the VPS. The deploy job
+  # below does `git reset --hard` + a rebuild in place, so a failure there is a
+  # broken live site — lint has to gate it, not follow it.
+  #
+  # Once, outside the matrix: CA and US deploy the same commit, so linting it
+  # twice tests nothing and doubles the wait.
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Run lint
+        run: npm run lint
+
+  deploy:
+    name: Deploy ${{ matrix.country }}
+    needs: lint
+    # ── PRODUCTION DEPLOYS ARE DISABLED ─────────────────────────────────────
+    # Cartzii is not live yet — QA is the only environment being deployed. A
+    # push to main still runs this workflow so the branch stays exercised, but
+    # the deploy is skipped rather than touching /srv/cartzii/prod/*.
+    #
+    # TO GO LIVE: delete the `github.ref_name != 'main'` clause below. Nothing
+    # else changes — the prod matrix, ports, env files and pm2 process names
+    # are already in place and tested.
+    if: github.ref_name != 'main'
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        country: [ca, us]
+      # One country at a time. Both deploys land on the SAME box, and a Next
+      # build peaks at a couple of GB — two at once exhausted 7.8 GB of RAM
+      # (2.4 GB of which the pm2 processes already hold) and the kernel killed
+      # the second build: `Killed`, exit 137, no error of its own.
+      #
+      # This does not weaken fail-fast: false below. That governs whether one
+      # country's FAILURE aborts the other, which it still must not.
+      max-parallel: 1
+      # A US deploy failing must never abort the Canadian one. That
+      # independence is the whole reason for two deployments rather than two
+      # codebases.
+      fail-fast: false
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          # This repo's secrets were named QA_SSH_* back when it only deployed
+          # QA. It deploys production too now, so the VPS_* names the other
+          # three repos use are preferred — with the old names kept as a
+          # fallback so this workflow runs before those secrets are renamed.
+          host: ${{ secrets.VPS_HOST || secrets.QA_SSH_HOST }}
+          username: ${{ secrets.VPS_USER || secrets.QA_SSH_USERNAME }}
+          # key wins when set; password is the fallback for hosts not yet on keys.
+          key: ${{ secrets.VPS_SSH_KEY || secrets.QA_SSH_KEY }}
+          password: ${{ secrets.VPS_PASSWORD || secrets.QA_SSH_PASSWORD }}
+          port: ${{ secrets.VPS_PORT || 22 }}
+          command_timeout: 20m
+          script_stop: true
+          script: |
+            set -euo pipefail
+
+            # Values are substituted by GitHub before this script is sent, so
+            # nothing depends on the remote shell receiving exported variables.
+            # They were passed via `envs:` before; an unset one then met
+            # `set -u` and killed the run with almost no output, which is
+            # indistinguishable from a connection failure in the log.
+            DEPLOY_ENV="${{ github.ref_name == 'main' && 'prod' || 'qa' }}"
+            COUNTRY="${{ matrix.country }}"
+            BRANCH="${{ github.ref_name }}"
+            echo "==> slot: $DEPLOY_ENV/$COUNTRY  branch: $BRANCH"
+
+            # nvm is not installed for every account, and node is on PATH
+            # without it here. Guarded with `if` so a missing file is not an
+            # error under `set -e`.
+            export NVM_DIR="$HOME/.nvm"
+            if [ -s "$NVM_DIR/nvm.sh" ]; then . "$NVM_DIR/nvm.sh"; fi
+
+            DIR="/srv/cartzii/$DEPLOY_ENV/$COUNTRY/marketplace"
+            APP="cartzii-$DEPLOY_ENV-$COUNTRY-marketplace"
+            ENV_FILE=".env.$DEPLOY_ENV.$COUNTRY"
+
+            cd "$DIR"
+
+            # Env file is NOT in the repo — it carries the guest token. Each
+            # slot's file is created once on the server. Fail here rather than
+            # after `git reset --hard`, so a misconfigured slot is never left
+            # mid-deploy.
+            if [ ! -f "$ENV_FILE" ]; then
+              echo "::error::$DIR/$ENV_FILE is missing. Create it from ${ENV_FILE}.example before deploying."
+              exit 1
+            fi
+
+            echo "==> fetch $BRANCH"
+            git fetch --prune origin
+            git reset --hard "origin/$BRANCH"
+
+            echo "==> install"
+            npm ci --no-audit --no-fund
+
+            # build:$DEPLOY_ENV:$COUNTRY, never plain `npm run build`. Every
+            # per-slot value in this app is NEXT_PUBLIC_*, which Next inlines
+            # into the bundle at BUILD time — a bundle built without the slot's
+            # env file talks to the wrong country's API no matter what pm2 sets
+            # in the environment afterwards.
+            # The script also runs `standalone:assets`, which copies
+            # public/ and .next/static into .next/standalone — the
+            # standalone server does not bundle them, and without that
+            # copy the site boots and 404s every stylesheet and image.
+            echo "==> build $DEPLOY_ENV/$COUNTRY"
+            NEXT_TELEMETRY_DISABLED=1 npm run "build:$DEPLOY_ENV:$COUNTRY"
+
+            # Next's image optimizer caches its output keyed by URL, not by file
+            # contents — replacing an image behind an existing path (a new logo
+            # at the same filename) otherwise keeps serving the old optimized
+            # copy indefinitely. Only the image cache is dropped; the rest of
+            # .next/cache is the build cache and is worth keeping.
+            echo "==> clear next image cache"
+            rm -rf .next/cache/images
+
+            # --update-env because pm2 caches a process's environment at start;
+            # a plain reload would keep serving the previous values.
+            echo "==> reload $APP"
+            pm2 reload "$APP" --update-env 2>/dev/null \
+              || pm2 start ecosystem.config.js --only "$APP"
+            pm2 save
+
+            echo "==> done: $APP @ $(git rev-parse --short HEAD)"

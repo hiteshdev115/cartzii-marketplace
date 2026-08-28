@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
-import Link from 'next/link';
+import { Link } from '@/i18n/navigation';
 import Image from 'next/image';
-import { buildCountryPath } from '@/config/countries';
+import { buildPath } from '@/config/countries';
 import { mockOrders } from '@/lib/mockData';
 import { Breadcrumb } from '@/components/layout/Breadcrumb';
 import { formatPrice, formatDate } from '@/lib/utils';
@@ -84,7 +84,7 @@ export function AccountDashboard() {
         {quickLinks.map((link) => (
           <Link
             key={link.label}
-            href={buildCountryPath(locale, link.href)}
+            href={buildPath(link.href)}
             className="card-base p-4 flex items-center gap-3 hover:border-primary transition-colors"
           >
             <link.icon className="w-8 h-8 text-primary" />
@@ -100,7 +100,7 @@ export function AccountDashboard() {
       <div className="bg-white rounded-2xl border p-6">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold">{t('recentOrders')}</h2>
-          <Link href={buildCountryPath(locale, '/account/orders')} className="text-sm text-primary hover:underline flex items-center gap-1">
+          <Link href={buildPath('/account/orders')} className="text-sm text-primary hover:underline flex items-center gap-1">
             {t('viewAll')} <ArrowRight className="w-4 h-4" />
           </Link>
         </div>

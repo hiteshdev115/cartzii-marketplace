@@ -2,11 +2,11 @@
 
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
-import Link from 'next/link';
+import { Link } from '@/i18n/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import { QRCodeSVG } from 'qrcode.react';
 import { ArrowLeft, Check, Download, ExternalLink, Loader2, Package, XCircle } from 'lucide-react';
-import { buildCountryPath } from '@/config/countries';
+import { buildPath } from '@/config/countries';
 import { getReturnById, type ReturnRequest } from '@/lib/api/returns';
 import { subscribeToOrderUpdates } from '@/lib/api/orders';
 import { getReturnStage, type ReturnStageKey } from '@/lib/returnConstants';
@@ -76,7 +76,7 @@ function ReturnDetailContent({ returnId }: { returnId: number }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ret?.orderId]);
 
-  const backHref = buildCountryPath(locale, '/account/orders');
+  const backHref = buildPath('/account/orders');
 
   if (loading) {
     return (
@@ -262,7 +262,7 @@ function ReturnDetailContent({ returnId }: { returnId: number }) {
 
       {ret.trackingCode && (
         <Link
-          href={`${buildCountryPath(locale, `/track/${encodeURIComponent(ret.trackingCode)}`)}?from=return&returnId=${ret.returnId}`}
+          href={`${buildPath(`/track/${encodeURIComponent(ret.trackingCode)}`)}?from=return&returnId=${ret.returnId}`}
           className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline"
         >
           {t('trackPackage')}

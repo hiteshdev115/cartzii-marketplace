@@ -26,7 +26,26 @@ export interface Product {
   isFeatured: boolean;
   isBestSeller: boolean;
   specifications: Record<string, string>;
+  /**
+   * Product-level attributes, keyed by attribute name ("Age Group", "Brand",
+   * "Screen Size"). Every filter beyond price/rating/discount reads from here,
+   * which is what lets a category page offer Fashion's attributes without any
+   * of them being hardcoded in the frontend.
+   */
+  attributes: Record<string, string[]>;
   createdAt: string;
+  /**
+   * The flash deal behind this product's price, when one is running.
+   *
+   * Present only while the window is open — the API attaches it to the price
+   * row it discounted, so its absence means the price is the ordinary one.
+   */
+  deal?: {
+    dealId: number;
+    discountPercent: number;
+    startsAt: string;
+    endsAt: string;
+  };
   /** Full variant details – populated on detail page only */
   detailVariants?: DetailVariant[];
   /**
@@ -281,7 +300,14 @@ export interface Deal {
 
 export interface FilterState {
   categories: string[];
-  priceRange: [number, number];
+  /**
+   * Inclusive price bounds; `null` means unbounded on that side. Modelled as
+   * nullable rather than defaulting to something like [0, 500], because a
+   * numeric default is indistinguishable from a deliberate choice — the old
+   * bar defaulted to 500 and then tested `< 1000`, so it reported a price
+   * filter as active before the user had touched anything.
+   */
+  priceRange: [number | null, number | null];
   brands: string[];
   ratings: number[];
   colors: string[];
@@ -289,6 +315,16 @@ export interface FilterState {
   availability: 'all' | 'inStock' | 'outOfStock' | 'onSale';
   sortBy: SortOption;
   searchQuery: string;
+  /** Show only products with a live discount. */
+  onSaleOnly: boolean;
+  /** Percent off, inclusive: [0, 80] means "no discount filter applied". */
+  discountRange: [number, number];
+  /**
+   * Selected values for any attribute, keyed by attribute name. Age Group is
+   * just another entry here — it is a global attribute like Brand or Gender,
+   * so giving it a dedicated field would mean two code paths for one concept.
+   */
+  attributes: Record<string, string[]>;
 }
 
 export type SortOption = 'relevance' | 'price-low' | 'price-high' | 'newest' | 'best-selling' | 'top-rated';

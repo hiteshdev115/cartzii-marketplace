@@ -2,12 +2,12 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import Image from 'next/image';
-import Link from 'next/link';
+import { Link } from '@/i18n/navigation';
 import { useTranslations, useLocale } from 'next-intl';
 import { Search, Loader2 } from 'lucide-react';
 import { searchProductsAPI } from '@/lib/api';
 import type { SearchProductResult } from '@/lib/api';
-import { buildCountryPath, getCountryFromLocale } from '@/config/countries';
+import { buildPath, getCountryFromLocale } from '@/config/countries';
 import { useDebounce } from '@/hooks/useDebounce';
 import { formatPrice } from '@/lib/utils';
 
@@ -82,7 +82,7 @@ export function SearchDropdown({ query, onSelect, visible }: SearchDropdownProps
             {results.map((item) => (
               <li key={item.productid}>
                 <Link
-                  href={buildCountryPath(locale, `/products/${item.slug}`)}
+                  href={buildPath(`/products/${item.slug}`)}
                   onClick={onSelect}
                   className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50 transition-colors"
                 >
@@ -125,7 +125,7 @@ export function SearchDropdown({ query, onSelect, visible }: SearchDropdownProps
           </ul>
           {total > 6 && (
             <Link
-              href={buildCountryPath(locale, `/search?q=${encodeURIComponent(debouncedQuery)}`)}
+              href={buildPath(`/search?q=${encodeURIComponent(debouncedQuery)}`)}
               onClick={onSelect}
               className="block px-4 py-3 text-center text-sm font-medium text-primary hover:bg-slate-50 border-t border-gray-100 transition-colors"
             >

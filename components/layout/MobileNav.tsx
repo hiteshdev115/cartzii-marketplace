@@ -4,12 +4,12 @@ import { useState, useSyncExternalStore, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { Menu, X, Home, Tag, Sparkles, ChevronDown, ChevronRight, Globe, ShoppingBag } from 'lucide-react';
 import { useTranslations, useLocale } from 'next-intl';
-import { buildCountryPath, getCountryFromLocale, countries, extractPagePath } from '@/config/countries';
+import { buildPath, getCountryFromLocale, countries, extractPagePath } from '@/config/countries';
 import { fetchCategories } from '@/lib/api';
 import { Category } from '@/types';
-import Link from 'next/link';
+import { Link } from '@/i18n/navigation';
 import Image from 'next/image';
-import { usePathname } from 'next/navigation';
+import { usePathname } from '@/i18n/navigation';
 import { cn } from '@/lib/utils';
 
 function MobileCategoryTree({
@@ -35,7 +35,7 @@ function MobileCategoryTree({
           <li key={cat.id}>
             <div className="flex items-center">
               <Link
-                href={buildCountryPath(locale, `/categories/${cat.slug}`)}
+                href={buildPath(`/categories/${cat.slug}`)}
                 onClick={onClose}
                 className="flex-1 px-3 py-2.5 text-sm text-slate-700 hover:bg-slate-50 rounded-lg transition-colors"
               >
@@ -89,7 +89,7 @@ function MobileRegionSwitcher({ locale }: { locale: string }) {
 
   const switchTo = (targetLocale: string) => {
     if (targetLocale === locale) return;
-    window.location.assign(buildCountryPath(targetLocale, extractPagePath(pathname, locale)));
+    window.location.assign(buildPath(extractPagePath(pathname)));
   };
 
   return (
@@ -152,14 +152,14 @@ export function MobileNav() {
   const mounted = useSyncExternalStore(emptySubscribe, () => true, () => false);
 
   const navLinks = [
-    { label: t('home'), href: buildCountryPath(locale, '/'), icon: Home },
-    { label: t('shop'), href: buildCountryPath(locale, '/products'), icon: ShoppingBag },
+    { label: t('home'), href: buildPath('/'), icon: Home },
+    { label: t('shop'), href: buildPath('/products'), icon: ShoppingBag },
   ];
 
   const navLinksAfter = [
-    { label: t('deals'), href: buildCountryPath(locale, '/deals'), icon: Sparkles },
-    { label: t('handicraft'), href: buildCountryPath(locale, '/handicraft'), icon: Sparkles },
-    { label: t('dollarStreet'), href: buildCountryPath(locale, '/dollar-street'), icon: Tag },
+    { label: t('deals'), href: buildPath('/deals'), icon: Sparkles },
+    { label: t('handicraft'), href: buildPath('/handicraft'), icon: Sparkles },
+    { label: t('dollarStreet'), href: buildPath('/dollar-street'), icon: Tag },
   ];
 
   return (

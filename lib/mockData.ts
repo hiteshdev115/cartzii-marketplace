@@ -1,4 +1,5 @@
 import { Product, Category, Review, Testimonial, Deal, Order, User } from '@/types';
+import { currentCurrency } from '@/config/countries';
 
 export const allCategories: Category[] = [
   {
@@ -90,7 +91,7 @@ export const allProducts: Product[] = [
     price: 299.99,
     salePrice: 199.99,
     discount: 33,
-    currency: 'USD',
+    currency: currentCurrency,
     images: [
       'https://placehold.co/600x600/1e293b/ffffff.png?text=Headphones+1',
       'https://placehold.co/600x600/334155/ffffff.png?text=Headphones+2',
@@ -126,7 +127,8 @@ export const allProducts: Product[] = [
       'Weight': '250g',
       'Noise Cancellation': 'Active (ANC)',
     },
-    createdAt: '2024-12-01',
+    attributes: {},
+  createdAt: '2024-12-01',
   },
   {
     id: 'prod-2',
@@ -135,7 +137,7 @@ export const allProducts: Product[] = [
     description: 'Elevate your style with this handcrafted genuine leather crossbody bag. Features multiple compartments, adjustable strap, and premium brass hardware. Ideal for everyday use.',
     shortDescription: 'Handcrafted genuine leather crossbody bag',
     price: 149.99,
-    currency: 'USD',
+    currency: currentCurrency,
     images: [
       'https://placehold.co/600x600/c2410c/ffffff.png?text=Bag+1',
       'https://placehold.co/600x600/9a3412/ffffff.png?text=Bag+2',
@@ -166,7 +168,8 @@ export const allProducts: Product[] = [
       'Closure': 'Magnetic snap',
       'Interior': '2 main compartments, 1 zip pocket',
     },
-    createdAt: '2025-01-15',
+    attributes: {},
+  createdAt: '2025-01-15',
   },
   {
     id: 'prod-3',
@@ -177,7 +180,7 @@ export const allProducts: Product[] = [
     price: 249.99,
     salePrice: 189.99,
     discount: 24,
-    currency: 'USD',
+    currency: currentCurrency,
     images: [
       'https://placehold.co/600x600/2563eb/ffffff.png?text=Watch+1',
       'https://placehold.co/600x600/1d4ed8/ffffff.png?text=Watch+2',
@@ -208,7 +211,8 @@ export const allProducts: Product[] = [
       'Sensors': 'Heart rate, SpO2, GPS',
       'Compatibility': 'iOS 14+ / Android 10+',
     },
-    createdAt: '2024-11-20',
+    attributes: {},
+  createdAt: '2024-11-20',
   },
   {
     id: 'prod-4',
@@ -217,7 +221,7 @@ export const allProducts: Product[] = [
     description: 'Ultra-soft organic cotton t-shirt made from 100% sustainably sourced cotton. Available in multiple colors and sizes. Perfect for everyday comfort.',
     shortDescription: '100% organic cotton everyday tee',
     price: 34.99,
-    currency: 'USD',
+    currency: currentCurrency,
     images: [
       'https://placehold.co/600x600/16a34a/ffffff.png?text=Tshirt+1',
       'https://placehold.co/600x600/15803d/ffffff.png?text=Tshirt+2',
@@ -249,7 +253,8 @@ export const allProducts: Product[] = [
       'Fit': 'Regular',
       'Care': 'Machine wash cold',
     },
-    createdAt: '2025-02-01',
+    attributes: {},
+  createdAt: '2025-02-01',
   },
   {
     id: 'prod-5',
@@ -260,7 +265,7 @@ export const allProducts: Product[] = [
     price: 89.99,
     salePrice: 69.99,
     discount: 22,
-    currency: 'USD',
+    currency: currentCurrency,
     images: [
       'https://placehold.co/600x600/f59e0b/ffffff.png?text=Lamp+1',
       'https://placehold.co/600x600/d97706/ffffff.png?text=Lamp+2',
@@ -291,7 +296,8 @@ export const allProducts: Product[] = [
       'Material': 'Aluminum + ABS',
       'Wireless Charging': 'Qi certified, 10W',
     },
-    createdAt: '2024-10-15',
+    attributes: {},
+  createdAt: '2024-10-15',
   },
   {
     id: 'prod-6',
@@ -300,7 +306,7 @@ export const allProducts: Product[] = [
     description: 'Professional-grade yoga mat with superior grip and cushioning. Made from eco-friendly TPE material, non-slip on both sides. Includes carrying strap.',
     shortDescription: 'Eco-friendly non-slip yoga mat',
     price: 59.99,
-    currency: 'USD',
+    currency: currentCurrency,
     images: [
       'https://placehold.co/600x600/7c3aed/ffffff.png?text=Yoga+Mat+1',
       'https://placehold.co/600x600/6d28d9/ffffff.png?text=Yoga+Mat+2',
@@ -330,7 +336,8 @@ export const allProducts: Product[] = [
       'Weight': '1.2kg',
       'Surface': 'Double-sided non-slip',
     },
-    createdAt: '2024-09-01',
+    attributes: {},
+  createdAt: '2024-09-01',
   },
   {
     id: 'prod-7',
@@ -341,7 +348,7 @@ export const allProducts: Product[] = [
     price: 79.99,
     salePrice: 59.99,
     discount: 25,
-    currency: 'USD',
+    currency: currentCurrency,
     images: [
       'https://placehold.co/600x600/dc2626/ffffff.png?text=Speaker+1',
       'https://placehold.co/600x600/b91c1c/ffffff.png?text=Speaker+2',
@@ -373,7 +380,8 @@ export const allProducts: Product[] = [
       'Water Resistance': 'IPX7',
       'Weight': '560g',
     },
-    createdAt: '2024-08-15',
+    attributes: {},
+  createdAt: '2024-08-15',
   },
   {
     id: 'prod-8',
@@ -382,7 +390,7 @@ export const allProducts: Product[] = [
     description: 'Set of 4 handcrafted ceramic coffee mugs with unique glazed finishes. Each mug holds 350ml and is microwave and dishwasher safe.',
     shortDescription: 'Set of 4 handcrafted ceramic mugs',
     price: 44.99,
-    currency: 'USD',
+    currency: currentCurrency,
     images: [
       'https://placehold.co/600x600/ea580c/ffffff.png?text=Mugs+1',
       'https://placehold.co/600x600/c2410c/ffffff.png?text=Mugs+2',
@@ -412,7 +420,8 @@ export const allProducts: Product[] = [
       'Microwave Safe': 'Yes',
       'Dishwasher Safe': 'Yes',
     },
-    createdAt: '2025-01-20',
+    attributes: {},
+  createdAt: '2025-01-20',
   },
   {
     id: 'prod-9',
@@ -423,7 +432,7 @@ export const allProducts: Product[] = [
     price: 179.99,
     salePrice: 139.99,
     discount: 22,
-    currency: 'USD',
+    currency: currentCurrency,
     images: [
       'https://placehold.co/600x600/0ea5e9/ffffff.png?text=Shoes+1',
       'https://placehold.co/600x600/0284c7/ffffff.png?text=Shoes+2',
@@ -454,7 +463,8 @@ export const allProducts: Product[] = [
       'Drop': '10mm',
       'Weight': '310g (size 9)',
     },
-    createdAt: '2024-11-01',
+    attributes: {},
+  createdAt: '2024-11-01',
   },
   {
     id: 'prod-10',
@@ -463,7 +473,7 @@ export const allProducts: Product[] = [
     description: 'Luxury skincare gift set features cleanser, toner, serum, and moisturizer. All products are vegan, cruelty-free, and made with organic botanical extracts.',
     shortDescription: 'Vegan 4-piece skincare essentials set',
     price: 89.99,
-    currency: 'USD',
+    currency: currentCurrency,
     images: [
       'https://placehold.co/600x600/ec4899/ffffff.png?text=Skincare+1',
       'https://placehold.co/600x600/db2777/ffffff.png?text=Skincare+2',
@@ -490,7 +500,8 @@ export const allProducts: Product[] = [
       'Cruelty Free': 'Yes',
       'Vegan': 'Yes',
     },
-    createdAt: '2025-02-10',
+    attributes: {},
+  createdAt: '2025-02-10',
   },
   {
     id: 'prod-11',
@@ -499,7 +510,7 @@ export const allProducts: Product[] = [
     description: 'RGB mechanical gaming keyboard with hot-swappable switches, N-key rollover, and per-key RGB lighting. Aircraft-grade aluminum frame. Perfect for gamers and typists.',
     shortDescription: 'RGB mechanical keyboard with hot-swap switches',
     price: 129.99,
-    currency: 'USD',
+    currency: currentCurrency,
     images: [
       'https://placehold.co/600x600/6366f1/ffffff.png?text=Keyboard+1',
       'https://placehold.co/600x600/4f46e5/ffffff.png?text=Keyboard+2',
@@ -529,7 +540,8 @@ export const allProducts: Product[] = [
       'Connection': 'USB-C (detachable)',
       'Frame': 'Aircraft-grade aluminum',
     },
-    createdAt: '2024-10-01',
+    attributes: {},
+  createdAt: '2024-10-01',
   },
   {
     id: 'prod-12',
@@ -538,7 +550,7 @@ export const allProducts: Product[] = [
     description: 'Set of 3 hand-poured soy wax scented candles. Fragrances include Lavender Fields, Vanilla Bourbon, and Cedar & Sage. Up to 50 hours burn time each.',
     shortDescription: 'Set of 3 soy wax scented candles',
     price: 38.99,
-    currency: 'USD',
+    currency: currentCurrency,
     images: [
       'https://placehold.co/600x600/a16207/ffffff.png?text=Candles+1',
       'https://placehold.co/600x600/92400e/ffffff.png?text=Candles+2',
@@ -565,7 +577,8 @@ export const allProducts: Product[] = [
       'Wick': 'Cotton (lead-free)',
       'Set Contents': '3 candles (200g each)',
     },
-    createdAt: '2024-09-15',
+    attributes: {},
+  createdAt: '2024-09-15',
   },
 ];
 
@@ -755,7 +768,7 @@ export const mockOrders: Order[] = [
       country: 'US',
     },
     paymentMethod: 'Credit Card',
-    createdAt: '2025-01-05',
+  createdAt: '2025-01-05',
     estimatedDelivery: '2025-01-10',
   },
   {
@@ -782,7 +795,7 @@ export const mockOrders: Order[] = [
       country: 'US',
     },
     paymentMethod: 'PayPal',
-    createdAt: '2025-02-15',
+  createdAt: '2025-02-15',
     estimatedDelivery: '2025-02-22',
   },
 ];
