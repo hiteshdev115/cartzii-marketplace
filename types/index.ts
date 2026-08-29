@@ -1,3 +1,33 @@
+/**
+ * The artisan detail behind a handicraft listing, exactly as the API nests it.
+ *
+ * Its PRESENCE is what makes a product a handicraft — there is no separate
+ * flag to fall out of step with it.
+ */
+export interface HandicraftDetails {
+  artisan_name: string;
+  craft_origin_country: string;
+  craft_origin_region: string | null;
+  craft_technique: string | null;
+  material_used: string[];
+  is_handmade: boolean;
+  is_one_of_a_kind: boolean;
+  certifications: string[];
+  production_lead_time_days: number | null;
+  is_made_to_order: boolean;
+  artisan_story: string | null;
+  /** A listed material carries an import/export caution. */
+  has_restricted_material: boolean;
+}
+
+/** Seller badges shown beside a handicraft listing. */
+export interface ProductSellerBadges {
+  sellerid: number;
+  is_international_seller: boolean;
+  seller_country: string | null;
+  artisan_verified: boolean;
+}
+
 export interface Product {
   id: string;
   name: string;
@@ -34,6 +64,10 @@ export interface Product {
    */
   attributes: Record<string, string[]>;
   createdAt: string;
+  /** Present only on a handicraft listing. */
+  handicraft?: HandicraftDetails | null;
+  /** Seller badges, when the feed supplies them. */
+  sellerBadges?: ProductSellerBadges | null;
   /**
    * The flash deal behind this product's price, when one is running.
    *

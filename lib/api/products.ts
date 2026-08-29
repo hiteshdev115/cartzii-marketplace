@@ -149,6 +149,12 @@ interface APIProduct {
   productimages: APIProductImage[];
   productvariants: APIVariant[];
   productcountries: APIProductCountry[];
+  // ── Handicraft ──
+  // Absent on a general product, and on any response predating the feature.
+  producttype?: string | null;
+  isfeatured?: boolean | null;
+  handicraft_details?: import('@/types').HandicraftDetails | null;
+  seller_badges?: import('@/types').ProductSellerBadges | null;
   categoryName?: string;
   categorySlug?: string;
   averageRating?: number | string | null;
@@ -259,7 +265,14 @@ function buildDetailVariants(variants: APIVariant[], country: string): DetailVar
   });
 }
 
-function mapProduct(raw: APIProduct, country: string): Product {
+/**
+ * Shapes an API product for the storefront.
+ *
+ * Exported so the handicraft feed can reuse it: a handicraft item is the SAME
+ * product payload with an extra detail object, and duplicating this pricing
+ * logic is how the two would drift into showing different prices for one item.
+ */
+export function mapProduct(raw: APIProduct, country: string): Product {
   // -- product-level images (fallback when no variant images) ---------------
   const productImages = (raw.productimages ?? [])
     .filter((img) => img.isactive)
@@ -442,7 +455,13 @@ function mapProduct(raw: APIProduct, country: string): Product {
     tags: raw.tags ? raw.tags.split(',').map((t) => t.trim()) : [],
     isNew,
     onSale: salePrice !== undefined && salePrice < originalPrice,
-    isFeatured: false,
+    // Attached here, not in the handicraft client, so EVERY path that shapes a
+    // product carries it — the detail page, the search results and the
+    // handicraft feed all go through this function, and a listing that showed
+    // its artisan on one and not the other would be the obvious bug.
+    handicraft: raw.handicraft_details ?? null,
+    sellerBadges: raw.seller_badges ?? null,
+    isFeatured: Boolean(raw.isfeatured),
     isBestSeller: false,
     specifications: {},
     attributes,

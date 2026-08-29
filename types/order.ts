@@ -203,6 +203,16 @@ export interface PlaceOrderPayload {
    * haven't been upgraded yet, but the server needs this to buy labels.
    */
   shippingSelections?: PlaceOrderShippingSelection[];
+  /**
+   * Optional gift-wrap add-on.
+   *
+   * A BOOLEAN only. The price is resolved from a platform setting server-side,
+   * so there is nothing here for a client to name its own amount with — and
+   * the server refuses the order (and refunds) if wrapping was paid for on a
+   * cart that is not eligible.
+   */
+  giftWrap?: boolean;
+  giftWrapMessage?: string;
   guest?: {
     email: string;
     firstName: string;

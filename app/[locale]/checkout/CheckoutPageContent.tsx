@@ -14,6 +14,8 @@ import { OrderSummary, type TaxState } from '@/components/checkout/OrderSummary'
 import { RateSelectorPanel } from '@/components/shipping/RateSelectorPanel';
 import { Toast, type ToastType } from '@/components/ui/Toast';
 import { getTaxEstimate, placeOrder } from '@/lib/api/orders';
+import { fetchGiftWrapPolicy, type GiftWrapPolicy } from '@/lib/api/giftWrap';
+import { GiftWrapOption } from '@/components/handicraft/GiftWrapOption';
 import { ApiError } from '@/lib/api/client';
 import { useCheckoutStore } from '@/stores/checkoutStore';
 import type { ShippingFormData } from '@/lib/validators';
@@ -66,6 +68,30 @@ export function CheckoutPageContent() {
   // same rate. Declared above the effect because the estimate depends on it.
   const shippingCents = getTotalShippingCents();
 
+  // ── Gift wrapping ────────────────────────────────────────────────────────
+  // Offered only when the platform has a price set AND the cart holds
+  // something it applies to. The API refuses — and refunds — an order that
+  // paid for wrapping it was not eligible for, so offering it speculatively
+  // would turn a client mistake into a refunded customer.
+  const [giftWrapPolicy, setGiftWrapPolicy] = useState<GiftWrapPolicy>({ priceCents: 0, available: false });
+  const [giftWrapSelected, setGiftWrapSelected] = useState(false);
+  const [giftWrapMessage, setGiftWrapMessage] = useState('');
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchGiftWrapPolicy().then((policy) => {
+      if (!cancelled) setGiftWrapPolicy(policy);
+    });
+    return () => { cancelled = true; };
+  }, []);
+
+  const cartHasHandicraft = useCartStore((s) =>
+    s.items.some((item) => Boolean(item.product.handicraft)),
+  );
+  const giftWrapOffered = giftWrapPolicy.available && cartHasHandicraft;
+  // The price the SERVER will charge, or zero. Never a client-side constant.
+  const giftWrapCents = giftWrapOffered && giftWrapSelected ? giftWrapPolicy.priceCents : 0;
+
   // Re-fetch the tax estimate whenever the locked shipping address, the cart
   // subtotal, or the chosen shipping changes. Skipped while the shipping form
   // is still being edited.
@@ -90,6 +116,7 @@ export function CheckoutPageContent() {
           stateCode: shippingData.state,
           subtotalCents,
           shippingCents,
+          giftWrapCents,
         });
         if (!cancelled) {
           setTaxState({ status: 'ready', estimate });
@@ -111,7 +138,7 @@ export function CheckoutPageContent() {
       cancelled = true;
       controller.abort();
     };
-  }, [shippingData, editingShipping, subtotalCents, shippingCents]);
+  }, [shippingData, editingShipping, subtotalCents, shippingCents, giftWrapCents]);
 
   // Stripe needs the grand total in the smallest currency unit.
   //
@@ -125,7 +152,7 @@ export function CheckoutPageContent() {
   const orderAmountCents =
     taxState.status === 'ready'
       ? taxState.estimate.totalAmountCents
-      : subtotalCents + shippingCents;
+      : subtotalCents + shippingCents + giftWrapCents;
   const taxReady = taxState.status === 'ready';
 
   const shippingPreview = useMemo(() => {
@@ -206,6 +233,10 @@ export function CheckoutPageContent() {
         );
 
       const order = await placeOrder({
+        // Boolean only — the server prices it from a platform setting.
+        ...(giftWrapCents > 0
+          ? { giftWrap: true, giftWrapMessage: giftWrapMessage || undefined }
+          : {}),
         paymentIntentId: paymentResult.paymentIntentId,
         portal: getCountryFromLocale(locale) as 'us' | 'ca',
         currency: currency.toUpperCase(),
@@ -300,6 +331,19 @@ export function CheckoutPageContent() {
                   onEligibilityChange={setRatesEligible}
                 />
               </section>
+            )}
+
+            {/* Gift wrapping — only when the platform offers it and the cart
+                holds something it applies to. */}
+            {giftWrapOffered && (
+              <GiftWrapOption
+                priceCents={giftWrapPolicy.priceCents}
+                currency={currency}
+                selected={giftWrapSelected}
+                message={giftWrapMessage}
+                onToggle={setGiftWrapSelected}
+                onMessageChange={setGiftWrapMessage}
+              />
             )}
 
             {/* Saved cards */}

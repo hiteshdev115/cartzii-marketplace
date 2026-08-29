@@ -143,7 +143,10 @@ export function Header() {
 
   const navAfterCategories = [
     { label: tNav('deals'), href: buildPath('/deals') },
-    { label: tNav('handicraft'), href: buildPath('/handicraft') },
+    // Accented: the spec asks for Handicraft to read as a distinct
+    // destination rather than another category, and it is the one nav item
+    // leading somewhere with its own rules and its own kind of seller.
+    { label: tNav('handicraft'), href: buildPath('/handicraft'), accent: true },
     { label: tNav('dollarStreet'), href: buildPath('/dollar-street') },
   ];
 
@@ -411,7 +414,11 @@ export function Header() {
                 <Link
                   key={link.label}
                   href={link.href}
-                  className="px-3 py-1 text-sm font-medium text-slate-600 hover:text-primary rounded-md hover:bg-slate-50 transition-colors"
+                  className={
+                    link.accent
+                      ? 'px-3 py-1 text-sm font-semibold text-amber-800 hover:text-amber-900 rounded-md hover:bg-amber-50 transition-colors'
+                      : 'px-3 py-1 text-sm font-medium text-slate-600 hover:text-primary rounded-md hover:bg-slate-50 transition-colors'
+                  }
                 >
                   {link.label}
                 </Link>

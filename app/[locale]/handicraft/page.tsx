@@ -1,76 +1,69 @@
 import { generateAlternates } from '@/lib/seo';
-import { fetchCategoryTree } from '@/lib/api';
+import { currentCountry } from '@/config/countries';
+import { fetchHandicraftFacets } from '@/lib/api/handicraft';
 import { HandicraftPageClient } from './HandicraftPageClient';
-import type { Category } from '@/types';
 
-/** Keywords that identify handicraft-related categories from the API */
-const HANDICRAFT_KEYWORDS = [
-  'craft', 'handicraft', 'handmade', 'artisan', 'art', 'knit', 'sew', 'stitch',
-  'embroid', 'weav', 'crochet', 'pottery', 'ceramic', 'paint', 'sculpt', 'wood',
-  'carv', 'jewel', 'bead', 'macram', 'quilt', 'origami', 'calligraph', 'print',
-  'stamp', 'diy', 'fabric', 'yarn', 'thread', 'canvas', 'sketch', 'draw',
-  'leatherwork', 'leather', 'glass', 'mosaic', 'textile', 'lace', 'tassel',
-  'home decor', 'stationery', 'paper', 'scrapbook', 'candle', 'soap', 'resin',
-];
-
-function isHandicraftCategory(cat: Category): boolean {
-  const hay = `${cat.slug} ${cat.name} ${cat.description}`.toLowerCase();
-  return HANDICRAFT_KEYWORDS.some((kw) => hay.includes(kw));
-}
-
-/** Recursively collect handicraft categories from the full tree */
-function collectHandicraftCategories(cats: Category[]): Category[] {
-  const result: Category[] = [];
-  for (const cat of cats) {
-    if (isHandicraftCategory(cat)) {
-      result.push(cat);
-    } else if (cat.subcategories?.length) {
-      result.push(...collectHandicraftCategories(cat.subcategories));
-    }
-  }
-  return result;
-}
-
+/**
+ * Metadata built from what is ACTUALLY listed.
+ *
+ * The previous version guessed at handicraft categories by keyword-matching
+ * the general category tree ("craft", "wood", "paper", …), which advertised
+ * whatever happened to contain those letters. Now that products declare their
+ * own type, the description names the real techniques and origins.
+ */
 export async function generateMetadata() {
+  const facets = await fetchHandicraftFacets();
+
+  const techniques = facets.techniques.slice(0, 4).map((t) => t.technique).filter(Boolean);
+  const countryCount = facets.countries.length;
+
+  const description =
+    techniques.length > 0
+      ? `Handmade pieces from artisans${countryCount > 0 ? ` in ${countryCount} ${countryCount === 1 ? 'country' : 'countries'}` : ''}. ${techniques.join(', ')} and more — each item made by hand, with the maker's story.`
+      : 'Handmade pieces from artisans around the world. Every item made by hand, with the story of the maker who made it.';
+
   const alternates = await generateAlternates(
     process.env.NEXT_PUBLIC_BASE_URL || 'https://cartzii.com',
     '/handicraft',
   );
+
   return {
-    title: 'Handicraft — Artisan & Handmade | Cartzii',
-    description:
-      'Explore handmade, artisan, and craft categories on Cartzii. Discover knitting, pottery, woodwork, jewelry making, sewing, and more. Shop unique handcrafted products or find supplies for your next project.',
+    title: 'Handicraft — Handmade & Artisan Goods | Cartzii',
+    description,
     keywords: [
-      'handicraft', 'handmade', 'artisan', 'crafts', 'DIY', 'knitting', 'pottery',
-      'sewing', 'jewelry making', 'woodwork', 'crochet', 'embroidery',
+      'handmade', 'handicraft', 'artisan', 'craft', 'one of a kind',
+      ...techniques.map((t) => t.toLowerCase()),
     ],
     alternates,
     openGraph: {
-      title: 'Handicraft — Artisan & Handmade | Cartzii',
-      description: 'Shop handcrafted and artisan products across all craft categories.',
+      title: 'Handicraft — Handmade & Artisan Goods | Cartzii',
+      description,
       type: 'website',
     },
   };
 }
 
-export default async function HandicraftPage({ params }: { params: Promise<{ locale: string }> }) {
-  await params; // consume params (locale used in metadata)
-
-  let handicraftCategories: Category[] = [];
-  let allCategories: Category[] = [];
-
-  try {
-    const tree = await fetchCategoryTree();
-    allCategories = tree;
-    handicraftCategories = collectHandicraftCategories(tree);
-  } catch {
-    // fall through — client will attempt its own fetch
-  }
+export default async function HandicraftPage() {
+  // A CollectionPage node, so the section is understood as a curated
+  // collection rather than a loose set of product pages.
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'CollectionPage',
+    name: 'Handicraft',
+    description: 'Handmade and artisan goods from makers around the world.',
+    url: `${process.env.NEXT_PUBLIC_BASE_URL || 'https://cartzii.com'}/handicraft`,
+    inLanguage: currentCountry === 'ca' ? 'en-CA' : 'en-US',
+  };
 
   return (
-    <HandicraftPageClient
-      initialHandicraftCategories={handicraftCategories}
-      initialAllCategories={allCategories}
-    />
+    <>
+      <script
+        type="application/ld+json"
+        // Serialised server-side from values this app controls; no user input
+        // reaches it.
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <HandicraftPageClient />
+    </>
   );
 }

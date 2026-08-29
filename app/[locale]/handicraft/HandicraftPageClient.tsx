@@ -1,386 +1,270 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useMemo, useState, useTransition } from 'react';
 import { Link } from '@/i18n/navigation';
-import Image from 'next/image';
-
-import {
-  ArrowRight, Scissors, Paintbrush2, Hammer, Gem, Leaf, BookOpen,
-  Shirt, Star, Sparkles, Search,
-} from 'lucide-react';
-import { buildPath } from '@/config/countries';
-import { fetchCategoryTree } from '@/lib/api';
-import { getCategoryIconConfig } from '@/lib/categoryIcons';
+import { buildPath, currentCountry, getCountryConfig } from '@/config/countries';
+import { useLocale } from 'next-intl';
+import { ArrowRight, PackageOpen, SlidersHorizontal, Sparkles, X } from 'lucide-react';
 import { Breadcrumb } from '@/components/layout/Breadcrumb';
-import type { Category } from '@/types';
+import { HandicraftProductCard } from '@/components/handicraft/HandicraftProductCard';
+import { HandicraftFilterSidebar } from '@/components/handicraft/HandicraftFilterSidebar';
+import {
+  fetchHandicraftProducts, fetchHandicraftFacets, fetchHandicraftFeatured,
+  type HandicraftFacets, type HandicraftFilters,
+} from '@/lib/api/handicraft';
+import type { Product } from '@/types';
 
-// ─── Constants ───────────────────────────────────────────────────────────────
+const PAGE_SIZE = 24;
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://staging-api.cartzii.com';
-const CATEGORY_CDN = `${API_BASE}/assets/upload/categoryImages`;
+const EMPTY_FACETS: HandicraftFacets = { countries: [], techniques: [], materials: [], categories: [] };
 
-function buildCategoryImageUrl(url: string | undefined): string {
-  if (!url) return '';
-  if (url.startsWith('http')) return url;
-  return `${CATEGORY_CDN}/${url}`;
-}
+/**
+ * The handicraft storefront.
+ *
+ * Every product, filter option and count comes from the API. This page used to
+ * render eight hard-coded "craft types" and a filtered slice of the general
+ * catalogue, which meant it advertised categories nobody had listed anything
+ * under and could not tell a handmade item from a mass-produced one.
+ */
+export function HandicraftPageClient() {
+  const locale = useLocale();
+  const currency = getCountryConfig(locale).currency;
+  const country = currentCountry.toUpperCase();
 
-const HANDICRAFT_KEYWORDS = [
-  'craft', 'handicraft', 'handmade', 'artisan', 'art', 'knit', 'sew', 'stitch',
-  'embroid', 'weav', 'crochet', 'pottery', 'ceramic', 'paint', 'sculpt', 'wood',
-  'carv', 'jewel', 'bead', 'macram', 'quilt', 'origami', 'calligraph', 'print',
-  'stamp', 'diy', 'fabric', 'yarn', 'thread', 'canvas', 'sketch', 'draw',
-  'leatherwork', 'leather', 'glass', 'mosaic', 'textile', 'lace', 'tassel',
-  'home decor', 'stationery', 'paper', 'scrapbook', 'candle', 'soap', 'resin',
-];
+  const [featured, setFeatured] = useState<Product[]>([]);
+  const [facets, setFacets] = useState<HandicraftFacets>(EMPTY_FACETS);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [total, setTotal] = useState(0);
+  const [filters, setFilters] = useState<HandicraftFilters>({});
+  const [loaded, setLoaded] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [pending, startTransition] = useTransition();
 
-function isHandicraftCategory(cat: Category): boolean {
-  const hay = `${cat.slug} ${cat.name} ${cat.description}`.toLowerCase();
-  return HANDICRAFT_KEYWORDS.some((kw) => hay.includes(kw));
-}
+  // Featured strip and filter vocabularies: fetched once. Both write state
+  // from the promise callback rather than synchronously in the effect body.
+  useEffect(() => {
+    let cancelled = false;
+    Promise.all([
+      fetchHandicraftFeatured(country, 8),
+      fetchHandicraftFacets(),
+    ]).then(([featuredItems, facetData]) => {
+      if (cancelled) return;
+      setFeatured(featuredItems);
+      setFacets(facetData);
+    });
+    return () => { cancelled = true; };
+  }, [country]);
 
-function collectHandicraftCategories(cats: Category[]): Category[] {
-  const result: Category[] = [];
-  for (const cat of cats) {
-    if (isHandicraftCategory(cat)) {
-      result.push(cat);
-    } else if (cat.subcategories?.length) {
-      result.push(...collectHandicraftCategories(cat.subcategories));
-    }
-  }
-  return result;
-}
-
-// ─── Static spotlight crafts ─────────────────────────────────────────────────
-// Shown always — highlights the breadth of handicraft with curated icons + nav
-
-const CRAFT_SPOTLIGHTS = [
-  {
-    icon: Scissors,
-    gradient: 'from-pink-500 to-rose-600',
-    title: 'Knitting & Crochet',
-    desc: 'Yarn, needles, patterns and finished pieces for every skill level.',
-    query: 'knitting crochet',
-  },
-  {
-    icon: Paintbrush2,
-    gradient: 'from-violet-500 to-purple-600',
-    title: 'Painting & Drawing',
-    desc: 'Canvases, brushes, watercolours, oils and sketch supplies.',
-    query: 'painting drawing',
-  },
-  {
-    icon: Hammer,
-    gradient: 'from-amber-500 to-orange-600',
-    title: 'Woodworking & Carving',
-    desc: 'Tools, lumber, finishes and handcrafted wooden goods.',
-    query: 'wood carving',
-  },
-  {
-    icon: Gem,
-    gradient: 'from-cyan-500 to-teal-600',
-    title: 'Jewellery Making',
-    desc: 'Beads, wire, findings and handmade artisan jewellery.',
-    query: 'jewelry jewellery',
-  },
-  {
-    icon: Shirt,
-    gradient: 'from-indigo-500 to-blue-600',
-    title: 'Sewing & Embroidery',
-    desc: 'Fabric, patterns, hoops, thread and embroidery kits.',
-    query: 'sewing embroidery',
-  },
-  {
-    icon: Leaf,
-    gradient: 'from-emerald-500 to-green-600',
-    title: 'Candle & Soap Making',
-    desc: 'Wax, moulds, fragrance oils and natural soap ingredients.',
-    query: 'candle soap',
-  },
-  {
-    icon: BookOpen,
-    gradient: 'from-rose-500 to-pink-600',
-    title: 'Scrapbooking & Paper',
-    desc: 'Albums, stickers, washi tape and paper crafting essentials.',
-    query: 'scrapbook paper',
-  },
-  {
-    icon: Star,
-    gradient: 'from-yellow-500 to-amber-600',
-    title: 'Pottery & Ceramics',
-    desc: 'Clay, wheels, glazes and hand-built ceramic creations.',
-    query: 'pottery ceramic',
-  },
-];
-
-// ─── Skeleton ────────────────────────────────────────────────────────────────
-
-function CardSkeleton() {
-  return (
-    <div className="flex flex-col items-center animate-pulse">
-      <div className="w-20 h-20 rounded-2xl bg-slate-200" />
-      <div className="mt-2.5 h-3 bg-slate-200 rounded w-3/4" />
-      <div className="mt-1 h-2.5 bg-slate-100 rounded w-1/2" />
-    </div>
-  );
-}
-
-// ─── Category Card ────────────────────────────────────────────────────────────
-
-function CategoryCard({ cat }: { cat: Category }) {
-  const imgSrc = buildCategoryImageUrl(cat.image);
-  const { icon: Icon, gradient } = getCategoryIconConfig(cat.slug, cat.name);
-  const subCount = cat.subcategories?.length ?? 0;
-
-  return (
-    <Link
-      href={buildPath(`/categories/${cat.slug}`)}
-      className="group flex flex-col items-center text-center"
-    >
-      {/* A fixed 80px square, not a padded card and not an aspect-ratio box:
-          the tile has to stay square at every breakpoint, and a box that sizes
-          to its grid column becomes a wide rectangle on desktop — which is
-          what made these look like big boxes around a small icon.
-
-          The logo inside is unchanged at 56px; only the box around it shrank,
-          leaving 12px of even padding on all four sides. */}
-      <div className="relative w-20 h-20 rounded-2xl overflow-hidden bg-white border border-slate-100 flex items-center justify-center group-hover:shadow-md group-hover:border-primary/25 transition-all duration-300">
-        {imgSrc ? (
-          <Image
-            src={imgSrc}
-            alt={cat.name}
-            width={56}
-            height={56}
-            sizes="56px"
-            className="w-14 h-14 object-cover rounded-xl group-hover:scale-110 transition-transform duration-300"
-          />
-        ) : (
-          <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${gradient} flex items-center justify-center group-hover:scale-105 transition-transform duration-300`}>
-            <Icon className="w-7 h-7 text-white drop-shadow" />
-          </div>
-        )}
-      </div>
-
-      {/* Below the square rather than inside it — text sharing the box is what
-          forced the box to be tall. */}
-      <p className="mt-2.5 w-full text-xs sm:text-sm font-semibold text-slate-900 leading-snug truncate group-hover:text-primary transition-colors">
-        {cat.name}
-      </p>
-      <p className="w-full text-[11px] text-slate-400 leading-tight truncate">
-        {subCount > 0
-          ? `${subCount} subcategor${subCount === 1 ? 'y' : 'ies'}`
-          : cat.productCount > 0
-          ? `${cat.productCount.toLocaleString()} products`
-          : 'Explore'}
-      </p>
-    </Link>
-  );
-}
-
-// ─── Main ────────────────────────────────────────────────────────────────────
-
-interface Props {
-  initialHandicraftCategories: Category[];
-  initialAllCategories: Category[];
-}
-
-export function HandicraftPageClient({ initialHandicraftCategories, initialAllCategories }: Props) {
-  const [handicraftCategories, setHandicraftCategories] = useState<Category[]>(initialHandicraftCategories);
-  const [allCategories, setAllCategories] = useState<Category[]>(initialAllCategories);
-  const [loading, setLoading] = useState(
-    initialHandicraftCategories.length === 0 && initialAllCategories.length === 0,
-  );
-  const [search, setSearch] = useState('');
+  // The grid, refetched whenever a filter changes. Serialised so the effect
+  // depends on a stable value rather than a new object every render.
+  const filterKey = useMemo(() => JSON.stringify(filters), [filters]);
 
   useEffect(() => {
-    if (initialAllCategories.length > 0) return;
-    fetchCategoryTree()
-      .then((tree) => {
-        setAllCategories(tree);
-        setHandicraftCategories(collectHandicraftCategories(tree));
-      })
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, [initialAllCategories.length]);
+    let cancelled = false;
+    fetchHandicraftProducts(country, JSON.parse(filterKey), { limit: PAGE_SIZE, offset: 0 })
+      .then((page) => {
+        if (cancelled) return;
+        setProducts(page.products);
+        setTotal(page.total);
+        setLoaded(true);
+      });
+    return () => { cancelled = true; };
+  }, [country, filterKey]);
 
-  // Use handicraft-filtered categories; if none match, fall back to all
-  const sourceCategories = handicraftCategories.length > 0 ? handicraftCategories : allCategories;
+  const loadMore = () => {
+    startTransition(async () => {
+      const page = await fetchHandicraftProducts(country, filters, {
+        limit: PAGE_SIZE,
+        offset: products.length,
+      });
+      setProducts((current) => [...current, ...page.products]);
+      setTotal(page.total);
+    });
+  };
 
-  const filtered = search.trim()
-    ? sourceCategories.filter((c) =>
-        `${c.name} ${c.description} ${c.slug}`.toLowerCase().includes(search.toLowerCase()),
-      )
-    : sourceCategories;
-
-  const showFallback = !loading && handicraftCategories.length === 0 && allCategories.length > 0;
+  const sidebar = (
+    <HandicraftFilterSidebar
+      facets={facets}
+      filters={filters}
+      currency={currency}
+      onChange={(next) => { setFilters(next); setDrawerOpen(false); }}
+      onClear={() => { setFilters({}); setDrawerOpen(false); }}
+    />
+  );
 
   return (
-    <div className="bg-[#F0F2F2] min-h-screen">
-      {/* Breadcrumb */}
+    <div className="min-h-screen bg-[#F0F2F2]">
       <div className="max-w-[var(--container-max)] mx-auto px-4 sm:px-6 lg:px-8 pt-6">
         <Breadcrumb items={[{ label: 'Handicraft' }]} />
       </div>
 
-      {/* ── Hero ──────────────────────────────────────────────────── */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-rose-950 via-pink-950 to-slate-900 text-white mt-4">
-        {/* Blobs */}
-        <div className="absolute -top-32 -right-32 w-[500px] h-[500px] rounded-full bg-pink-500/15 blur-[100px] pointer-events-none" />
-        <div className="absolute -bottom-24 -left-24 w-[400px] h-[400px] rounded-full bg-rose-400/10 blur-[80px] pointer-events-none" />
-        <div className="absolute inset-0 opacity-[0.04] bg-[radial-gradient(circle,_#fff_1px,_transparent_1px)] bg-[size:28px_28px]" />
+      {/* ── Hero ─────────────────────────────────────────────────── */}
+      <section className="relative mt-4 overflow-hidden bg-gradient-to-br from-[#3b2417] via-[#5a3620] to-[#8a4b23] text-white">
+        <div className="pointer-events-none absolute -right-24 -top-24 h-[420px] w-[420px] rounded-full bg-amber-500/20 blur-[90px]" />
+        <div className="pointer-events-none absolute inset-0 opacity-[0.05] bg-[radial-gradient(circle,_#fff_1px,_transparent_1px)] bg-[size:26px_26px]" />
 
-        <div className="relative max-w-[var(--container-max)] mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24">
-          <div className="max-w-2xl">
-            <div className="inline-flex items-center gap-2 bg-white/10 border border-white/20 rounded-full px-4 py-2 text-sm font-medium mb-6">
-              <Sparkles className="w-4 h-4 text-amber-400" /> Handcrafted with love
-            </div>
-            <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold leading-tight mb-4">
-              The World of{' '}
-              <span className="bg-gradient-to-r from-rose-400 via-pink-400 to-amber-400 bg-clip-text text-transparent">
-                Handicraft
-              </span>
-            </h1>
-            <p className="text-lg text-white/70 leading-relaxed mb-8">
-              From knitting and pottery to jewellery-making and woodwork — explore
-              artisan categories, discover handmade goods, and find everything you
-              need for your next creative project.
-            </p>
-            <div className="flex flex-wrap gap-3">
-              <Link
-                href={buildPath('/search?q=handmade')}
-                className="inline-flex items-center gap-2 bg-white text-slate-900 font-bold px-6 py-3 rounded-xl hover:bg-white/90 transition-all shadow-lg"
-              >
-                Shop Handmade <ArrowRight className="w-4 h-4" />
-              </Link>
-              <Link
-                href={buildPath('/products')}
-                className="inline-flex items-center gap-2 bg-white/10 border border-white/20 text-white font-semibold px-6 py-3 rounded-xl hover:bg-white/20 transition-all"
-              >
-                All Products
-              </Link>
-            </div>
+        <div className="relative mx-auto max-w-[var(--container-max)] px-4 py-14 sm:px-6 md:py-20 lg:px-8">
+          <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm font-medium">
+            <Sparkles className="h-4 w-4 text-amber-300" aria-hidden="true" />
+            Made by hand, not by machine
           </div>
-        </div>
+          <h1 className="max-w-2xl text-4xl font-extrabold leading-tight sm:text-5xl md:text-6xl">
+            Handicraft
+          </h1>
+          <p className="mt-4 max-w-xl text-lg leading-relaxed text-white/75">
+            Work from artisans around the world — each piece carrying the technique, the
+            materials and the hands that made it.
+          </p>
 
-        {/* Wave */}
-        <div className="absolute bottom-0 left-0 right-0">
-          <svg viewBox="0 0 1440 60" fill="none" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" className="w-full h-10 md:h-14">
-            <path d="M0 60L60 52C120 44 240 28 360 24C480 20 600 28 720 32C840 36 960 36 1080 32C1200 28 1320 20 1380 16L1440 12V60H0Z" fill="#F0F2F2" />
-          </svg>
+          {loaded && total > 0 && (
+            <p className="mt-6 text-sm text-white/70">
+              {total.toLocaleString()} piece{total === 1 ? '' : 's'} from{' '}
+              {facets.countries.length} {facets.countries.length === 1 ? 'country' : 'countries'}
+            </p>
+          )}
         </div>
       </section>
 
-      <div className="max-w-[var(--container-max)] mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-14">
-
-        {/* ── Craft Spotlights ───────────────────────────────────── */}
-        <section>
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <p className="text-xs font-semibold text-primary uppercase tracking-widest mb-1">Explore by Craft</p>
-              <h2 className="text-2xl font-extrabold text-slate-900">Popular Craft Types</h2>
+      <div className="mx-auto max-w-[var(--container-max)] space-y-12 px-4 py-10 sm:px-6 lg:px-8">
+        {/* ── Featured collections ─────────────────────────────── */}
+        {featured.length > 0 && (
+          <section>
+            <div className="mb-5 flex items-end justify-between gap-4">
+              <div>
+                <p className="mb-1 text-xs font-semibold uppercase tracking-widest text-primary">
+                  Curated
+                </p>
+                <h2 className="text-2xl font-extrabold text-slate-900">Featured pieces</h2>
+              </div>
             </div>
+            <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4">
+              {featured.map((product) => (
+                <HandicraftProductCard key={product.id} product={product} />
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* ── Catalogue ────────────────────────────────────────── */}
+        <section>
+          <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+            <h2 className="text-2xl font-extrabold text-slate-900">All handicraft</h2>
+            <button
+              type="button"
+              onClick={() => setDrawerOpen(true)}
+              className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold lg:hidden"
+            >
+              <SlidersHorizontal className="h-4 w-4" aria-hidden="true" /> Filters
+            </button>
           </div>
-          <div className="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-8 gap-3 sm:gap-4">
-            {CRAFT_SPOTLIGHTS.map((craft) => (
-              <Link
-                key={craft.title}
-                href={buildPath(`/search?q=${encodeURIComponent(craft.query)}`)}
-                className="group flex flex-col items-center text-center"
-                // The description still reaches anyone who wants it, without
-                // costing the tile the height it needed to display it.
-                title={craft.desc}
-              >
-                {/* Same 80px square as the categories below, so the two grids
-                    read as one system. The 56px icon inside is unchanged. */}
-                <div className="w-20 h-20 rounded-2xl bg-white border border-slate-100 flex items-center justify-center group-hover:shadow-md group-hover:border-primary/25 transition-all duration-300">
-                  <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${craft.gradient} flex items-center justify-center group-hover:scale-105 transition-transform duration-300 shadow-md`}>
-                    <craft.icon className="w-7 h-7 text-white drop-shadow" />
-                  </div>
+
+          <div className="flex gap-6">
+            <div className="hidden w-64 flex-shrink-0 lg:block">
+              <div className="sticky top-24">{sidebar}</div>
+            </div>
+
+            <div className="min-w-0 flex-1">
+              {!loaded ? (
+                <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4">
+                  {Array.from({ length: 8 }).map((_, i) => (
+                    <div key={i} className="animate-pulse overflow-hidden rounded-2xl border border-slate-100 bg-white">
+                      <div className="aspect-square bg-slate-200" />
+                      <div className="space-y-2 p-3">
+                        <div className="h-3 w-3/4 rounded bg-slate-200" />
+                        <div className="h-3 w-1/2 rounded bg-slate-100" />
+                      </div>
+                    </div>
+                  ))}
                 </div>
-                <p className="mt-2.5 w-full text-xs sm:text-sm font-semibold text-slate-900 leading-snug truncate group-hover:text-primary transition-colors">
-                  {craft.title}
-                </p>
-              </Link>
-            ))}
-          </div>
-        </section>
-
-        {/* ── API-sourced categories ─────────────────────────────── */}
-        <section>
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-            <div>
-              <p className="text-xs font-semibold text-primary uppercase tracking-widest mb-1">
-                {showFallback ? 'Browse All' : 'Artisan Categories'}
-              </p>
-              <h2 className="text-2xl font-extrabold text-slate-900">
-                {showFallback ? 'All Product Categories' : 'Shop by Craft Category'}
-              </h2>
-              {showFallback && (
-                <p className="text-sm text-slate-500 mt-1">
-                  Browse all categories and use the search bar above to find craft-specific results.
-                </p>
-              )}
-            </div>
-
-            {/* Search */}
-            <div className="relative w-full sm:w-72">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-              <input
-                type="text"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search categories..."
-                className="w-full pl-10 pr-4 py-2.5 text-sm bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-8 gap-3 sm:gap-4">
-            {loading
-              ? Array.from({ length: 12 }).map((_, i) => <CardSkeleton key={i} />)
-              : filtered.length === 0
-              ? (
-                <div className="col-span-full text-center py-16 text-slate-400">
-                  <p className="text-base font-medium">No categories found for &ldquo;{search}&rdquo;</p>
+              ) : products.length === 0 ? (
+                <div className="rounded-3xl border border-slate-100 bg-white px-6 py-20 text-center">
+                  <PackageOpen className="mx-auto mb-3 h-10 w-10 text-slate-300" aria-hidden="true" />
+                  <h3 className="text-lg font-bold text-slate-900">Nothing matches those filters</h3>
+                  <p className="mt-1.5 text-sm text-slate-600">
+                    Try widening the price range or clearing a filter.
+                  </p>
                   <button
-                    onClick={() => setSearch('')}
-                    className="mt-2 text-sm text-primary hover:underline"
+                    type="button"
+                    onClick={() => setFilters({})}
+                    className="btn-primary mt-6 inline-flex items-center gap-2"
                   >
-                    Clear search
+                    Clear filters <X className="h-4 w-4" aria-hidden="true" />
                   </button>
                 </div>
-              )
-              : filtered.map((cat) => (
-                  <CategoryCard key={cat.id} cat={cat} />
-                ))}
+              ) : (
+                <>
+                  <p className="mb-4 text-sm text-slate-500">
+                    <span className="font-bold text-slate-800">{total.toLocaleString()}</span> pieces
+                  </p>
+                  <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4">
+                    {products.map((product) => (
+                      <HandicraftProductCard key={product.id} product={product} />
+                    ))}
+                  </div>
+
+                  {products.length < total && (
+                    <div className="mt-8 text-center">
+                      <button
+                        type="button"
+                        onClick={loadMore}
+                        disabled={pending}
+                        className="rounded-xl border border-slate-200 bg-white px-8 py-3 text-sm font-semibold text-slate-700 transition-all hover:bg-slate-50 disabled:opacity-60"
+                      >
+                        {pending ? 'Loading…' : 'Load more'}
+                      </button>
+                      <p className="mt-2 text-xs text-slate-400">
+                        Showing {products.length} of {total}
+                      </p>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
           </div>
         </section>
 
-        {/* ── Why Handmade CTA ──────────────────────────────────────── */}
-        <section className="relative overflow-hidden bg-gradient-to-br from-slate-900 to-slate-800 rounded-3xl px-8 py-14 text-center text-white shadow-xl">
-          <div className="absolute -top-16 -right-16 w-64 h-64 bg-rose-500/20 rounded-full blur-[70px] pointer-events-none" />
-          <div className="absolute -bottom-16 -left-16 w-64 h-64 bg-pink-500/15 rounded-full blur-[60px] pointer-events-none" />
-          <div className="relative max-w-xl mx-auto">
-            <div className="inline-flex items-center gap-2 bg-white/10 border border-white/20 rounded-full px-4 py-2 text-sm font-medium mb-5">
-              <Sparkles className="w-4 h-4 text-amber-400" /> Support artisan makers
-            </div>
-            <h2 className="text-3xl md:text-4xl font-extrabold mb-3">
+        {/* ── Closing CTA ──────────────────────────────────────── */}
+        <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900 to-slate-800 px-8 py-14 text-center text-white shadow-xl">
+          <div className="pointer-events-none absolute -right-16 -top-16 h-64 w-64 rounded-full bg-amber-500/20 blur-[70px]" />
+          <div className="relative mx-auto max-w-xl">
+            <h2 className="mb-3 text-3xl font-extrabold md:text-4xl">
               Every piece tells a{' '}
-              <span className="bg-gradient-to-r from-rose-400 to-amber-400 bg-clip-text text-transparent">story.</span>
+              <span className="bg-gradient-to-r from-amber-300 to-orange-400 bg-clip-text text-transparent">
+                story.
+              </span>
             </h2>
-            <p className="text-white/70 text-base mb-8 leading-relaxed">
-              Handmade products carry the care, skill, and creativity of the maker.
-              Shop authentic handicrafts and support independent artisans on Cartzii.
+            <p className="mb-8 text-base leading-relaxed text-white/70">
+              Buying handmade supports the maker directly — and no two pieces are quite alike.
             </p>
             <Link
-              href={buildPath('/search?q=handmade artisan')}
-              className="inline-flex items-center gap-2 bg-gradient-to-r from-rose-500 to-pink-600 text-white font-bold px-8 py-3.5 rounded-2xl hover:opacity-90 transition-all shadow-lg shadow-rose-900/40"
+              href={buildPath('/products')}
+              className="inline-flex items-center gap-2 rounded-2xl bg-white px-8 py-3.5 font-bold text-slate-900 transition-all hover:bg-white/90"
             >
-              Discover Handmade <ArrowRight className="w-4 h-4" />
+              Browse everything <ArrowRight className="h-4 w-4" aria-hidden="true" />
             </Link>
           </div>
         </section>
-
       </div>
+
+      {/* Mobile filter drawer */}
+      {drawerOpen && (
+        <div className="fixed inset-0 z-50 flex lg:hidden">
+          <div className="absolute inset-0 bg-black/40" onClick={() => setDrawerOpen(false)} />
+          <div className="relative ml-auto flex h-full w-80 flex-col overflow-y-auto bg-[#F0F2F2] p-4">
+            <div className="mb-3 flex items-center justify-between">
+              <h2 className="font-bold text-slate-900">Filters</h2>
+              <button
+                onClick={() => setDrawerOpen(false)}
+                className="rounded-lg p-1 hover:bg-slate-200"
+                aria-label="Close filters"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            {sidebar}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
