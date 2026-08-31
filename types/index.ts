@@ -69,6 +69,16 @@ export interface Product {
   /** Seller badges, when the feed supplies them. */
   sellerBadges?: ProductSellerBadges | null;
   /**
+   * True when this listing is sold across borders under Delivered Duty
+   * Paid — the price already includes an estimated duty component and the
+   * buyer will see no separate duties at delivery. Drives the "Ships
+   * internationally · no duties on delivery" badge on cards and the
+   * detail page.
+   */
+  isInternationalListing?: boolean;
+  /** ISO-3166-1 alpha-2. Rendered as "Made in {country}" on the badge. */
+  originCountry?: string | null;
+  /**
    * The flash deal behind this product's price, when one is running.
    *
    * Present only while the window is open — the API attaches it to the price

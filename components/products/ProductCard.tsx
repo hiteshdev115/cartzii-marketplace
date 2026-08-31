@@ -19,6 +19,7 @@ import { CountdownTimer } from '@/components/ui/CountdownTimer';
 import { useDealActive } from '@/hooks/useDealActive';
 import { SPECIAL_DISCOUNT_MIN } from '@/lib/deals';
 import { discountPercent } from '@/lib/filters/productFilters';
+import { DdpBadge } from '@/components/international/DdpBadge';
 
 interface ProductCardProps {
   product: Product;
@@ -93,6 +94,11 @@ export function ProductCard({ product }: ProductCardProps) {
             {product.name}
           </h3>
         </Link>
+        {product.isInternationalListing && (
+          <div className="mb-2">
+            <DdpBadge originCountry={product.originCountry} variant="compact" />
+          </div>
+        )}
         <StarRating value={product.rating} size="sm" reviewCount={product.reviewCount} />
         <div className="flex items-center gap-2 mt-2">
           <span className="text-lg font-bold text-primary">

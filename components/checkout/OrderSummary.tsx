@@ -9,6 +9,7 @@ import { useCheckoutStore } from '@/stores/checkoutStore';
 import { formatPrice } from '@/lib/utils';
 import { cn } from '@/lib/utils';
 import type { TaxEstimate } from '@/types/order';
+import { DdpBadge } from '@/components/international/DdpBadge';
 
 export type TaxState =
   | { status: 'pending' }
@@ -148,6 +149,25 @@ export function OrderSummary({ taxState = { status: 'pending' } }: OrderSummaryP
               <span>{t('total')}</span>
               <span className="text-primary">{formatPrice(total, locale)}</span>
             </div>
+
+            {/* DDP note — shown when any cart item is an international
+                listing. This is the promise the buyer is paying under, so
+                surface it BEFORE they click pay, not only on confirmation.
+                Origin country is passed only when every international item
+                ships from the same one, otherwise the badge stays generic. */}
+            {(() => {
+              const intl = items.filter((i) => i.product?.isInternationalListing);
+              if (intl.length === 0) return null;
+              const origins = new Set(
+                intl.map((i) => i.product?.originCountry ?? '').filter(Boolean),
+              );
+              const singleOrigin = origins.size === 1 ? [...origins][0] : null;
+              return (
+                <div className="pt-1">
+                  <DdpBadge originCountry={singleOrigin} variant="full" />
+                </div>
+              );
+            })()}
           </div>
         </div>
       </div>

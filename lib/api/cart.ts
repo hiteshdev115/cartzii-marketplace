@@ -21,6 +21,13 @@ export interface CartAPIProduct {
     categoryslug: string;
   } | null;
   image: string | null;
+  /**
+   * International-listing flags. Optional so cart responses from server
+   * builds predating DDP still parse; when absent, the cart treats items
+   * as domestic and no DDP note is shown.
+   */
+  isinternationallisting?: boolean | null;
+  origincountry?: string | null;
 }
 
 export interface CartAPIVariantAttribute {

@@ -16,6 +16,7 @@ import { cn } from '@/lib/utils';
 import { useHydrated } from '@/hooks/useHydration';
 import { isLowStock, isOutOfStock, maxPurchasable } from '@/lib/stock';
 import { OutOfStockButton } from './OutOfStockButton';
+import { DdpBadge } from '@/components/international/DdpBadge';
 
 interface ProductInfoProps {
   product: Product;
@@ -156,6 +157,13 @@ export function ProductInfo({ product, onVariantChange, onShowReviews, onWriteRe
           </>
         )}
       </div>
+
+      {/* DDP note — right under the price so the "no duties at delivery"
+          promise is visible in the same glance the customer forms a
+          price expectation. */}
+      {product.isInternationalListing && (
+        <DdpBadge originCountry={product.originCountry} variant="full" />
+      )}
 
       {/* Short description */}
       <p className="text-slate-600">{product.shortDescription}</p>

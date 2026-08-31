@@ -246,6 +246,14 @@ export interface PlaceOrderResponse {
   currency?: string;
   accountCreated?: boolean;
   alreadyProcessed?: boolean;
+  /**
+   * True when any item on the order is an international (DDP) listing.
+   * When true, `ddpNote` is populated and the storefront must surface it
+   * (all-inclusive pricing, no duties at delivery). Absent on responses
+   * predating the DDP feature.
+   */
+  hasInternationalItems?: boolean;
+  ddpNote?: string;
 }
 
 /** Shipping address shape returned by `/orders/my-orders`.

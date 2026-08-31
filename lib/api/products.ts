@@ -155,6 +155,11 @@ interface APIProduct {
   isfeatured?: boolean | null;
   handicraft_details?: import('@/types').HandicraftDetails | null;
   seller_badges?: import('@/types').ProductSellerBadges | null;
+  // ── International (DDP) listing ──
+  // Absent on responses predating the DDP feature; treat as false / null.
+  isinternationallisting?: boolean | null;
+  origincountry?: string | null;
+  ddpincludedinprice?: boolean | null;
   categoryName?: string;
   categorySlug?: string;
   averageRating?: number | string | null;
@@ -461,6 +466,11 @@ export function mapProduct(raw: APIProduct, country: string): Product {
     // its artisan on one and not the other would be the obvious bug.
     handicraft: raw.handicraft_details ?? null,
     sellerBadges: raw.seller_badges ?? null,
+    // International (DDP) badge fields. Kept at the top level of Product
+    // (not nested under handicraft) because a general product can also be
+    // an international listing.
+    isInternationalListing: raw.isinternationallisting === true,
+    originCountry: raw.origincountry ?? null,
     isFeatured: Boolean(raw.isfeatured),
     isBestSeller: false,
     specifications: {},
