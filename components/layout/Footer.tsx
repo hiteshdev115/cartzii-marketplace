@@ -9,12 +9,16 @@ import { CountrySelector } from './CountrySelector';
 export function Footer() {
   const t = useTranslations('Footer');
 
-  const sections = [
+  const sections: {
+    title: string;
+    links: { label: string; href: string; external?: boolean }[];
+  }[] = [
     {
       title: t('company'),
       links: [
         { label: t('aboutUs'), href: buildPath('/about') },
-        { label: t('careers'), href: '#' },
+        { label: t('careers'), href: buildPath('/careers') },
+        { label: t('becomeSeller'), href: 'https://qa-seller.cartzii.ca/#quickstart', external: true },
         { label: t('press'), href: '#' },
         { label: t('blog'), href: '#' },
       ],
@@ -31,7 +35,7 @@ export function Footer() {
     {
       title: t('support'),
       links: [
-        { label: t('helpCenter'), href: '#' },
+        { label: t('helpCenter'), href: buildPath('/help') },
         { label: t('contactUs'), href: '#' },
         { label: t('shippingInfo'), href: '#' },
         { label: t('returnsPolicy'), href: '#' },
@@ -72,12 +76,23 @@ export function Footer() {
               <ul className="space-y-2.5">
                 {section.links.map((link) => (
                   <li key={link.label}>
-                    <Link
-                      href={link.href}
-                      className="text-sm text-slate-400 hover:text-white transition-colors"
-                    >
-                      {link.label}
-                    </Link>
+                    {link.external ? (
+                      <a
+                        href={link.href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm text-slate-400 hover:text-white transition-colors"
+                      >
+                        {link.label}
+                      </a>
+                    ) : (
+                      <Link
+                        href={link.href}
+                        className="text-sm text-slate-400 hover:text-white transition-colors"
+                      >
+                        {link.label}
+                      </Link>
+                    )}
                   </li>
                 ))}
               </ul>
