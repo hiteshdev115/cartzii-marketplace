@@ -1,9 +1,7 @@
 import { getLocale } from 'next-intl/server';
 import {
-  buildPath,
   countries,
   countrySiteUrl,
-  getCountryFromLocale,
   localeUrlPath,
 } from '@/config/countries';
 
@@ -29,7 +27,6 @@ export async function generateAlternates(baseUrl: string, pagePath: string) {
   // reads the request's locale rather than assuming the default. A French page
   // declaring the English URL as canonical asks Google to drop it.
   const locale = await getLocale();
-  const country = getCountryFromLocale(locale);
 
   const languages: Record<string, string> = {};
   for (const [c, config] of Object.entries(countries)) {

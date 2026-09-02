@@ -148,7 +148,7 @@ export default async function CookiePolicyPage() {
                 <p>
                   When you first visit Cartzii we show a cookie banner where you can accept, reject, or
                   customise non-essential cookies. You can re-open your preferences at any time from the
-                  "Cookie settings" link in the footer or your account preferences.
+                  &ldquo;Cookie settings&rdquo; link in the footer or your account preferences.
                 </p>
                 <p>
                   You can also block or delete cookies from your browser settings, but doing so may cause
