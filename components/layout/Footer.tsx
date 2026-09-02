@@ -36,18 +36,18 @@ export function Footer() {
       title: t('support'),
       links: [
         { label: t('helpCenter'), href: buildPath('/help') },
-        { label: t('contactUs'), href: '#' },
-        { label: t('shippingInfo'), href: '#' },
-        { label: t('returnsPolicy'), href: '#' },
-        { label: t('faq'), href: '#' },
+        { label: t('contactUs'), href: buildPath('/contact') },
+        { label: t('shippingInfo'), href: buildPath('/shipping') },
+        { label: t('returnsPolicy'), href: buildPath('/returns') },
+        { label: t('faq'), href: buildPath('/faq') },
       ],
     },
     {
       title: t('legal'),
       links: [
-        { label: t('termsOfService'), href: '#' },
-        { label: t('privacyPolicy'), href: '#' },
-        { label: t('cookiePolicy'), href: '#' },
+        { label: t('termsOfService'), href: buildPath('/terms') },
+        { label: t('privacyPolicy'), href: buildPath('/privacy') },
+        { label: t('cookiePolicy'), href: buildPath('/cookies') },
       ],
     },
   ];
