@@ -18,7 +18,12 @@ export function Footer() {
       links: [
         { label: t('aboutUs'), href: buildPath('/about') },
         { label: t('careers'), href: buildPath('/careers') },
-        { label: t('becomeSeller'), href: 'https://qa-seller.cartzii.ca/#quickstart', external: true },
+        // Links to the Etsy-style wizard's entry step. The step's page
+        // handles both new signups (renders the register form) and
+        // returning sellers (auto-forwards to their resume step).
+        // NEXT_PUBLIC_SELLER_WIZARD_URL is per-environment; defaults to
+        // the QA .ca URL for local dev.
+        { label: t('becomeSeller'), href: process.env.NEXT_PUBLIC_SELLER_WIZARD_URL ?? 'https://qa-seller.cartzii.ca/onboarding/account-basics', external: true },
         { label: t('press'), href: '#' },
         { label: t('blog'), href: '#' },
       ],

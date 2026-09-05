@@ -8,7 +8,13 @@ import { generateAlternates } from '@/lib/seo';
 import { Link } from '@/i18n/navigation';
 
 const SUPPORT_EMAIL = 'support@cartzii.ca';
-const SELLER_QUICKSTART_URL = 'https://qa-seller.cartzii.ca/#quickstart';
+// Where "Become a seller" / "Open Quickstart" send the visitor. Points at
+// the wizard's entry step, which handles both new signups (renders the
+// register form) and returning sellers (auto-forwards to their resume
+// step). Set per environment via env var; defaults to the QA .ca URL.
+const SELLER_QUICKSTART_URL =
+  process.env.NEXT_PUBLIC_SELLER_WIZARD_URL
+  ?? 'https://qa-seller.cartzii.ca/onboarding/account-basics';
 
 export async function generateMetadata() {
   const alternates = await generateAlternates(
