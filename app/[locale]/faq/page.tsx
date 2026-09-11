@@ -96,7 +96,7 @@ const groups: Group[] = [
     gradient: 'from-amber-500 to-yellow-600',
     items: [
       { q: 'How do I open a Cartzii shop?', a: 'Head to the Seller portal (qa-seller.cartzii.ca), complete Stripe Connect onboarding, and list your first product. Full step-by-step in the Help Center.' },
-      { q: 'What are the fees?', a: 'Cartzii\'s commission is 9.99% on the goods subtotal (tax and shipping excluded). Stripe\'s standard card-processing fee applies to every transaction and is billed to the platform.' },
+      { q: 'What are the fees?', a: 'Cartzii\'s commission is 12% on the goods subtotal (tax and shipping excluded). Stripe\'s standard card-processing fee applies to every transaction and is billed to the platform.' },
       { q: 'When do I get paid?', a: 'Payouts are triggered per order once the buyer\'s Cartzii return window closes, and land in your bank via Stripe\'s standard schedule.' },
       { q: 'What can I sell on Cartzii?', a: 'Anything legal to sell in your country and the buyer\'s country. Prohibited items are listed in the Seller Agreement — weapons, drugs, counterfeit goods, and similar.' },
       { q: 'Do I need a business number?', a: 'For CA/US sellers, Stripe collects the tax information required at onboarding — an SSN, EIN, SIN, or BN as appropriate. We do not accept sellers who cannot complete this step.' },

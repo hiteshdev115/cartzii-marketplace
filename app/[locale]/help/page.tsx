@@ -109,7 +109,7 @@ export default async function HelpCenterPage() {
       description: 'Absolute transparency on marketplace commission, processing fees, and payout schedules.',
       gradient: 'from-emerald-500 to-teal-600',
       articles: [
-        { title: 'Marketplace commission', description: 'Cartzii\'s commission is 9.99% on the goods subtotal (tax and shipping are excluded from the commission base).' },
+        { title: 'Marketplace commission', description: 'Cartzii\'s commission is 12% on the goods subtotal (tax and shipping are excluded from the commission base).' },
         { title: 'Stripe processing fees', description: 'Stripe\'s standard card-processing fee applies to every transaction and is billed to the platform, not to you.' },
         { title: 'When you get paid', description: 'Payouts are triggered per order once the buyer\'s Cartzii return window closes. Funds land in your bank via Stripe\'s standard schedule.' },
         { title: 'Reading your seller ledger', description: 'Every payout line matches an order line: gross, commission, refund, and net transfer are itemised so nothing is guessed.' },
