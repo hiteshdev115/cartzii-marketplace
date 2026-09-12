@@ -46,33 +46,42 @@ export function StorefrontView({ store, productCount }: Props) {
   const [tab, setTab] = useState<Tab>('products');
 
   return (
-    <div className="mx-auto max-w-6xl px-4 pb-16">
+    <div className="pb-16">
+      {/* Banner is FULL WIDTH — deliberately outside the max-w-6xl
+          container that follows, so it spans edge-to-edge like the
+          home-page hero. Constraining it would give sellers a tiny
+          card instead of the presentation surface they asked for. */}
       <StorefrontBanner store={store} productCount={productCount} />
 
-      <nav className="mt-6 flex flex-wrap gap-2 border-b border-slate-200" aria-label="Store sections">
-        {availableTabs.map((t) => (
-          <button
-            key={t}
-            type="button"
-            onClick={() => setTab(t)}
-            className={
-              tab === t
-                ? 'border-b-2 border-primary px-4 py-2 text-sm font-semibold text-primary'
-                : 'px-4 py-2 text-sm text-slate-600 hover:text-slate-900'
-            }
-            aria-current={tab === t ? 'page' : undefined}
-          >
-            {TAB_LABEL[t]}
-          </button>
-        ))}
-      </nav>
+      {/* Tabs + content stay in a comfortable reading width; a
+          full-viewport product grid is too sparse on wide monitors
+          and reviews become uncomfortably long lines. */}
+      <div className="mx-auto max-w-6xl px-4">
+        <nav className="mt-6 flex flex-wrap gap-2 border-b border-slate-200" aria-label="Store sections">
+          {availableTabs.map((t) => (
+            <button
+              key={t}
+              type="button"
+              onClick={() => setTab(t)}
+              className={
+                tab === t
+                  ? 'border-b-2 border-primary px-4 py-2 text-sm font-semibold text-primary'
+                  : 'px-4 py-2 text-sm text-slate-600 hover:text-slate-900'
+              }
+              aria-current={tab === t ? 'page' : undefined}
+            >
+              {TAB_LABEL[t]}
+            </button>
+          ))}
+        </nav>
 
-      <div className="mt-6">
-        {tab === 'products' && <ProductsTab slug={store.slug} />}
-        {tab === 'reviews'  && <ReviewsTab  slug={store.slug} />}
-        {tab === 'about'    && <AboutTab    store={store} />}
-        {tab === 'terms'    && <TermsTab    store={store} />}
-        {tab === 'contact'  && <ContactTab  store={store} />}
+        <div className="mt-6">
+          {tab === 'products' && <ProductsTab slug={store.slug} />}
+          {tab === 'reviews'  && <ReviewsTab  slug={store.slug} />}
+          {tab === 'about'    && <AboutTab    store={store} />}
+          {tab === 'terms'    && <TermsTab    store={store} />}
+          {tab === 'contact'  && <ContactTab  store={store} />}
+        </div>
       </div>
     </div>
   );
@@ -107,8 +116,63 @@ const BANNER_HEIGHT_STYLE = {
 } as const;
 
 function StorefrontBanner({ store, productCount }: { store: StorefrontStore; productCount: number }) {
+  // Overlay text sits inside the same max-w-6xl container the tabs
+  // use, so it lines up with the tab strip below regardless of how
+  // wide the viewport is. The banner IMAGE itself is edge-to-edge.
+  const overlay = (
+    <div className="absolute inset-x-0 bottom-0">
+      <div className="mx-auto max-w-6xl px-4 py-5 md:py-6">
+        <div className="flex flex-wrap items-center gap-3">
+          <h1 className="text-2xl font-semibold text-white drop-shadow md:text-4xl">
+            {store.storeName}
+          </h1>
+          {store.country && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-white/15 px-2 py-0.5 text-xs text-white backdrop-blur">
+              {countryFlag(store.country)} {store.country}
+            </span>
+          )}
+          <span className="text-xs text-white/80">
+            {productCount} {productCount === 1 ? 'product' : 'products'}
+          </span>
+        </div>
+        {store.description && (
+          <p className="mt-2 max-w-3xl text-sm text-white/90 drop-shadow md:text-base">
+            {store.description}
+          </p>
+        )}
+      </div>
+    </div>
+  );
+
+  // Placeholder overlay for the no-banner case uses dark-on-light copy
+  // rather than the white-on-scrim treatment above.
+  const overlayLight = (
+    <div className="absolute inset-x-0 bottom-0">
+      <div className="mx-auto max-w-6xl px-4 py-5 md:py-6">
+        <div className="flex flex-wrap items-center gap-3">
+          <h1 className="text-2xl font-semibold text-slate-900 md:text-4xl">
+            {store.storeName}
+          </h1>
+          {store.country && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-700">
+              {countryFlag(store.country)} {store.country}
+            </span>
+          )}
+          <span className="text-xs text-slate-500">
+            {productCount} {productCount === 1 ? 'product' : 'products'}
+          </span>
+        </div>
+        {store.description && (
+          <p className="mt-2 max-w-3xl text-sm text-slate-600 md:text-base">
+            {store.description}
+          </p>
+        )}
+      </div>
+    </div>
+  );
+
   return (
-    <header className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+    <header className="relative w-full overflow-hidden bg-slate-100">
       {store.bannerUrl ? (
         <div className="relative w-full" style={BANNER_HEIGHT_STYLE}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -117,29 +181,10 @@ function StorefrontBanner({ store, productCount }: { store: StorefrontStore; pro
             alt=""
             className="h-full w-full object-cover"
           />
-          {/* Scrim so the header text stays readable on any banner. Same
+          {/* Scrim so overlay copy stays readable on any image. Same
               treatment the home-page hero applies to its own copy. */}
-          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-900/60 via-slate-900/20 to-transparent" />
-          <div className="absolute inset-x-0 bottom-0 p-5 md:p-6">
-            <div className="flex flex-wrap items-center gap-3">
-              <h1 className="text-2xl font-semibold text-white drop-shadow md:text-3xl">
-                {store.storeName}
-              </h1>
-              {store.country && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-white/15 px-2 py-0.5 text-xs text-white backdrop-blur">
-                  {countryFlag(store.country)} {store.country}
-                </span>
-              )}
-              <span className="text-xs text-white/80">
-                {productCount} {productCount === 1 ? 'product' : 'products'}
-              </span>
-            </div>
-            {store.description && (
-              <p className="mt-2 max-w-3xl text-sm text-white/90 drop-shadow">
-                {store.description}
-              </p>
-            )}
-          </div>
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-900/70 via-slate-900/25 to-transparent" />
+          {overlay}
         </div>
       ) : (
         // No banner yet — a soft placeholder at the same responsive
@@ -153,26 +198,7 @@ function StorefrontBanner({ store, productCount }: { store: StorefrontStore; pro
               'linear-gradient(135deg, rgb(241 245 249) 0%, rgb(226 232 240) 100%)',
           }}
         >
-          <div className="absolute inset-x-0 bottom-0 p-5 md:p-6">
-            <div className="flex flex-wrap items-center gap-3">
-              <h1 className="text-2xl font-semibold text-slate-900 md:text-3xl">
-                {store.storeName}
-              </h1>
-              {store.country && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-700">
-                  {countryFlag(store.country)} {store.country}
-                </span>
-              )}
-              <span className="text-xs text-slate-500">
-                {productCount} {productCount === 1 ? 'product' : 'products'}
-              </span>
-            </div>
-            {store.description && (
-              <p className="mt-2 max-w-3xl text-sm text-slate-600">
-                {store.description}
-              </p>
-            )}
-          </div>
+          {overlayLight}
         </div>
       )}
     </header>
