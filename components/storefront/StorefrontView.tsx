@@ -88,45 +88,93 @@ const TAB_LABEL: Record<Tab, string> = {
 
 // ── Banner + header ────────────────────────────────────────────────────────
 
+/**
+ * Same responsive envelope as `<HeroBanner>` on the home page — the
+ * height scales linearly with viewport width, capped at 480px on wide
+ * screens (the home page hero's design height) and floored at 200px on
+ * narrow screens so it never collapses into a strip. Keeping the two
+ * heroes in sync means the store page feels like the same product
+ * rather than a smaller cousin.
+ */
+const BANNER_DESIGN_WIDTH_PX = 1440;
+const BANNER_DESIGN_HEIGHT_PX = 480;
+const BANNER_MIN_HEIGHT_PX = 200;
+const BANNER_HEIGHT_STYLE = {
+  height:
+    `clamp(${BANNER_MIN_HEIGHT_PX}px, ` +
+    `calc(100vw * ${BANNER_DESIGN_HEIGHT_PX} / ${BANNER_DESIGN_WIDTH_PX}), ` +
+    `${BANNER_DESIGN_HEIGHT_PX}px)`,
+} as const;
+
 function StorefrontBanner({ store, productCount }: { store: StorefrontStore; productCount: number }) {
   return (
     <header className="overflow-hidden rounded-xl border border-slate-200 bg-white">
       {store.bannerUrl ? (
-        /* eslint-disable-next-line @next/next/no-img-element */
-        <img
-          src={store.bannerUrl}
-          alt=""
-          className="h-48 w-full object-cover md:h-64"
-        />
+        <div className="relative w-full" style={BANNER_HEIGHT_STYLE}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={store.bannerUrl}
+            alt=""
+            className="h-full w-full object-cover"
+          />
+          {/* Scrim so the header text stays readable on any banner. Same
+              treatment the home-page hero applies to its own copy. */}
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-900/60 via-slate-900/20 to-transparent" />
+          <div className="absolute inset-x-0 bottom-0 p-5 md:p-6">
+            <div className="flex flex-wrap items-center gap-3">
+              <h1 className="text-2xl font-semibold text-white drop-shadow md:text-3xl">
+                {store.storeName}
+              </h1>
+              {store.country && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-white/15 px-2 py-0.5 text-xs text-white backdrop-blur">
+                  {countryFlag(store.country)} {store.country}
+                </span>
+              )}
+              <span className="text-xs text-white/80">
+                {productCount} {productCount === 1 ? 'product' : 'products'}
+              </span>
+            </div>
+            {store.description && (
+              <p className="mt-2 max-w-3xl text-sm text-white/90 drop-shadow">
+                {store.description}
+              </p>
+            )}
+          </div>
+        </div>
       ) : (
+        // No banner yet — a soft placeholder at the same responsive
+        // height so the page never jumps around when a seller uploads
+        // one later.
         <div
-          className="h-32 w-full md:h-40"
+          className="relative w-full"
           style={{
+            ...BANNER_HEIGHT_STYLE,
             background:
               'linear-gradient(135deg, rgb(241 245 249) 0%, rgb(226 232 240) 100%)',
           }}
-        />
-      )}
-      <div className="p-5 md:p-6">
-        <div className="flex flex-wrap items-center gap-3">
-          <h1 className="text-2xl font-semibold text-slate-900 md:text-3xl">
-            {store.storeName}
-          </h1>
-          {store.country && (
-            <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-700">
-              {countryFlag(store.country)} {store.country}
-            </span>
-          )}
-          <span className="text-xs text-slate-500">
-            {productCount} {productCount === 1 ? 'product' : 'products'}
-          </span>
+        >
+          <div className="absolute inset-x-0 bottom-0 p-5 md:p-6">
+            <div className="flex flex-wrap items-center gap-3">
+              <h1 className="text-2xl font-semibold text-slate-900 md:text-3xl">
+                {store.storeName}
+              </h1>
+              {store.country && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-700">
+                  {countryFlag(store.country)} {store.country}
+                </span>
+              )}
+              <span className="text-xs text-slate-500">
+                {productCount} {productCount === 1 ? 'product' : 'products'}
+              </span>
+            </div>
+            {store.description && (
+              <p className="mt-2 max-w-3xl text-sm text-slate-600">
+                {store.description}
+              </p>
+            )}
+          </div>
         </div>
-        {store.description && (
-          <p className="mt-2 max-w-3xl text-sm text-slate-600">
-            {store.description}
-          </p>
-        )}
-      </div>
+      )}
     </header>
   );
 }
