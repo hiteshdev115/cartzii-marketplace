@@ -122,6 +122,9 @@ interface APICategory {
 
 interface APISeller {
   storename?: string | null;
+  /** Storefront slug for /store/<slug>. Absent on responses predating
+   *  the storefront feature; treat as null. */
+  slug?: string | null;
 }
 
 interface APIProduct {
@@ -480,6 +483,10 @@ export function mapProduct(raw: APIProduct, country: string): Product {
     detailVariants: buildDetailVariants(activeVariants, country),
     sellerId: raw.sellerid,
     sellerName: raw.seller?.storename ?? raw.storename ?? null,
+    // Prefer the nested `seller.slug` (list responses) over the
+    // flat `sellerSlug` (detail response) — both are populated by
+    // the api-server today, either is safe.
+    sellerSlug: raw.seller?.slug ?? (raw as { sellerSlug?: string | null }).sellerSlug ?? null,
     // Resolved server-side (seller window → platform default). Left undefined
     // when the API predates it, so the badge hides rather than showing NaN.
     returnPolicy: raw.returnPolicy,

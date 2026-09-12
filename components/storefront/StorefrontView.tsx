@@ -23,6 +23,12 @@ import {
   type StorefrontReview,
   type Pagination,
 } from '@/lib/api/storefront';
+// Reuse the marketplace's canonical product card so a store page shows
+// the same interactive surface a category page does — star ratings,
+// discount tags, wishlist, add-to-cart, out-of-stock handling. Not a
+// bespoke card, because that meant every future improvement to the
+// main card would have to be duplicated here.
+import { ProductCard } from '@/components/products/ProductCard';
 
 interface Props {
   store: StorefrontStore;
@@ -240,61 +246,13 @@ function ProductsTab({ slug }: { slug: string }) {
     <div>
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
         {rows.map((p) => (
-          <ProductCard key={p.productId} product={p} />
+          <ProductCard key={p.id} product={p} />
         ))}
       </div>
       {pag && pag.totalPages > 1 && (
         <PaginationBar pag={pag} onPage={setPage} />
       )}
     </div>
-  );
-}
-
-function ProductCard({ product }: { product: StorefrontProduct }) {
-  // Pick the first pricing row; the marketplace elsewhere resolves this
-  // by viewer locale, but the buyer already lands on a locale-prefixed
-  // URL so any listed price is valid to show as a preview.
-  const p0 = product.pricing[0];
-  const price = p0
-    ? p0.discountPrice && Number(p0.discountPrice) < Number(p0.price)
-      ? { display: p0.discountPrice, was: p0.price, currency: p0.currency }
-      : { display: p0.price, was: null, currency: p0.currency }
-    : null;
-
-  return (
-    <a
-      href={`/products/${product.slug}`}
-      className="group block overflow-hidden rounded-lg border border-slate-200 bg-white transition-shadow hover:shadow-md"
-    >
-      <div className="aspect-square w-full overflow-hidden bg-slate-100">
-        {product.image ? (
-          /* eslint-disable-next-line @next/next/no-img-element */
-          <img
-            src={product.image}
-            alt={product.name}
-            className="h-full w-full object-cover transition-transform group-hover:scale-105"
-            loading="lazy"
-          />
-        ) : (
-          <div className="flex h-full items-center justify-center text-xs text-slate-400">No image</div>
-        )}
-      </div>
-      <div className="p-3">
-        <p className="line-clamp-2 text-sm font-medium text-slate-900">{product.name}</p>
-        {price && (
-          <div className="mt-1 flex items-baseline gap-2">
-            <span className="text-sm font-semibold text-slate-900">
-              {price.currency} {formatPrice(price.display)}
-            </span>
-            {price.was && (
-              <span className="text-xs text-slate-400 line-through">
-                {price.currency} {formatPrice(price.was)}
-              </span>
-            )}
-          </div>
-        )}
-      </div>
-    </a>
   );
 }
 
@@ -475,12 +433,6 @@ function StarBar({ value }: { value: number }) {
       ))}
     </div>
   );
-}
-
-function formatPrice(v: string): string {
-  const n = Number(v);
-  if (!Number.isFinite(n)) return v;
-  return n.toFixed(2);
 }
 
 function formatDate(iso: string): string {

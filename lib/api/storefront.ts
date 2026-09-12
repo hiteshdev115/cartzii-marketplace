@@ -13,6 +13,8 @@
  */
 
 import { api, ApiError } from './client';
+import { mapProduct } from './products';
+import type { Product } from '@/types';
 
 export interface StorefrontContact {
   email: string | null;
@@ -35,24 +37,12 @@ export interface StorefrontStore {
   updatedAt: string;
 }
 
-export interface StorefrontPricing {
-  country: string;
-  currency: string;
-  price: string;
-  discountPrice: string;
-}
-
-export interface StorefrontProduct {
-  productId: number;
-  slug: string;
-  name: string;
-  shortDescription: string;
-  stock: number;
-  productType: string;
-  image: string | null;
-  pricing: StorefrontPricing[];
-  createdAt: string;
-}
+// StorefrontProduct is the shape returned by `fetchStorefrontProducts`
+// — a fully-mapped Product (same type the /products listing uses)
+// with a `sellerName` and `sellerSlug` already resolved. Reusing the
+// canonical Product means the standard <ProductCard> works out of
+// the box; a bespoke type would fork the card component too.
+export type StorefrontProduct = Product;
 
 export interface StorefrontReviewMedia {
   url: string;
@@ -100,18 +90,36 @@ export async function fetchStorefront(slug: string): Promise<{
   }
 }
 
+/**
+ * Paginated products for a storefront.
+ *
+ * The API returns the SAME rich shape the main product listing uses,
+ * so we route it through `mapProduct` here and hand back canonical
+ * `Product` objects. `country` picks the pricing row the mapper
+ * surfaces on the card — falls back to CA (the default deployment)
+ * when the marketplace hasn't provided one.
+ */
 export async function fetchStorefrontProducts(
   slug: string,
-  opts: { page?: number; limit?: number } = {},
+  opts: { page?: number; limit?: number; country?: string } = {},
 ): Promise<{ products: StorefrontProduct[]; pagination: Pagination }> {
   const qs = new URLSearchParams();
   if (opts.page)  qs.set('page',  String(opts.page));
   if (opts.limit) qs.set('limit', String(opts.limit));
   const suffix = qs.toString() ? `?${qs.toString()}` : '';
-  const res = await api.get<Envelope<{ products: StorefrontProduct[]; pagination: Pagination }>>(
+  // Raw response is `{ products: APIProduct[], pagination }` — the
+  // API-side rows carry the same fields as /products list.
+  const res = await api.get<Envelope<{
+    products: Parameters<typeof mapProduct>[0][];
+    pagination: Pagination;
+  }>>(
     `/api/v1/public/stores/${encodeURIComponent(slug)}/products${suffix}`,
   );
-  return res.data;
+  const country = (opts.country ?? 'CA').toUpperCase();
+  return {
+    products: res.data.products.map((p) => mapProduct(p, country)),
+    pagination: res.data.pagination,
+  };
 }
 
 export async function fetchStorefrontReviews(

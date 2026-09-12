@@ -2,7 +2,9 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
-import { Heart, ShoppingCart, Truck, RotateCcw, Shield } from 'lucide-react';
+import { Link } from '@/i18n/navigation';
+import { buildPath } from '@/config/countries';
+import { Heart, ShoppingCart, Store, Truck, RotateCcw, Shield } from 'lucide-react';
 import { Product } from '@/types';
 import { formatPrice } from '@/lib/utils';
 import { StarRating } from '@/components/ui/StarRating';
@@ -120,9 +122,22 @@ export function ProductInfo({ product, onVariantChange, onShowReviews, onWriteRe
       {/* Title */}
       <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-slate-900 break-words">{product.name}</h1>
 
-      {/* Store name */}
+      {/* Store name — links to the seller's public storefront when
+          the API returned a slug (post-wizard sellers always have one).
+          Falls back to plain text for legacy sellers with no
+          storefront row yet. */}
       {product.sellerName && (
-        <p className="text-sm text-primary">{product.sellerName}</p>
+        product.sellerSlug ? (
+          <Link
+            href={buildPath(`/store/${product.sellerSlug}`)}
+            className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
+          >
+            <Store className="h-3.5 w-3.5" aria-hidden="true" />
+            <span>Sold by <span className="font-medium">{product.sellerName}</span></span>
+          </Link>
+        ) : (
+          <p className="text-sm text-primary">{product.sellerName}</p>
+        )
       )}
 
       {/* Rating */}

@@ -99,6 +99,14 @@ export interface Product {
    */
   sellerId?: number;
   sellerName?: string | null;
+  /**
+   * The seller's storefront slug — populated whenever the API returned
+   * a storedetails row with a slug (post-wizard sellers always have
+   * one). Turns the seller-name label into a link to `/store/<slug>`.
+   * Null on pre-wizard sellers or when the API response predates the
+   * enrichment.
+   */
+  sellerSlug?: string | null;
   // ---- Optional shipping measurements (from `/getProductBySlug` etc.) ------
   /** Product weight (nullable — only shown when present). */
   weight?: number | null;
