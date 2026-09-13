@@ -339,9 +339,10 @@ function ReviewsTab({ slug }: { slug: string }) {
 
 function AboutTab({ store }: { store: StorefrontStore }) {
   return (
-    <div className="prose prose-sm max-w-3xl">
-      <p className="whitespace-pre-wrap text-slate-700">{store.about}</p>
-    </div>
+    <div
+      className="prose prose-slate prose-sm max-w-3xl overflow-hidden break-words text-slate-700 prose-p:text-slate-700 prose-li:text-slate-700 prose-ul:space-y-1"
+      dangerouslySetInnerHTML={{ __html: store.about ?? '' }}
+    />
   );
 }
 
@@ -349,7 +350,10 @@ function TermsTab({ store }: { store: StorefrontStore }) {
   return (
     <div className="max-w-3xl rounded-lg border border-slate-200 bg-white p-5">
       <h2 className="mb-2 text-sm font-semibold text-slate-900">Store policies</h2>
-      <p className="whitespace-pre-wrap text-sm text-slate-700">{store.terms}</p>
+      <div
+        className="prose prose-slate prose-sm max-w-none overflow-hidden break-words text-slate-700 prose-p:text-slate-700 prose-li:text-slate-700 prose-ul:space-y-1"
+        dangerouslySetInnerHTML={{ __html: store.terms ?? '' }}
+      />
       <p className="mt-4 border-t border-slate-100 pt-3 text-xs text-slate-500">
         Cartzii&rsquo;s platform terms and buyer protection apply to every purchase.
         These store-specific terms are in addition to, not instead of, Cartzii&rsquo;s.
