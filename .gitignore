@@ -43,13 +43,18 @@ yarn-error.log*
 .env.production
 .env.qa
 
-# Per-slot environment files for the four storefront deployments. These
-# carry the guest token and Stripe publishable key; the tracked
-# `.example` next to each documents the shape.
-.env.prod.ca
-.env.prod.us
-.env.qa.ca
-.env.qa.us
+# Per-slot environment files for the four storefront deployments.
+#
+# TEMPORARY (2026-09-14): tracked so config changes can be shipped through
+# git during pre-launch testing. Every secret currently in these files
+# must be ROTATED before public launch — git history preserves the
+# values in perpetuity, so any credential ever committed here is
+# considered burned for post-launch use.
+#
+# .env.prod.ca   — TRACKED (pre-launch); rotate secrets before launch
+# .env.prod.us   — TRACKED (pre-launch); rotate secrets before launch
+# .env.qa.ca     — TRACKED (pre-launch)
+# .env.qa.us     — TRACKED (pre-launch)
 
 # # env files (can opt-in for committing if needed)
 # .env.local
