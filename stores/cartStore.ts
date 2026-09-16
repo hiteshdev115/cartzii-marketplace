@@ -145,6 +145,12 @@ function mapAPIItemToCartItem(item: CartAPIItem): CartItem {
     // OrderSummary and the DdpBadge on cart lines. Absent on legacy carts.
     isInternationalListing: item.product.isinternationallisting === true,
     originCountry: item.product.origincountry ?? null,
+    // Product-type family — determines whether checkout shows the
+    // "digital · final sale" banner and whether shipping/address is
+    // collected for this line.
+    productType: (
+      (item.product as { producttype?: 'general' | 'handicraft' | 'digital' | null }).producttype
+    ) ?? 'general',
   };
 
   return {

@@ -66,6 +66,15 @@ export interface Product {
   createdAt: string;
   /** Present only on a handicraft listing. */
   handicraft?: HandicraftDetails | null;
+  /**
+   * Product-type family. Determines the shipping/returns/download UX:
+   *
+   *   'general' | 'handicraft'  → physical shipment, seller return policy applies
+   *   'digital'                 → instant download, no shipping, no buyer returns
+   */
+  productType?: 'general' | 'handicraft' | 'digital' | null;
+  /** Only set for digital products; one of the DIGITAL_SUBCATEGORY ids. */
+  digitalSubcategory?: string | null;
   /** Seller badges, when the feed supplies them. */
   sellerBadges?: ProductSellerBadges | null;
   /**

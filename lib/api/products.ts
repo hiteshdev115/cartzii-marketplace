@@ -468,6 +468,11 @@ export function mapProduct(raw: APIProduct, country: string): Product {
     // handicraft feed all go through this function, and a listing that showed
     // its artisan on one and not the other would be the obvious bug.
     handicraft: raw.handicraft_details ?? null,
+    // Product-type family. Consumers read this to choose the right treatment
+    // (physical vs handicraft vs downloadable). Falls back to 'general' so
+    // legacy payloads that predate the field render as ordinary products.
+    productType: (raw.producttype as 'general' | 'handicraft' | 'digital' | null) ?? 'general',
+    digitalSubcategory: (raw as { digitalsubcategory?: string | null }).digitalsubcategory ?? null,
     sellerBadges: raw.seller_badges ?? null,
     // International (DDP) badge fields. Kept at the top level of Product
     // (not nested under handicraft) because a general product can also be
