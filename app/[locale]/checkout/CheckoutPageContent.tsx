@@ -88,6 +88,26 @@ export function CheckoutPageContent() {
   const cartHasHandicraft = useCartStore((s) =>
     s.items.some((item) => Boolean(item.product.handicraft)),
   );
+  /**
+   * True when every cart line is a digital product. Digital purchases
+   * skip the shipping-rate step entirely — the seller doesn't ship
+   * anything, so quoting a carrier rate would either return nothing
+   * (blocking the pay button) or a bogus rate for a parcel that never
+   * exists. The tax estimator still runs (VAT / GST applies to digital
+   * goods in most jurisdictions), which is why we still ask for a
+   * billing address.
+   */
+  const cartIsDigitalOnly = useCartStore((s) =>
+    s.items.length > 0 && s.items.every((item) => item.product.productType === 'digital'),
+  );
+  // Digital-only carts skip the shipping-rate panel entirely; nothing
+  // ships. Force `ratesEligible = true` so the pay button unblocks. If
+  // the seller later adds a physical item, the panel reappears and
+  // takes ownership of this flag again.
+  useEffect(() => {
+    if (cartIsDigitalOnly && !ratesEligible) setRatesEligible(true);
+    if (!cartIsDigitalOnly && ratesEligible && !shippingData) setRatesEligible(false);
+  }, [cartIsDigitalOnly, ratesEligible, shippingData]);
   const giftWrapOffered = giftWrapPolicy.available && cartHasHandicraft;
   // The price the SERVER will charge, or zero. Never a client-side constant.
   const giftWrapCents = giftWrapOffered && giftWrapSelected ? giftWrapPolicy.priceCents : 0;
@@ -323,8 +343,12 @@ export function CheckoutPageContent() {
               )}
             </section>
 
-            {/* Shipping rate selection — appears after address is locked */}
-            {shippingData && !editingShipping && !paymentComplete && (
+            {/* Shipping rate selection — appears after address is locked.
+                Hidden entirely for a digital-only cart; there is no parcel
+                to price. `ratesEligible` is forced true in that case so
+                the payment button unblocks. See the effect just above the
+                render tree. */}
+            {shippingData && !editingShipping && !paymentComplete && !cartIsDigitalOnly && (
               <section className="bg-white rounded-xl p-3 sm:p-5 shadow-sm border border-slate-200">
                 <RateSelectorPanel
                   shippingAddress={shippingData}
