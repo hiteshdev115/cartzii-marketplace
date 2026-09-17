@@ -34,6 +34,12 @@ export interface OrderItem {
   existingReturnShipmentStatus?: string | null;
   variantInfo?: string;
   currencyCode: string;
+  /**
+   * 'general' | 'handicraft' | 'digital'. Drives the order-confirmation
+   * "Download files" section for digital lines — a digital item shows
+   * a link to the buyer's Library instead of a shipment status pill.
+   */
+  productType?: 'general' | 'handicraft' | 'digital' | null;
 }
 
 // Shared address shape — used by both OrderConfirmation and PlaceOrderPayload
