@@ -10,6 +10,7 @@ import { PaymentForm, type PaymentSubmitResult } from '@/components/checkout/Pay
 import { ShippingForm } from '@/components/checkout/ShippingForm';
 import { WalletPayButton } from '@/components/checkout/WalletPayButton';
 import { SavedPaymentMethods } from '@/components/checkout/SavedPaymentMethods';
+import { usePaymentStore } from '@/stores/paymentStore';
 import { OrderSummary, type TaxState } from '@/components/checkout/OrderSummary';
 import { RateSelectorPanel } from '@/components/shipping/RateSelectorPanel';
 import { Toast, type ToastType } from '@/components/ui/Toast';
@@ -108,6 +109,20 @@ export function CheckoutPageContent() {
     if (cartIsDigitalOnly && !ratesEligible) setRatesEligible(true);
     if (!cartIsDigitalOnly && ratesEligible && !shippingData) setRatesEligible(false);
   }, [cartIsDigitalOnly, ratesEligible, shippingData]);
+
+  // Auto-select the first saved payment method for signed-in buyers,
+  // ONCE, when the store's list of saved methods populates. `hasAutoSelected`
+  // is intentionally set-and-forget so a buyer who clicks "Use a different
+  // card" and then re-selects nothing isn't yanked back to the saved card
+  // on the next render.
+  const savedMethods = usePaymentStore((s) => s.savedMethods);
+  const [hasAutoSelected, setHasAutoSelected] = useState(false);
+  useEffect(() => {
+    if (isGuestCheckout || hasAutoSelected) return;
+    if (savedMethods.length === 0) return;
+    setSelectedMethodId(savedMethods[0].id);
+    setHasAutoSelected(true);
+  }, [isGuestCheckout, savedMethods, hasAutoSelected]);
   const giftWrapOffered = giftWrapPolicy.available && cartHasHandicraft;
   // The price the SERVER will charge, or zero. Never a client-side constant.
   const giftWrapCents = giftWrapOffered && giftWrapSelected ? giftWrapPolicy.priceCents : 0;
@@ -370,16 +385,33 @@ export function CheckoutPageContent() {
               />
             )}
 
-            {/* Saved cards */}
-            <section className="bg-white rounded-xl p-3 sm:p-4 shadow-sm">
-              <h2 className="text-sm font-semibold text-gray-700 mb-3">
-                {t('savedPaymentMethods')}
-              </h2>
-              <SavedPaymentMethods
-                selectedId={selectedMethodId}
-                onSelect={setSelectedMethodId}
-              />
-            </section>
+            {/* Saved cards — signed-in buyers only. The component fetches
+                the list on mount; when the list is non-empty its UI shows
+                and the auto-select effect above pre-picks the first card
+                so the buyer can hit Pay without any card entry. Guests
+                skip entirely — they can't attach a card to an account
+                they don't have. */}
+            {!isGuestCheckout && (
+              <section
+                className={
+                  savedMethods.length > 0
+                    ? 'bg-white rounded-xl p-3 sm:p-4 shadow-sm'
+                    // Zero-methods state: the component renders a small
+                    // "No saved cards" line; wrapping it in a dedicated
+                    // section made the checkout look like it had an empty
+                    // widget in the middle. Class collapses it into flow.
+                    : 'sr-only'
+                }
+              >
+                <h2 className="text-sm font-semibold text-gray-700 mb-3">
+                  {t('savedPaymentMethods')}
+                </h2>
+                <SavedPaymentMethods
+                  selectedId={selectedMethodId}
+                  onSelect={setSelectedMethodId}
+                />
+              </section>
+            )}
 
             {/* Wallet: Google Pay / Apple Pay — only renders if available */}
             {shippingData && !editingShipping && taxReady && ratesEligible && (
@@ -408,6 +440,9 @@ export function CheckoutPageContent() {
                 amount={orderAmountCents}
                 currency={currency}
                 country={shippingData.country}
+                selectedSavedMethodId={selectedMethodId}
+                onUseDifferentCard={() => setSelectedMethodId(null)}
+                isGuest={isGuestCheckout}
                 onSubmit={handlePaymentSubmit}
               />
             ) : shippingData && !editingShipping && paymentComplete && !placedOrder ? (
