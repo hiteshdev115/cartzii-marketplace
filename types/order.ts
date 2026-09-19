@@ -136,6 +136,9 @@ export interface OrderConfirmation {
   shipments?: OrderShipmentSummary[];
   /** Server-computed — true only while the order hasn't shipped yet. */
   cancelEligible?: boolean;
+  /** See the matching fields on OrderHistoryRow. */
+  digitalOnly?: boolean;
+  hasDigital?: boolean;
 }
 
 /** Shape of the `shippingAddress` block sent to `POST /api/v1/orders/place-order`. */
@@ -298,6 +301,14 @@ export interface OrderHistoryRow {
   stripePaymentId?: string;
   /** Server-computed — true only while the order hasn't shipped yet. */
   cancelEligible?: boolean;
+  /**
+   * Server-computed. True when EVERY line is a digital good, which makes the
+   * order final sale, instantly fulfilled, and free of anything to ship or
+   * track. `hasDigital` is the weaker question: does any line need the
+   * download treatment rather than the parcel treatment.
+   */
+  digitalOnly?: boolean;
+  hasDigital?: boolean;
   shippingAddress?: OrderHistoryShippingAddress;
   itemCount: number;
   sellerCount?: number;

@@ -13,6 +13,7 @@ import { CancelOrderModal } from '@/components/orders/CancelOrderModal';
 import {
   getOrderStatusBadge,
   getOrderDeliveryProgress,
+  DIGITAL_COMPLETED_BADGE,
   findItemShipment,
 } from '@/lib/shippingConstants';
 import { StatusBadge } from '@/components/shipping/StatusBadge';
@@ -273,7 +274,19 @@ function OrderCard({ order, locale, tCart, tCheckout, tAccount, onRequestReturn,
       .filter((s): s is OrderShipmentSummary => s != null);
   }, [order.shipments]);
 
-  const statusBadge = getOrderStatusBadge(trackableShipments);
+  // ── Digital-only orders ────────────────────────────────────────────────────
+  //
+  // Nothing ships, so there are no shipments to derive a status from and the
+  // shipment-based badge fell through to "Processing" on a purchase the buyer
+  // had already downloaded. The server sends `digitalOnly`; the item-level
+  // fallback keeps orders placed before that field existed reading correctly.
+  const isDigitalOnly =
+    order.digitalOnly ??
+    (order.items.length > 0 && order.items.every((i) => i.productType === 'digital'));
+
+  const statusBadge = isDigitalOnly
+    ? DIGITAL_COMPLETED_BADGE
+    : getOrderStatusBadge(trackableShipments);
   const deliveryProgress = getOrderDeliveryProgress(trackableShipments);
 
   // ── When a return may be requested ─────────────────────────────────────────
@@ -325,7 +338,10 @@ function OrderCard({ order, locale, tCart, tCheckout, tAccount, onRequestReturn,
           <span className={`rounded-full px-2 py-0.5 ${statusBadge.className}`}>
             {statusBadge.label}
           </span>
-          {order.paymentStatus && (
+          {/* Suppressed on a digital-only order: the payment badge also reads
+              "Completed", and two identical pills side by side was the
+              confusing part of the original report. */}
+          {!isDigitalOnly && order.paymentStatus && (
             <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-emerald-700">
               {order.paymentStatus}
             </span>
@@ -422,7 +438,11 @@ function OrderCard({ order, locale, tCart, tCheckout, tAccount, onRequestReturn,
           >
             {tAccount('viewDetails')}
           </Link>
-          {order.cancelEligible && !orderFullyRefunded && (
+          {/* `isDigitalOnly` as well as the server's flag: an order placed
+              before the API sent `digitalOnly`, or one whose fulfilment never
+              ran, still sits in PROCESSING and would otherwise offer Cancel on
+              files the buyer already has. The server refuses it either way. */}
+          {order.cancelEligible && !isDigitalOnly && !orderFullyRefunded && (
             <button
               type="button"
               onClick={() => onCancelOrder(order.orderNumber)}
@@ -460,6 +480,16 @@ function SellerBlock({
   // than repeated against each of their lines.
   const shipment = findItemShipment({ sellerId: seller.sellerId }, shipments);
 
+  // A seller shipping nothing but downloads has no parcel, and the shipment
+  // badge defaults to "Processing" when it cannot find one. On a mixed order
+  // this is per seller, so a physical seller still shows real parcel status.
+  const sellerAllDigital =
+    (seller.items ?? []).length > 0 &&
+    (seller.items ?? []).every((item) => {
+      const flat = flatItems.find((i) => i.productId === item.productId);
+      return (flat?.productType ?? item.productType) === 'digital';
+    });
+
   return (
     <div className="p-4">
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
@@ -470,7 +500,13 @@ function SellerBlock({
           </span>
         </p>
         <div className="flex items-center gap-2">
-          <StatusBadge status={shipment?.currentStatus ?? 'label_created'} />
+          {sellerAllDigital ? (
+            <span className={`rounded-full px-2 py-0.5 text-xs ${DIGITAL_COMPLETED_BADGE.className}`}>
+              {DIGITAL_COMPLETED_BADGE.label}
+            </span>
+          ) : (
+            <StatusBadge status={shipment?.currentStatus ?? 'label_created'} />
+          )}
           <p className="text-xs text-slate-500">
             {seller.itemCount} {seller.itemCount === 1 ? tCart('item') : tCheckout('items')}
           </p>
@@ -532,7 +568,11 @@ function ItemRow({
 }) {
   const lineTotal = typeof item.finalPrice === 'number' ? item.finalPrice : item.totalPrice;
   const [imgSrc, setImgSrc] = useState(resolveImageUrl(item.imageUrl));
-  const shipment = showStatus ? findItemShipment(item, shipments) : null;
+  // A digital line has no parcel. Looking one up would find nothing and fall
+  // back to the "Processing" badge, which is what made a downloaded file look
+  // like it was still being packed.
+  const isDigital = item.productType === 'digital';
+  const shipment = showStatus && !isDigital ? findItemShipment(item, shipments) : null;
   return (
     <div className="flex gap-3">
       <div className="relative w-16 h-16 rounded-lg overflow-hidden shrink-0 border border-slate-200 bg-slate-50">
@@ -554,7 +594,13 @@ function ItemRow({
         </p>
         {showStatus && (
           <div className="mt-1">
-            <StatusBadge status={shipment?.currentStatus ?? 'label_created'} />
+            {isDigital ? (
+              <span className={`rounded-full px-2 py-0.5 text-xs ${DIGITAL_COMPLETED_BADGE.className}`}>
+                {DIGITAL_COMPLETED_BADGE.label}
+              </span>
+            ) : (
+              <StatusBadge status={shipment?.currentStatus ?? 'label_created'} />
+            )}
           </div>
         )}
       </div>

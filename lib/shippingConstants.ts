@@ -114,6 +114,20 @@ export const PARTIALLY_DELIVERED_BADGE = {
 };
 
 /**
+ * A digital-only order.
+ *
+ * Kept out of STATUS_BADGE_MAP for the same reason as the badge above: that
+ * map is the carrier's vocabulary, and a download has no carrier. Such an
+ * order has no shipments at all, so deriving its badge from shipments fell
+ * through to `label_created` and left a finished purchase reading
+ * "Processing" for ever.
+ */
+export const DIGITAL_COMPLETED_BADGE = {
+  label: 'Completed',
+  className: 'bg-emerald-100 text-emerald-700',
+};
+
+/**
  * How much of a multi-seller order has actually arrived.
  *
  * A single order can carry one parcel per seller, and they do not land
