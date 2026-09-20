@@ -3,7 +3,7 @@ import {
   Mail, MessageSquare, Sparkles, Clock, ShieldCheck, ShoppingBag,
   Briefcase, LifeBuoy, Building2, MapPin,
 } from 'lucide-react';
-import { generateAlternates } from '@/lib/seo';
+import { generateAlternates, BASE_URL } from '@/lib/seo';
 import { Link } from '@/i18n/navigation';
 
 const SUPPORT_EMAIL = 'support@cartzii.ca';
@@ -11,7 +11,7 @@ const CAREERS_EMAIL = 'career@cartzii.ca';
 
 export async function generateMetadata() {
   const alternates = await generateAlternates(
-    process.env.NEXT_PUBLIC_BASE_URL || 'https://cartzii.com',
+    BASE_URL,
     '/contact',
   );
   return {

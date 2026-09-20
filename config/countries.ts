@@ -61,10 +61,14 @@ export const currentLocale: string = countries[currentCountry].defaultLocale;
  * Needed for hreflang, which has to point at the OTHER domain — the one thing
  * that cannot be expressed as a path now that the countries are separate
  * sites. Configurable so QA points at QA rather than production.
+ *
+ * `www` is the canonical form. These strings end up in canonical and hreflang
+ * tags, and naming a host that then redirects wastes the redirect on every
+ * crawl and splits the signal between two spellings of the same page.
  */
 export const countrySiteUrl: Record<string, string> = {
-  ca: process.env.NEXT_PUBLIC_SITE_URL_CA || 'https://cartzii.ca',
-  us: process.env.NEXT_PUBLIC_SITE_URL_US || 'https://cartzii.com',
+  ca: process.env.NEXT_PUBLIC_SITE_URL_CA || 'https://www.cartzii.ca',
+  us: process.env.NEXT_PUBLIC_SITE_URL_US || 'https://www.cartzii.com',
 };
 
 /**

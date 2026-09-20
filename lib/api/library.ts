@@ -1,3 +1,5 @@
+import { currentCountry } from '@/config/countries';
+
 /**
  * Buyer Library API.
  *
@@ -57,7 +59,7 @@ async function authed<T>(path: string): Promise<T> {
   if (!token) throw new Error('Sign in to view your library.');
   const res = await fetch(`${API_BASE_URL}${path}`, {
     method:  'GET',
-    headers: { Authorization: `Bearer ${token}` },
+    headers: { Authorization: `Bearer ${token}`, 'X-Portal-Locale': currentCountry },
     cache:   'no-store',
   });
   if (!res.ok) {

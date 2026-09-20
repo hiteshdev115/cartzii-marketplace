@@ -1,3 +1,5 @@
+import { currentCountry } from '@/config/countries';
+
 // ---------------------------------------------------------------------------
 // Centralized API Client
 // ---------------------------------------------------------------------------
@@ -65,6 +67,18 @@ function getAuthToken(): string | null {
 function buildHeaders(config?: RequestConfig, hasBody?: boolean): HeadersInit {
   const headers: Record<string, string> = {
     Accept: 'application/json',
+    // Which storefront this request is for.
+    //
+    // It did not matter while each country had its own API: the server could
+    // tell them apart by which process the request reached. Once one API
+    // serves both, that stops being true, and without this header the server
+    // falls back to its own slot's country — the same answer for both
+    // storefronts. One of them would then be served the other's catalogue at
+    // the other's prices, and the page would look completely normal.
+    //
+    // `currentCountry` is inlined at build time and each storefront builds its
+    // own, so this is a constant per deployment rather than a lookup.
+    'X-Portal-Locale': currentCountry,
   };
 
   // Only set Content-Type for requests with a body

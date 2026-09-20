@@ -3,7 +3,8 @@ import { allProducts } from '@/lib/mockData';
 import { fetchRootCategories } from '@/lib/api';
 import { deploymentLocales, localeUrlPath } from '@/config/countries';
 
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://cartzii.com';
+// Re-exported from lib/seo so one definition decides this deployment's origin.
+import { BASE_URL } from '@/lib/seo';
 
 /**
  * This deployment's sitemap — its own country only.

@@ -1,12 +1,12 @@
 import { getTranslations } from 'next-intl/server';
 import { Breadcrumb } from '@/components/layout/Breadcrumb';
-import { generateAlternates } from '@/lib/seo';
+import { generateAlternates, BASE_URL } from '@/lib/seo';
 import { ProductListingClient } from './ProductListingClient';
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: 'Metadata' });
-  const alternates = await generateAlternates(process.env.NEXT_PUBLIC_BASE_URL || 'https://cartzii.com', '/products');
+  const alternates = await generateAlternates(BASE_URL, '/products');
   return {
     title: t('productsTitle'),
     description: t('productsDescription'),

@@ -2,10 +2,19 @@ import { getLocale } from 'next-intl/server';
 import {
   countries,
   countrySiteUrl,
+  currentCountry,
   localeUrlPath,
 } from '@/config/countries';
 
-export const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://cartzii.com';
+/**
+ * This deployment's own origin.
+ *
+ * Falls back to THIS country's site rather than a fixed US domain. The old
+ * fallback meant a Canadian build with no env override declared the American
+ * URL as its canonical, which asks Google to drop every Canadian page.
+ */
+export const BASE_URL =
+  process.env.NEXT_PUBLIC_BASE_URL || countrySiteUrl[currentCountry];
 
 /**
  * Canonical and hreflang for a page.

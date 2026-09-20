@@ -1,4 +1,5 @@
 import { MetadataRoute } from 'next';
+import { BASE_URL } from '@/lib/seo';
 
 export default function robots(): MetadataRoute.Robots {
   return {
@@ -9,6 +10,6 @@ export default function robots(): MetadataRoute.Robots {
         disallow: ['/account/', '/checkout/', '/auth/'],
       },
     ],
-    sitemap: `${process.env.NEXT_PUBLIC_BASE_URL || 'https://cartzii.com'}/sitemap.xml`,
+    sitemap: `${BASE_URL}/sitemap.xml`,
   };
 }

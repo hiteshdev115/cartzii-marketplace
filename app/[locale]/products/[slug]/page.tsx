@@ -1,5 +1,6 @@
 import { getTranslations } from 'next-intl/server';
-import { currentCountry } from '@/config/countries';
+import { currentCountry, countrySiteUrl } from '@/config/countries';
+import { generateAlternates } from '@/lib/seo';
 import { fetchHandicraftProduct, countryName } from '@/lib/api/handicraft';
 import { ProductDetailClient } from './ProductDetailClient';
 
@@ -18,8 +19,18 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
   const product = await fetchHandicraftProduct(currentCountry.toUpperCase(), slug);
   const handicraft = product?.handicraft;
 
+  // The Canadian and American pages for one product are near-identical text on
+  // two domains, which search engines read as duplicates and rank as neither.
+  // These tags say they are the same product for different markets, so each
+  // one ranks in its own country instead of the two diluting each other. The
+  // product page is the page this matters most on and the one that had none.
+  const alternates = await generateAlternates(
+    countrySiteUrl[currentCountry],
+    `/products/${slug}`,
+  );
+
   if (!product || !handicraft) {
-    return { title: fallbackTitle, description: t('allProducts') };
+    return { title: fallbackTitle, description: t('allProducts'), alternates };
   }
 
   const origin = countryName(handicraft.craft_origin_country);
@@ -33,6 +44,7 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
   return {
     title: `${product.name} — Handmade by ${handicraft.artisan_name} | Cartzii`,
     description: `${parts.join(' ')}. ${product.shortDescription || ''}`.trim(),
+    alternates,
     keywords: [
       'handmade', 'artisan', handicraft.artisan_name,
       ...(handicraft.craft_technique ? [handicraft.craft_technique] : []),

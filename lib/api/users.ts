@@ -1,4 +1,5 @@
 import type { UserProfile, UpdateProfilePayload } from '@/types';
+import { currentCountry } from '@/config/countries';
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL || 'https://staging-api.cartzii.com';
@@ -47,6 +48,7 @@ export async function fetchUserProfile(
       method: 'GET',
       headers: {
         Authorization: `Bearer ${token}`,
+        'X-Portal-Locale': currentCountry,
       },
     });
 
@@ -94,6 +96,7 @@ export async function updateUserProfile(
     method: 'PUT',
     headers: {
       Authorization: `Bearer ${token}`,
+      'X-Portal-Locale': currentCountry,
     },
     body: formData,
   });

@@ -110,7 +110,7 @@ jobs:
             export NVM_DIR="$HOME/.nvm"
             if [ -s "$NVM_DIR/nvm.sh" ]; then . "$NVM_DIR/nvm.sh"; fi
 
-            DIR="/srv/cartzii/$DEPLOY_ENV/$COUNTRY/marketplace"
+            DIR="/srv/cartzii/$DEPLOY_ENV/marketplace/$COUNTRY"
             APP="cartzii-$DEPLOY_ENV-$COUNTRY-marketplace"
             ENV_FILE=".env.$DEPLOY_ENV.$COUNTRY"
 
