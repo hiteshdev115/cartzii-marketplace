@@ -34,32 +34,25 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# Local and legacy env files. These used to be committed, which meant every
-# deployment shipped a file naming the OLD api host. Next loads .env.local and
-# .env.production during a build, so they only lost to the per-slot file by
-# precedence — one plain `next build` instead of `build:{env}:{country}` and
-# the wrong API would be baked in silently.
-.env.local
-.env.production
-.env.qa
-
-# Per-slot environment files for the four storefront deployments.
+# env files
 #
-# TEMPORARY (2026-09-14): tracked so config changes can be shipped through
-# git during pre-launch testing. Every secret currently in these files
-# must be ROTATED before public launch — git history preserves the
-# values in perpetuity, so any credential ever committed here is
-# considered burned for post-launch use.
+# Nothing with a secret is tracked: ignore every env file, then allow back
+# only the templates. This repo builds FOUR deployments from one codebase —
+# .env.qa.ca, .env.qa.us, .env.prod.ca, .env.prod.us — and each real file is
+# created once on its server slot, never committed.
 #
-# .env.prod.ca   — TRACKED (pre-launch); rotate secrets before launch
-# .env.prod.us   — TRACKED (pre-launch); rotate secrets before launch
-# .env.qa.ca     — TRACKED (pre-launch)
-# .env.qa.us     — TRACKED (pre-launch)
-
-# # env files (can opt-in for committing if needed)
-# .env.local
-# .env.qa
-# !.env.production
+# Four of them WERE tracked before 2026-09-21. Git history keeps their
+# contents, so any credential that appeared in them is burned and needs
+# rotating before launch.
+#
+# Local development uses .env.local (see .env.local.example). Next loads
+# .env.local and .env.production during ANY build, so a stray .env.production
+# would silently beat the per-slot file on a plain `next build` — which is why
+# the ignore is a blanket one rather than a list.
+.env
+.env.*
+!.env.example
+!.env.*.example
 
 # vercel
 .vercel
