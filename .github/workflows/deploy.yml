@@ -116,18 +116,23 @@ jobs:
 
             cd "$DIR"
 
-            # Env file is NOT in the repo — it carries the guest token. Each
-            # slot's file is created once on the server. Fail here rather than
-            # after `git reset --hard`, so a misconfigured slot is never left
-            # mid-deploy.
-            if [ ! -f "$ENV_FILE" ]; then
-              echo "::error::$DIR/$ENV_FILE is missing. Create it from ${ENV_FILE}.example before deploying."
-              exit 1
-            fi
-
             echo "==> fetch $BRANCH"
             git fetch --prune origin
             git reset --hard "origin/$BRANCH"
+
+            # The env file COMES FROM THE REPO, so this check belongs after the
+            # fetch, not before it. It used to run first, on the assumption
+            # that each slot's file was created by hand on the server — which
+            # made a brand-new slot fail on a file the very next line would
+            # have delivered.
+            #
+            # `git reset --hard` also means anything edited on the server is
+            # discarded here. That is the point: the repo is the one place
+            # config lives.
+            if [ ! -f "$ENV_FILE" ]; then
+              echo "::error::$DIR/$ENV_FILE is missing from the repo. Commit it on $BRANCH — it is tracked, not created on the server."
+              exit 1
+            fi
 
             echo "==> install"
             npm ci --no-audit --no-fund

@@ -36,23 +36,33 @@ yarn-error.log*
 
 # env files
 #
-# Nothing with a secret is tracked: ignore every env file, then allow back
-# only the templates. This repo builds FOUR deployments from one codebase —
-# .env.qa.ca, .env.qa.us, .env.prod.ca, .env.prod.us — and each real file is
-# created once on its server slot, never committed.
+# The four per-slot files ARE TRACKED, deliberately. This repo builds FOUR
+# deployments from one codebase, and these are the files they run:
 #
-# Four of them WERE tracked before 2026-09-21. Git history keeps their
-# contents, so any credential that appeared in them is burned and needs
-# rotating before launch.
+#   .env.qa.ca    -> qa.cartzii.ca        .env.prod.ca  -> www.cartzii.ca
+#   .env.qa.us    -> qa.cartzii.com       .env.prod.us  -> www.cartzii.com
 #
-# Local development uses .env.local (see .env.local.example). Next loads
-# .env.local and .env.production during ANY build, so a stray .env.production
-# would silently beat the per-slot file on a plain `next build` — which is why
-# the ignore is a blanket one rather than a list.
+# The deploy does `git reset --hard`, so editing them here and pushing is how
+# a storefront's config changes. Editing them on the server does nothing.
+#
+# THE TRADE-OFF, STATED PLAINLY: they hold real values, and git history keeps
+# every version forever. Anyone with read access to this repo gets them, and
+# deleting a file later does not remove it from history. Every secret ever
+# committed here must be rotated before public launch, and Stripe LIVE keys
+# should stay out of the .env.prod.* files until then.
+#
+# .env.local stays ignored: it is yours, not a deployment's. Keep it that way
+# — Next loads .env.local and .env.production during ANY build, so a stray
+# file of either name silently beats the per-slot one on a plain
+# `next build`, which is why the ignore below is a blanket one.
 .env
 .env.*
 !.env.example
 !.env.*.example
+!.env.qa.ca
+!.env.qa.us
+!.env.prod.ca
+!.env.prod.us
 
 # vercel
 .vercel
