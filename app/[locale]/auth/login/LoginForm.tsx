@@ -10,7 +10,10 @@ import { Breadcrumb } from '@/components/layout/Breadcrumb';
 import { Link } from '@/i18n/navigation';
 import { useSearchParams } from 'next/navigation';
 import { useRouter } from '@/i18n/navigation';
-import { buildPath } from '@/config/countries';
+import { buildPath, currentCountry, countrySiteUrl, countries } from '@/config/countries';
+
+/** The storefront this one is not. Two markets, so it is simply the other. */
+const otherCountryCode = currentCountry === 'ca' ? 'us' : 'ca';
 import { api, ApiError } from '@/lib/api/client';
 import { useAuthStore } from '@/stores/authStore';
 import { mergeCartOnLogin } from '@/lib/mergeCart';
@@ -35,6 +38,11 @@ export function LoginForm() {
   const redirectTo = searchParams.get('redirect');
   const [showPassword, setShowPassword] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
+  // Set only for errorCode 1060: the address has an account, on the other
+  // storefront. Drives the link below the message — a red box telling someone
+  // to "sign in on our other store" without saying which one, or linking to
+  // it, is barely better than the wrong answer it replaced.
+  const [wrongCountry, setWrongCountry] = useState(false);
   const [isRestoringCart, setIsRestoringCart] = useState(false);
   const setTokens = useAuthStore((s) => s.setTokens);
   const setUser = useAuthStore((s) => s.setUser);
@@ -49,6 +57,7 @@ export function LoginForm() {
 
   const onSubmit = async (data: LoginFormData) => {
     setApiError(null);
+    setWrongCountry(false);
     try {
       const res = await api.post<LoginResponse>('/api/v1/login', {
         email: data.email,
@@ -88,6 +97,12 @@ export function LoginForm() {
         const body = error.body as LoginResponse | null;
         if (body?.errorCode === 1013) {
           setApiError(t('accountNotVerified'));
+        } else if (body?.errorCode === 1060) {
+          // The account exists, on the other storefront. Saying "invalid
+          // credentials" here would send someone to reset a password that
+          // was never wrong, so name the store that actually has it.
+          setWrongCountry(true);
+          setApiError(body?.message || t('loginFailed'));
         } else if (body?.errorCode === 1007) {
           setApiError(t('invalidCredentials'));
         } else {
@@ -116,6 +131,14 @@ export function LoginForm() {
         {apiError && (
           <div className="mb-4 rounded-lg bg-red-50 border border-red-200 p-3 text-sm text-red-700">
             {apiError}
+            {wrongCountry && (
+              <a
+                href={`${countrySiteUrl[otherCountryCode]}/auth/login`}
+                className="mt-2 block font-medium underline"
+              >
+                Go to {countries[otherCountryCode]?.name ?? otherCountryCode.toUpperCase()}
+              </a>
+            )}
           </div>
         )}
 
