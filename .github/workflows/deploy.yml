@@ -147,6 +147,22 @@ jobs:
             # standalone server does not bundle them, and without that
             # copy the site boots and 404s every stylesheet and image.
             echo "==> build $DEPLOY_ENV/$COUNTRY"
+            # A killed build leaves .next/lock behind, and the next build
+            # refuses to start rather than overwrite it: "Unable to acquire
+            # lock". Under `set -e` that aborts the deploy AFTER `git reset
+            # --hard` has run, so the slot reports the new commit while pm2
+            # keeps serving the previous build — a deploy that looks applied
+            # and is not. It bit the seller portal on 2026-09-22.
+            #
+            # Only removed when no build is actually running, so this cannot
+            # clobber a concurrent one — and this repo has two slots on one
+            # box, which makes that a real possibility rather than a
+            # theoretical one.
+            if [ -f .next/lock ] && ! pgrep -f "next build" >/dev/null 2>&1; then
+              echo "==> clearing stale .next/lock (no build running)"
+              rm -f .next/lock
+            fi
+
             NEXT_TELEMETRY_DISABLED=1 npm run "build:$DEPLOY_ENV:$COUNTRY"
 
             # Next's image optimizer caches its output keyed by URL, not by file
