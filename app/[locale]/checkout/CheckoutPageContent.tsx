@@ -10,10 +10,13 @@ import { PaymentForm, type PaymentSubmitResult } from '@/components/checkout/Pay
 import { ShippingForm } from '@/components/checkout/ShippingForm';
 import { WalletPayButton } from '@/components/checkout/WalletPayButton';
 import { SavedPaymentMethods } from '@/components/checkout/SavedPaymentMethods';
+import { usePaymentStore } from '@/stores/paymentStore';
 import { OrderSummary, type TaxState } from '@/components/checkout/OrderSummary';
 import { RateSelectorPanel } from '@/components/shipping/RateSelectorPanel';
 import { Toast, type ToastType } from '@/components/ui/Toast';
 import { getTaxEstimate, placeOrder } from '@/lib/api/orders';
+import { fetchGiftWrapPolicy, type GiftWrapPolicy } from '@/lib/api/giftWrap';
+import { GiftWrapOption } from '@/components/handicraft/GiftWrapOption';
 import { ApiError } from '@/lib/api/client';
 import { useCheckoutStore } from '@/stores/checkoutStore';
 import type { ShippingFormData } from '@/lib/validators';
@@ -66,6 +69,64 @@ export function CheckoutPageContent() {
   // same rate. Declared above the effect because the estimate depends on it.
   const shippingCents = getTotalShippingCents();
 
+  // ── Gift wrapping ────────────────────────────────────────────────────────
+  // Offered only when the platform has a price set AND the cart holds
+  // something it applies to. The API refuses — and refunds — an order that
+  // paid for wrapping it was not eligible for, so offering it speculatively
+  // would turn a client mistake into a refunded customer.
+  const [giftWrapPolicy, setGiftWrapPolicy] = useState<GiftWrapPolicy>({ priceCents: 0, available: false });
+  const [giftWrapSelected, setGiftWrapSelected] = useState(false);
+  const [giftWrapMessage, setGiftWrapMessage] = useState('');
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchGiftWrapPolicy().then((policy) => {
+      if (!cancelled) setGiftWrapPolicy(policy);
+    });
+    return () => { cancelled = true; };
+  }, []);
+
+  const cartHasHandicraft = useCartStore((s) =>
+    s.items.some((item) => Boolean(item.product.handicraft)),
+  );
+  /**
+   * True when every cart line is a digital product. Digital purchases
+   * skip the shipping-rate step entirely — the seller doesn't ship
+   * anything, so quoting a carrier rate would either return nothing
+   * (blocking the pay button) or a bogus rate for a parcel that never
+   * exists. The tax estimator still runs (VAT / GST applies to digital
+   * goods in most jurisdictions), which is why we still ask for a
+   * billing address.
+   */
+  const cartIsDigitalOnly = useCartStore((s) =>
+    s.items.length > 0 && s.items.every((item) => item.product.productType === 'digital'),
+  );
+  // Digital-only carts skip the shipping-rate panel entirely; nothing
+  // ships. Force `ratesEligible = true` so the pay button unblocks. If
+  // the seller later adds a physical item, the panel reappears and
+  // takes ownership of this flag again.
+  useEffect(() => {
+    if (cartIsDigitalOnly && !ratesEligible) setRatesEligible(true);
+    if (!cartIsDigitalOnly && ratesEligible && !shippingData) setRatesEligible(false);
+  }, [cartIsDigitalOnly, ratesEligible, shippingData]);
+
+  // Auto-select the first saved payment method for signed-in buyers,
+  // ONCE, when the store's list of saved methods populates. `hasAutoSelected`
+  // is intentionally set-and-forget so a buyer who clicks "Use a different
+  // card" and then re-selects nothing isn't yanked back to the saved card
+  // on the next render.
+  const savedMethods = usePaymentStore((s) => s.savedMethods);
+  const [hasAutoSelected, setHasAutoSelected] = useState(false);
+  useEffect(() => {
+    if (isGuestCheckout || hasAutoSelected) return;
+    if (savedMethods.length === 0) return;
+    setSelectedMethodId(savedMethods[0].id);
+    setHasAutoSelected(true);
+  }, [isGuestCheckout, savedMethods, hasAutoSelected]);
+  const giftWrapOffered = giftWrapPolicy.available && cartHasHandicraft;
+  // The price the SERVER will charge, or zero. Never a client-side constant.
+  const giftWrapCents = giftWrapOffered && giftWrapSelected ? giftWrapPolicy.priceCents : 0;
+
   // Re-fetch the tax estimate whenever the locked shipping address, the cart
   // subtotal, or the chosen shipping changes. Skipped while the shipping form
   // is still being edited.
@@ -90,6 +151,7 @@ export function CheckoutPageContent() {
           stateCode: shippingData.state,
           subtotalCents,
           shippingCents,
+          giftWrapCents,
         });
         if (!cancelled) {
           setTaxState({ status: 'ready', estimate });
@@ -111,7 +173,7 @@ export function CheckoutPageContent() {
       cancelled = true;
       controller.abort();
     };
-  }, [shippingData, editingShipping, subtotalCents, shippingCents]);
+  }, [shippingData, editingShipping, subtotalCents, shippingCents, giftWrapCents]);
 
   // Stripe needs the grand total in the smallest currency unit.
   //
@@ -125,7 +187,7 @@ export function CheckoutPageContent() {
   const orderAmountCents =
     taxState.status === 'ready'
       ? taxState.estimate.totalAmountCents
-      : subtotalCents + shippingCents;
+      : subtotalCents + shippingCents + giftWrapCents;
   const taxReady = taxState.status === 'ready';
 
   const shippingPreview = useMemo(() => {
@@ -206,6 +268,10 @@ export function CheckoutPageContent() {
         );
 
       const order = await placeOrder({
+        // Boolean only — the server prices it from a platform setting.
+        ...(giftWrapCents > 0
+          ? { giftWrap: true, giftWrapMessage: giftWrapMessage || undefined }
+          : {}),
         paymentIntentId: paymentResult.paymentIntentId,
         portal: getCountryFromLocale(locale) as 'us' | 'ca',
         currency: currency.toUpperCase(),
@@ -292,8 +358,12 @@ export function CheckoutPageContent() {
               )}
             </section>
 
-            {/* Shipping rate selection — appears after address is locked */}
-            {shippingData && !editingShipping && !paymentComplete && (
+            {/* Shipping rate selection — appears after address is locked.
+                Hidden entirely for a digital-only cart; there is no parcel
+                to price. `ratesEligible` is forced true in that case so
+                the payment button unblocks. See the effect just above the
+                render tree. */}
+            {shippingData && !editingShipping && !paymentComplete && !cartIsDigitalOnly && (
               <section className="bg-white rounded-xl p-3 sm:p-5 shadow-sm border border-slate-200">
                 <RateSelectorPanel
                   shippingAddress={shippingData}
@@ -302,16 +372,46 @@ export function CheckoutPageContent() {
               </section>
             )}
 
-            {/* Saved cards */}
-            <section className="bg-white rounded-xl p-3 sm:p-4 shadow-sm">
-              <h2 className="text-sm font-semibold text-gray-700 mb-3">
-                {t('savedPaymentMethods')}
-              </h2>
-              <SavedPaymentMethods
-                selectedId={selectedMethodId}
-                onSelect={setSelectedMethodId}
+            {/* Gift wrapping — only when the platform offers it and the cart
+                holds something it applies to. */}
+            {giftWrapOffered && (
+              <GiftWrapOption
+                priceCents={giftWrapPolicy.priceCents}
+                currency={currency}
+                selected={giftWrapSelected}
+                message={giftWrapMessage}
+                onToggle={setGiftWrapSelected}
+                onMessageChange={setGiftWrapMessage}
               />
-            </section>
+            )}
+
+            {/* Saved cards — signed-in buyers only. The component fetches
+                the list on mount; when the list is non-empty its UI shows
+                and the auto-select effect above pre-picks the first card
+                so the buyer can hit Pay without any card entry. Guests
+                skip entirely — they can't attach a card to an account
+                they don't have. */}
+            {!isGuestCheckout && (
+              <section
+                className={
+                  savedMethods.length > 0
+                    ? 'bg-white rounded-xl p-3 sm:p-4 shadow-sm'
+                    // Zero-methods state: the component renders a small
+                    // "No saved cards" line; wrapping it in a dedicated
+                    // section made the checkout look like it had an empty
+                    // widget in the middle. Class collapses it into flow.
+                    : 'sr-only'
+                }
+              >
+                <h2 className="text-sm font-semibold text-gray-700 mb-3">
+                  {t('savedPaymentMethods')}
+                </h2>
+                <SavedPaymentMethods
+                  selectedId={selectedMethodId}
+                  onSelect={setSelectedMethodId}
+                />
+              </section>
+            )}
 
             {/* Wallet: Google Pay / Apple Pay — only renders if available */}
             {shippingData && !editingShipping && taxReady && ratesEligible && (
@@ -340,6 +440,9 @@ export function CheckoutPageContent() {
                 amount={orderAmountCents}
                 currency={currency}
                 country={shippingData.country}
+                selectedSavedMethodId={selectedMethodId}
+                onUseDifferentCard={() => setSelectedMethodId(null)}
+                isGuest={isGuestCheckout}
                 onSubmit={handlePaymentSubmit}
               />
             ) : shippingData && !editingShipping && paymentComplete && !placedOrder ? (

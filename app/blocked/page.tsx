@@ -12,8 +12,9 @@ export default function BlockedPage() {
           <Image
             src="/assets/cartzii-logo.png"
             alt="Cartzii"
-            width={180}
-            height={48}
+            width={240}
+            height={67}
+            className="h-16 w-auto object-contain"
             priority
           />
         </div>

@@ -1,13 +1,20 @@
 import { getLocale } from 'next-intl/server';
 import {
-  buildPath,
   countries,
   countrySiteUrl,
-  getCountryFromLocale,
+  currentCountry,
   localeUrlPath,
 } from '@/config/countries';
 
-export const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://cartzii.com';
+/**
+ * This deployment's own origin.
+ *
+ * Falls back to THIS country's site rather than a fixed US domain. The old
+ * fallback meant a Canadian build with no env override declared the American
+ * URL as its canonical, which asks Google to drop every Canadian page.
+ */
+export const BASE_URL =
+  process.env.NEXT_PUBLIC_BASE_URL || countrySiteUrl[currentCountry];
 
 /**
  * Canonical and hreflang for a page.
@@ -29,7 +36,6 @@ export async function generateAlternates(baseUrl: string, pagePath: string) {
   // reads the request's locale rather than assuming the default. A French page
   // declaring the English URL as canonical asks Google to drop it.
   const locale = await getLocale();
-  const country = getCountryFromLocale(locale);
 
   const languages: Record<string, string> = {};
   for (const [c, config] of Object.entries(countries)) {

@@ -4,8 +4,8 @@ import { useCallback, useEffect, useState } from 'react';
 import Image from 'next/image';
 import { useLocale, useTranslations } from 'next-intl';
 import { useSearchParams } from 'next/navigation';
-import { useRouter } from '@/i18n/navigation';
-import { CheckCircle2, Mail, Printer, RefreshCw } from 'lucide-react';
+import { Link, useRouter } from '@/i18n/navigation';
+import { CheckCircle2, Download, Mail, Printer, RefreshCw, Zap } from 'lucide-react';
 import { buildPath } from '@/config/countries';
 import { getOrderByNumber } from '@/lib/api/orders';
 import type { OrderConfirmation } from '@/types/order';
@@ -182,6 +182,39 @@ export function OrderConfirmationContent({ orderNumber }: OrderConfirmationConte
             <div className="text-sm text-indigo-900">
               <p className="font-semibold">{t('accountCreatedTitle')}</p>
               <p className="mt-0.5 text-indigo-800/80">{t('accountCreatedBody')}</p>
+            </div>
+          </section>
+        )}
+
+        {/* Digital-order banner. Renders when EVERY line in the order is
+            a digital product — the order is fulfilled the moment payment
+            confirms, and the files are already in the buyer's Library.
+            A mixed order (digital + physical) doesn't get this banner
+            because part of it still has to ship. */}
+        {order.items.length > 0 && order.items.every((it) => it.productType === 'digital') && (
+          <section className="rounded-2xl border border-sky-200 bg-sky-50 p-5 shadow-sm">
+            <div className="flex items-start gap-4">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-sky-600 shadow-sm">
+                <Zap className="h-5 w-5" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h2 className="text-base font-semibold text-sky-950">
+                  Your files are ready to download
+                </h2>
+                <p className="mt-1 text-sm text-sky-900/80">
+                  This is a digital order — nothing ships to your address.
+                  Your purchases have been added to your Library and are
+                  available immediately. Digital purchases are final sale
+                  and are not eligible for return or cancellation.
+                </p>
+              </div>
+              <Link
+                href={buildPath('/account/library')}
+                className="shrink-0 inline-flex items-center gap-2 rounded-xl bg-sky-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-sky-700 transition-colors"
+              >
+                <Download className="h-4 w-4" />
+                Open Library
+              </Link>
             </div>
           </section>
         )}

@@ -70,6 +70,21 @@ export function CartPageContent() {
       ) : (
         <div className="grid lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2">
+            {/* Digital notice — shown whenever the cart contains at least
+                one digital line item. Required for pre-purchase disclosure
+                under Canada's Consumer Protection Act and the EU CRD. */}
+            {items.some((it) => it.product.productType === 'digital') && (
+              <div className="mb-4 rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-900">
+                <p className="font-semibold">Your cart contains a digital item.</p>
+                <p className="mt-1 text-blue-800">
+                  Digital purchases become available for immediate download from
+                  your Library once payment is confirmed, and are not eligible
+                  for return. Cartzii can still refund a digital purchase if the
+                  file is materially different from what was described.
+                </p>
+              </div>
+            )}
+
             <div className="flex items-center justify-between mb-4">
               <p className="text-sm text-slate-600">{items.length} {items.length === 1 ? 'item' : 'items'}</p>
               <button onClick={() => clearCart()} className="text-sm text-red-500 hover:underline">

@@ -8,6 +8,7 @@ import { fetchProductReviews } from '@/lib/api/reviews';
 import { ProductGallery } from '@/components/products/ProductGallery';
 import { ProductInfo, type VariantMeasurements } from '@/components/products/ProductInfo';
 import { ProductTabs } from '@/components/products/ProductTabs';
+import { ArtisanStory } from '@/components/handicraft/ArtisanStory';
 import { ReviewForm } from '@/components/products/ReviewForm';
 import { Breadcrumb } from '@/components/layout/Breadcrumb';
 import { Skeleton } from '@/components/ui/Skeleton';
@@ -185,6 +186,13 @@ export function ProductDetailClient({ slug }: ProductDetailClientProps) {
         <ProductInfo product={product} onVariantChange={handleVariantChange} onShowReviews={scrollToReviews} onWriteReview={scrollToWriteReview} />
       </div>
       <div className="mt-8 sm:mt-12 bg-white rounded-2xl border border-gray-200 p-4 sm:p-6 lg:p-8">
+        {/* Above the tabs: on a handmade item the maker IS the product
+            information, not a footnote to it. Absent for a general product,
+            which carries no handicraft detail. */}
+        {product.handicraft && (
+          <ArtisanStory handicraft={product.handicraft} seller={product.sellerBadges} />
+        )}
+
         <ProductTabs product={product} reviews={reviews} stats={reviewStats} activeTab={activeTab} onTabChange={setActiveTab} />
         <ReviewForm productId={parseInt(product.id, 10)} reviews={reviews} onReviewPosted={handleReviewPosted} />
       </div>

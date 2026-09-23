@@ -6,14 +6,14 @@
  * (cartzii-api-server/docs/architecture/deployment-runbook.md). Each slot is a
  * separate checkout:
  *
- *   /srv/cartzii/prod/ca/marketplace  →  cartzii-prod-ca-marketplace  :4001
- *   /srv/cartzii/prod/us/marketplace  →  cartzii-prod-us-marketplace  :4011
- *   /srv/cartzii/qa/ca/marketplace    →  cartzii-qa-ca-marketplace    :4101
- *   /srv/cartzii/qa/us/marketplace    →  cartzii-qa-us-marketplace    :4111
+ *   /srv/cartzii/prod/marketplace/ca  →  cartzii-prod-ca-marketplace  :4001
+ *   /srv/cartzii/prod/marketplace/us  →  cartzii-prod-us-marketplace  :4011
+ *   /srv/cartzii/qa/marketplace/ca    →  cartzii-qa-ca-marketplace    :4101
+ *   /srv/cartzii/qa/marketplace/us    →  cartzii-qa-us-marketplace    :4111
  *
  * All four are declared here, but a checkout only ever runs its own:
  *
- *   cd /srv/cartzii/prod/ca/marketplace
+ *   cd /srv/cartzii/prod/marketplace/ca
  *   npm run build:prod:ca
  *   pm2 start ecosystem.config.js --only cartzii-prod-ca-marketplace
  *

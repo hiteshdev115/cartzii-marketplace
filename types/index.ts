@@ -1,3 +1,33 @@
+/**
+ * The artisan detail behind a handicraft listing, exactly as the API nests it.
+ *
+ * Its PRESENCE is what makes a product a handicraft — there is no separate
+ * flag to fall out of step with it.
+ */
+export interface HandicraftDetails {
+  artisan_name: string;
+  craft_origin_country: string;
+  craft_origin_region: string | null;
+  craft_technique: string | null;
+  material_used: string[];
+  is_handmade: boolean;
+  is_one_of_a_kind: boolean;
+  certifications: string[];
+  production_lead_time_days: number | null;
+  is_made_to_order: boolean;
+  artisan_story: string | null;
+  /** A listed material carries an import/export caution. */
+  has_restricted_material: boolean;
+}
+
+/** Seller badges shown beside a handicraft listing. */
+export interface ProductSellerBadges {
+  sellerid: number;
+  is_international_seller: boolean;
+  seller_country: string | null;
+  artisan_verified: boolean;
+}
+
 export interface Product {
   id: string;
   name: string;
@@ -34,6 +64,29 @@ export interface Product {
    */
   attributes: Record<string, string[]>;
   createdAt: string;
+  /** Present only on a handicraft listing. */
+  handicraft?: HandicraftDetails | null;
+  /**
+   * Product-type family. Determines the shipping/returns/download UX:
+   *
+   *   'general' | 'handicraft'  → physical shipment, seller return policy applies
+   *   'digital'                 → instant download, no shipping, no buyer returns
+   */
+  productType?: 'general' | 'handicraft' | 'digital' | null;
+  /** Only set for digital products; one of the DIGITAL_SUBCATEGORY ids. */
+  digitalSubcategory?: string | null;
+  /** Seller badges, when the feed supplies them. */
+  sellerBadges?: ProductSellerBadges | null;
+  /**
+   * True when this listing is sold across borders under Delivered Duty
+   * Paid — the price already includes an estimated duty component and the
+   * buyer will see no separate duties at delivery. Drives the "Ships
+   * internationally · no duties on delivery" badge on cards and the
+   * detail page.
+   */
+  isInternationalListing?: boolean;
+  /** ISO-3166-1 alpha-2. Rendered as "Made in {country}" on the badge. */
+  originCountry?: string | null;
   /**
    * The flash deal behind this product's price, when one is running.
    *
@@ -55,6 +108,14 @@ export interface Product {
    */
   sellerId?: number;
   sellerName?: string | null;
+  /**
+   * The seller's storefront slug — populated whenever the API returned
+   * a storedetails row with a slug (post-wizard sellers always have
+   * one). Turns the seller-name label into a link to `/store/<slug>`.
+   * Null on pre-wizard sellers or when the API response predates the
+   * enrichment.
+   */
+  sellerSlug?: string | null;
   // ---- Optional shipping measurements (from `/getProductBySlug` etc.) ------
   /** Product weight (nullable — only shown when present). */
   weight?: number | null;

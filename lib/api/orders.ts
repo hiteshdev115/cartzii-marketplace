@@ -81,6 +81,14 @@ export interface TaxEstimateParams {
    * Omitting it under-collects tax on every order.
    */
   shippingCents?: number;
+  /**
+   * Gift wrapping, same unit.
+   *
+   * Its OWN term, not folded into shipping: a wrap fee counted as shipping is
+   * what the order endpoint had to be fixed for, and the two are charged back
+   * to different parties.
+   */
+  giftWrapCents?: number;
 }
 
 export async function getTaxEstimate(params: TaxEstimateParams): Promise<TaxEstimate> {
@@ -93,6 +101,7 @@ export async function getTaxEstimate(params: TaxEstimateParams): Promise<TaxEsti
         stateCode: params.stateCode,
         subtotalCents: params.subtotalCents,
         ...(params.shippingCents != null ? { shippingCents: params.shippingCents } : {}),
+        ...(params.giftWrapCents ? { giftWrapCents: params.giftWrapCents } : {}),
       },
       ...(isAuthenticated ? { skipGuestToken: true } : {}),
     },

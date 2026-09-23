@@ -111,7 +111,32 @@ export function ReviewForm({ productId, reviews = [], onReviewPosted }: ReviewFo
   };
 
   if (!isAuthenticated()) {
-    return null;
+    // Render a lightweight placeholder that keeps `id="review-form"`
+    // in the DOM, so the product page's "Write a Review" button still
+    // has a scroll target for unauthenticated visitors — the previous
+    // `return null` made the button appear broken (no scroll, no
+    // signal). Clicking here opens the login modal; after sign-in the
+    // real form takes this component's place.
+    return (
+      <div
+        id="review-form"
+        className="mt-6 p-6 bg-slate-50 rounded-xl text-center"
+      >
+        <p className="font-medium text-slate-800">
+          Sign in to write a review
+        </p>
+        <p className="mt-1 text-sm text-slate-500">
+          You&apos;ll need a Cartzii account to leave a rating on this product.
+        </p>
+        <button
+          type="button"
+          onClick={() => openLoginModal()}
+          className="mt-3 inline-flex items-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary/90"
+        >
+          Sign in
+        </button>
+      </div>
+    );
   }
 
   // Checked BEFORE "already reviewed". A successful post is appended to the

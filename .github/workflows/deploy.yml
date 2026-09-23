@@ -110,24 +110,29 @@ jobs:
             export NVM_DIR="$HOME/.nvm"
             if [ -s "$NVM_DIR/nvm.sh" ]; then . "$NVM_DIR/nvm.sh"; fi
 
-            DIR="/srv/cartzii/$DEPLOY_ENV/$COUNTRY/marketplace"
+            DIR="/srv/cartzii/$DEPLOY_ENV/marketplace/$COUNTRY"
             APP="cartzii-$DEPLOY_ENV-$COUNTRY-marketplace"
             ENV_FILE=".env.$DEPLOY_ENV.$COUNTRY"
 
             cd "$DIR"
 
-            # Env file is NOT in the repo — it carries the guest token. Each
-            # slot's file is created once on the server. Fail here rather than
-            # after `git reset --hard`, so a misconfigured slot is never left
-            # mid-deploy.
-            if [ ! -f "$ENV_FILE" ]; then
-              echo "::error::$DIR/$ENV_FILE is missing. Create it from ${ENV_FILE}.example before deploying."
-              exit 1
-            fi
-
             echo "==> fetch $BRANCH"
             git fetch --prune origin
             git reset --hard "origin/$BRANCH"
+
+            # The env file COMES FROM THE REPO, so this check belongs after the
+            # fetch, not before it. It used to run first, on the assumption
+            # that each slot's file was created by hand on the server — which
+            # made a brand-new slot fail on a file the very next line would
+            # have delivered.
+            #
+            # `git reset --hard` also means anything edited on the server is
+            # discarded here. That is the point: the repo is the one place
+            # config lives.
+            if [ ! -f "$ENV_FILE" ]; then
+              echo "::error::$DIR/$ENV_FILE is missing from the repo. Commit it on $BRANCH — it is tracked, not created on the server."
+              exit 1
+            fi
 
             echo "==> install"
             npm ci --no-audit --no-fund
@@ -142,6 +147,22 @@ jobs:
             # standalone server does not bundle them, and without that
             # copy the site boots and 404s every stylesheet and image.
             echo "==> build $DEPLOY_ENV/$COUNTRY"
+            # A killed build leaves .next/lock behind, and the next build
+            # refuses to start rather than overwrite it: "Unable to acquire
+            # lock". Under `set -e` that aborts the deploy AFTER `git reset
+            # --hard` has run, so the slot reports the new commit while pm2
+            # keeps serving the previous build — a deploy that looks applied
+            # and is not. It bit the seller portal on 2026-09-22.
+            #
+            # Only removed when no build is actually running, so this cannot
+            # clobber a concurrent one — and this repo has two slots on one
+            # box, which makes that a real possibility rather than a
+            # theoretical one.
+            if [ -f .next/lock ] && ! pgrep -f "next build" >/dev/null 2>&1; then
+              echo "==> clearing stale .next/lock (no build running)"
+              rm -f .next/lock
+            fi
+
             NEXT_TELEMETRY_DISABLED=1 npm run "build:$DEPLOY_ENV:$COUNTRY"
 
             # Next's image optimizer caches its output keyed by URL, not by file

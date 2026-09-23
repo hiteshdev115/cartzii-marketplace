@@ -9,12 +9,21 @@ import { CountrySelector } from './CountrySelector';
 export function Footer() {
   const t = useTranslations('Footer');
 
-  const sections = [
+  const sections: {
+    title: string;
+    links: { label: string; href: string; external?: boolean }[];
+  }[] = [
     {
       title: t('company'),
       links: [
         { label: t('aboutUs'), href: buildPath('/about') },
-        { label: t('careers'), href: '#' },
+        { label: t('careers'), href: buildPath('/careers') },
+        // Links to the Etsy-style wizard's entry step. The step's page
+        // handles both new signups (renders the register form) and
+        // returning sellers (auto-forwards to their resume step).
+        // NEXT_PUBLIC_SELLER_WIZARD_URL is per-environment; defaults to
+        // the QA .ca URL for local dev.
+        { label: t('becomeSeller'), href: process.env.NEXT_PUBLIC_SELLER_WIZARD_URL ?? 'https://qa-seller.cartzii.ca/onboarding/account-basics', external: true },
         { label: t('press'), href: '#' },
         { label: t('blog'), href: '#' },
       ],
@@ -31,19 +40,19 @@ export function Footer() {
     {
       title: t('support'),
       links: [
-        { label: t('helpCenter'), href: '#' },
-        { label: t('contactUs'), href: '#' },
-        { label: t('shippingInfo'), href: '#' },
-        { label: t('returnsPolicy'), href: '#' },
-        { label: t('faq'), href: '#' },
+        { label: t('helpCenter'), href: buildPath('/help') },
+        { label: t('contactUs'), href: buildPath('/contact') },
+        { label: t('shippingInfo'), href: buildPath('/shipping') },
+        { label: t('returnsPolicy'), href: buildPath('/returns') },
+        { label: t('faq'), href: buildPath('/faq') },
       ],
     },
     {
       title: t('legal'),
       links: [
-        { label: t('termsOfService'), href: '#' },
-        { label: t('privacyPolicy'), href: '#' },
-        { label: t('cookiePolicy'), href: '#' },
+        { label: t('termsOfService'), href: buildPath('/terms') },
+        { label: t('privacyPolicy'), href: buildPath('/privacy') },
+        { label: t('cookiePolicy'), href: buildPath('/cookies') },
       ],
     },
   ];
@@ -54,7 +63,7 @@ export function Footer() {
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-8">
           {/* Brand column */}
           <div className="col-span-2 md:col-span-4 lg:col-span-1 mb-4 lg:mb-0">
-            <Image src="/assets/cartzii-logo.png" alt="Cartzii" width={150} height={40} className="object-contain brightness-0 invert" />
+            <Image src="/assets/cartzii-logo.png" alt="Cartzii" width={210} height={59} className="h-14 w-auto object-contain brightness-0 invert" />
             <p className="mt-3 text-sm text-slate-400 max-w-xs">
               Discover products you&apos;ll love from trusted sellers worldwide.
             </p>
@@ -72,12 +81,23 @@ export function Footer() {
               <ul className="space-y-2.5">
                 {section.links.map((link) => (
                   <li key={link.label}>
-                    <Link
-                      href={link.href}
-                      className="text-sm text-slate-400 hover:text-white transition-colors"
-                    >
-                      {link.label}
-                    </Link>
+                    {link.external ? (
+                      <a
+                        href={link.href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm text-slate-400 hover:text-white transition-colors"
+                      >
+                        {link.label}
+                      </a>
+                    ) : (
+                      <Link
+                        href={link.href}
+                        className="text-sm text-slate-400 hover:text-white transition-colors"
+                      >
+                        {link.label}
+                      </Link>
+                    )}
                   </li>
                 ))}
               </ul>

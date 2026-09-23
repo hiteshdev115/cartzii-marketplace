@@ -2,7 +2,9 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
-import { Heart, ShoppingCart, Truck, RotateCcw, Shield } from 'lucide-react';
+import { Link } from '@/i18n/navigation';
+import { buildPath } from '@/config/countries';
+import { Heart, ShoppingCart, Store, Truck, RotateCcw, Shield, Download, Zap } from 'lucide-react';
 import { Product } from '@/types';
 import { formatPrice } from '@/lib/utils';
 import { StarRating } from '@/components/ui/StarRating';
@@ -16,6 +18,7 @@ import { cn } from '@/lib/utils';
 import { useHydrated } from '@/hooks/useHydration';
 import { isLowStock, isOutOfStock, maxPurchasable } from '@/lib/stock';
 import { OutOfStockButton } from './OutOfStockButton';
+import { DdpBadge } from '@/components/international/DdpBadge';
 
 interface ProductInfoProps {
   product: Product;
@@ -119,9 +122,22 @@ export function ProductInfo({ product, onVariantChange, onShowReviews, onWriteRe
       {/* Title */}
       <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-slate-900 break-words">{product.name}</h1>
 
-      {/* Store name */}
+      {/* Store name — links to the seller's public storefront when
+          the API returned a slug (post-wizard sellers always have one).
+          Falls back to plain text for legacy sellers with no
+          storefront row yet. */}
       {product.sellerName && (
-        <p className="text-sm text-primary">{product.sellerName}</p>
+        product.sellerSlug ? (
+          <Link
+            href={buildPath(`/store/${product.sellerSlug}`)}
+            className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
+          >
+            <Store className="h-3.5 w-3.5" aria-hidden="true" />
+            <span>Sold by <span className="font-medium">{product.sellerName}</span></span>
+          </Link>
+        ) : (
+          <p className="text-sm text-primary">{product.sellerName}</p>
+        )
       )}
 
       {/* Rating */}
@@ -156,6 +172,13 @@ export function ProductInfo({ product, onVariantChange, onShowReviews, onWriteRe
           </>
         )}
       </div>
+
+      {/* DDP note — right under the price so the "no duties at delivery"
+          promise is visible in the same glance the customer forms a
+          price expectation. */}
+      {product.isInternationalListing && (
+        <DdpBadge originCountry={product.originCountry} variant="full" />
+      )}
 
       {/* Short description */}
       <p className="text-slate-600">{product.shortDescription}</p>
@@ -241,35 +264,75 @@ export function ProductInfo({ product, onVariantChange, onShowReviews, onWriteRe
         )}
       </div>
 
-      {/* Trust badges */}
-      <div className="grid grid-cols-3 gap-3 pt-4 border-t">
-        <div className="flex flex-col items-center text-center gap-1">
-          <Truck className="w-5 h-5 text-primary" />
-          <span className="text-xs text-slate-600">
-            {/* The seller can absorb shipping per-product; when they do, we
-                say so plainly instead of the generic "Free shipping" copy. */}
-            {product.isFreeDelivery ? 'Free Delivery' : t('freeShipping')}
-          </span>
+      {/* Trust badges. Digital products have their own set — the standard
+          "free shipping / easy returns" copy would lie about them. */}
+      {product.productType === 'digital' ? (
+        <div className="grid grid-cols-3 gap-3 pt-4 border-t">
+          <div className="flex flex-col items-center text-center gap-1">
+            <Download className="w-5 h-5 text-primary" />
+            <span className="text-xs text-slate-600">Downloadable</span>
+          </div>
+          <div className="flex flex-col items-center text-center gap-1">
+            <Zap className="w-5 h-5 text-primary" />
+            <span className="text-xs text-slate-600">Instant delivery</span>
+          </div>
+          <div className="flex flex-col items-center text-center gap-1">
+            <Shield className="w-5 h-5 text-primary" />
+            <span className="text-xs text-slate-600">{t('secureCheckout')}</span>
+          </div>
         </div>
-        <div className="flex flex-col items-center text-center gap-1">
-          <RotateCcw className="w-5 h-5 text-primary" />
-          <span className="text-xs text-slate-600">
-            {/* The seller's actual window, not a hardcoded "30-Day" string —
-                sellers can set their own, so the old fixed copy could lie. */}
-            {product.returnPolicy
-              ? t('returnsWithDays', { days: product.returnPolicy.returnWindowDays })
-              : t('easyReturns')}
-          </span>
+      ) : (
+        <div className="grid grid-cols-3 gap-3 pt-4 border-t">
+          <div className="flex flex-col items-center text-center gap-1">
+            <Truck className="w-5 h-5 text-primary" />
+            <span className="text-xs text-slate-600">
+              {/* The seller can absorb shipping per-product; when they do, we
+                  say so plainly instead of the generic "Free shipping" copy. */}
+              {product.isFreeDelivery ? 'Free Delivery' : t('freeShipping')}
+            </span>
+          </div>
+          <div className="flex flex-col items-center text-center gap-1">
+            <RotateCcw className="w-5 h-5 text-primary" />
+            <span className="text-xs text-slate-600">
+              {/* The seller's actual window, not a hardcoded "30-Day" string —
+                  sellers can set their own, so the old fixed copy could lie. */}
+              {product.returnPolicy
+                ? t('returnsWithDays', { days: product.returnPolicy.returnWindowDays })
+                : t('easyReturns')}
+            </span>
+          </div>
+          <div className="flex flex-col items-center text-center gap-1">
+            <Shield className="w-5 h-5 text-primary" />
+            <span className="text-xs text-slate-600">{t('secureCheckout')}</span>
+          </div>
         </div>
-        <div className="flex flex-col items-center text-center gap-1">
-          <Shield className="w-5 h-5 text-primary" />
-          <span className="text-xs text-slate-600">{t('secureCheckout')}</span>
+      )}
+
+      {/* Digital-product policy notice. Legally required in EU and Canada
+          BEFORE purchase — the buyer must be told a downloaded item can't
+          be returned as it can with a physical one. Cartzii's own Purchase
+          Protection still allows an admin refund for misrepresented files. */}
+      {product.productType === 'digital' && (
+        <div className="rounded-xl border border-blue-200 bg-blue-50 p-4">
+          <div className="flex items-start gap-3">
+            <Download className="w-5 h-5 text-blue-700 mt-0.5 shrink-0" />
+            <div>
+              <h3 className="text-sm font-semibold text-blue-900">Digital purchase — final sale</h3>
+              <p className="text-xs text-blue-800 mt-1">
+                Files are available for immediate download after payment and
+                are not eligible for return. Cartzii can still refund a purchase
+                if the file is materially different from what was described.
+              </p>
+            </div>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Return & exchange policy — resolved per seller by the API. Hidden
-          entirely when absent so a legacy payload never renders "undefined". */}
-      {product.returnPolicy && (
+          entirely when absent so a legacy payload never renders "undefined".
+          Also hidden for digital products; the "final sale" notice above
+          is the only relevant return-policy language for downloads. */}
+      {product.returnPolicy && product.productType !== 'digital' && (
         <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
           <div className="flex items-start gap-3">
             <RotateCcw className="w-5 h-5 text-primary mt-0.5 shrink-0" />

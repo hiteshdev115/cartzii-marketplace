@@ -1,4 +1,5 @@
 import { api, ApiError } from './client';
+import { currentCountry } from '@/config/countries';
 
 // ---- API response shapes --------------------------------------------------
 
@@ -130,6 +131,7 @@ export async function postReview(formData: FormData): Promise<ReviewAPIItem> {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${token}`,
+      'X-Portal-Locale': currentCountry,
       // Do NOT set Content-Type — the browser sets it with the correct boundary for FormData
     },
     body: formData,

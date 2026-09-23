@@ -141,6 +141,16 @@ function mapAPIItemToCartItem(item: CartAPIItem): CartItem {
     // field if the server surfaces it there instead.
     sellerId: item.product.sellerid ?? item.sellerid,
     sellerName: item.product.sellername,
+    // International (DDP) flags. Drive the "no duties at delivery" note in
+    // OrderSummary and the DdpBadge on cart lines. Absent on legacy carts.
+    isInternationalListing: item.product.isinternationallisting === true,
+    originCountry: item.product.origincountry ?? null,
+    // Product-type family — determines whether checkout shows the
+    // "digital · final sale" banner and whether shipping/address is
+    // collected for this line.
+    productType: (
+      (item.product as { producttype?: 'general' | 'handicraft' | 'digital' | null }).producttype
+    ) ?? 'general',
   };
 
   return {

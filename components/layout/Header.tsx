@@ -143,7 +143,10 @@ export function Header() {
 
   const navAfterCategories = [
     { label: tNav('deals'), href: buildPath('/deals') },
-    { label: tNav('handicraft'), href: buildPath('/handicraft') },
+    // Accented: the spec asks for Handicraft to read as a distinct
+    // destination rather than another category, and it is the one nav item
+    // leading somewhere with its own rules and its own kind of seller.
+    { label: tNav('handicraft'), href: buildPath('/handicraft'), accent: true },
     { label: tNav('dollarStreet'), href: buildPath('/dollar-street') },
   ];
 
@@ -244,7 +247,7 @@ export function Header() {
             <div className="flex items-center justify-between h-12">
               <MobileNav />
               <Link href={buildPath('/')} className="absolute left-1/2 -translate-x-1/2">
-                <Image src="/assets/cartzii-logo.png" alt="Cartzii" width={120} height={34} className="object-contain" priority />
+                <Image src="/assets/cartzii-logo.png" alt="Cartzii" width={160} height={45} className="h-10 w-auto object-contain" priority />
               </Link>
               <div className="flex items-center gap-0.5">
                 <Link
@@ -316,7 +319,7 @@ export function Header() {
             {/* Desktop Row 1: Logo | Search | Icons */}
             <div className="flex items-center h-16 gap-4">
               <Link href={buildPath('/')} className="flex items-center shrink-0">
-                <Image src="/assets/cartzii-logo.png" alt="Cartzii" width={144} height={41} className="object-contain" priority />
+                <Image src="/assets/cartzii-logo.png" alt="Cartzii" width={210} height={59} className="h-14 w-auto object-contain" priority />
               </Link>
 
               {/* Search bar — grows to fill space */}
@@ -411,7 +414,11 @@ export function Header() {
                 <Link
                   key={link.label}
                   href={link.href}
-                  className="px-3 py-1 text-sm font-medium text-slate-600 hover:text-primary rounded-md hover:bg-slate-50 transition-colors"
+                  className={
+                    link.accent
+                      ? 'px-3 py-1 text-sm font-semibold text-amber-800 hover:text-amber-900 rounded-md hover:bg-amber-50 transition-colors'
+                      : 'px-3 py-1 text-sm font-medium text-slate-600 hover:text-primary rounded-md hover:bg-slate-50 transition-colors'
+                  }
                 >
                   {link.label}
                 </Link>

@@ -34,6 +34,12 @@ export interface OrderItem {
   existingReturnShipmentStatus?: string | null;
   variantInfo?: string;
   currencyCode: string;
+  /**
+   * 'general' | 'handicraft' | 'digital'. Drives the order-confirmation
+   * "Download files" section for digital lines — a digital item shows
+   * a link to the buyer's Library instead of a shipment status pill.
+   */
+  productType?: 'general' | 'handicraft' | 'digital' | null;
 }
 
 // Shared address shape — used by both OrderConfirmation and PlaceOrderPayload
@@ -130,6 +136,9 @@ export interface OrderConfirmation {
   shipments?: OrderShipmentSummary[];
   /** Server-computed — true only while the order hasn't shipped yet. */
   cancelEligible?: boolean;
+  /** See the matching fields on OrderHistoryRow. */
+  digitalOnly?: boolean;
+  hasDigital?: boolean;
 }
 
 /** Shape of the `shippingAddress` block sent to `POST /api/v1/orders/place-order`. */
@@ -203,6 +212,16 @@ export interface PlaceOrderPayload {
    * haven't been upgraded yet, but the server needs this to buy labels.
    */
   shippingSelections?: PlaceOrderShippingSelection[];
+  /**
+   * Optional gift-wrap add-on.
+   *
+   * A BOOLEAN only. The price is resolved from a platform setting server-side,
+   * so there is nothing here for a client to name its own amount with — and
+   * the server refuses the order (and refunds) if wrapping was paid for on a
+   * cart that is not eligible.
+   */
+  giftWrap?: boolean;
+  giftWrapMessage?: string;
   guest?: {
     email: string;
     firstName: string;
@@ -236,6 +255,14 @@ export interface PlaceOrderResponse {
   currency?: string;
   accountCreated?: boolean;
   alreadyProcessed?: boolean;
+  /**
+   * True when any item on the order is an international (DDP) listing.
+   * When true, `ddpNote` is populated and the storefront must surface it
+   * (all-inclusive pricing, no duties at delivery). Absent on responses
+   * predating the DDP feature.
+   */
+  hasInternationalItems?: boolean;
+  ddpNote?: string;
 }
 
 /** Shipping address shape returned by `/orders/my-orders`.
@@ -274,6 +301,14 @@ export interface OrderHistoryRow {
   stripePaymentId?: string;
   /** Server-computed — true only while the order hasn't shipped yet. */
   cancelEligible?: boolean;
+  /**
+   * Server-computed. True when EVERY line is a digital good, which makes the
+   * order final sale, instantly fulfilled, and free of anything to ship or
+   * track. `hasDigital` is the weaker question: does any line need the
+   * download treatment rather than the parcel treatment.
+   */
+  digitalOnly?: boolean;
+  hasDigital?: boolean;
   shippingAddress?: OrderHistoryShippingAddress;
   itemCount: number;
   sellerCount?: number;
