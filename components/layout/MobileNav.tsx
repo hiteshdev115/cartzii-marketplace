@@ -31,40 +31,70 @@ function MobileCategoryTree({
         const hasChildren = cat.subcategories && cat.subcategories.length > 0;
         const isExpanded = expandedId === cat.id;
 
+        // Row click behaviour mirrors the seller-portal CategoryDropdown:
+        //   • has-children → EXPAND the whole row on click; the shopper can
+        //     drill into subcategories without hunting for the chevron.
+        //     "Shop all X" appears inside the expanded panel so browsing
+        //     the parent as a category itself is still one click away.
+        //   • leaf → navigate to the category page and close the nav.
         return (
           <li key={cat.id}>
             <div className="flex items-center">
-              <Link
-                href={buildPath(`/categories/${cat.slug}`)}
-                onClick={onClose}
-                className="flex-1 px-3 py-2.5 text-sm text-slate-700 hover:bg-slate-50 rounded-lg transition-colors"
-              >
-                {cat.name}
-                {cat.productCount > 0 && (
-                  <span className="ml-1.5 text-xs text-slate-400">({cat.productCount})</span>
-                )}
-              </Link>
-              {hasChildren && (
+              {hasChildren ? (
                 <button
+                  type="button"
                   onClick={() => setExpandedId(isExpanded ? null : cat.id)}
-                  className="p-2 hover:bg-slate-100 rounded-lg"
-                  aria-label={`${isExpanded ? 'Collapse' : 'Expand'} ${cat.name}`}
+                  className="flex-1 flex items-center justify-between px-3 py-2.5 text-sm text-slate-700 hover:bg-slate-50 rounded-lg transition-colors text-left"
+                  aria-expanded={isExpanded}
                 >
+                  <span>
+                    {cat.name}
+                    {cat.productCount > 0 && (
+                      <span className="ml-1.5 text-xs text-slate-400">({cat.productCount})</span>
+                    )}
+                  </span>
                   {isExpanded ? (
                     <ChevronDown className="w-4 h-4 text-slate-400" />
                   ) : (
                     <ChevronRight className="w-4 h-4 text-slate-400" />
                   )}
                 </button>
+              ) : (
+                <Link
+                  href={buildPath(`/categories/${cat.slug}`)}
+                  onClick={onClose}
+                  className="flex-1 px-3 py-2.5 text-sm text-slate-700 hover:bg-slate-50 rounded-lg transition-colors"
+                >
+                  {cat.name}
+                  {cat.productCount > 0 && (
+                    <span className="ml-1.5 text-xs text-slate-400">({cat.productCount})</span>
+                  )}
+                </Link>
               )}
             </div>
             {hasChildren && isExpanded && (
-              <MobileCategoryTree
-                categories={cat.subcategories!}
-                locale={locale}
-                depth={depth + 1}
-                onClose={onClose}
-              />
+              <>
+                {/*
+                  "Shop all X" gives the shopper a way to browse the parent
+                  as a category itself now that clicking the row expands
+                  instead of navigating. Rendered OUTSIDE the recursive
+                  <ul> so MobileCategoryTree's own indent styling is not
+                  applied twice.
+                */}
+                <Link
+                  href={buildPath(`/categories/${cat.slug}`)}
+                  onClick={onClose}
+                  className="block ml-6 px-3 py-1.5 text-xs italic text-primary hover:bg-primary/5 rounded-lg"
+                >
+                  Shop all {cat.name}
+                </Link>
+                <MobileCategoryTree
+                  categories={cat.subcategories!}
+                  locale={locale}
+                  depth={depth + 1}
+                  onClose={onClose}
+                />
+              </>
             )}
           </li>
         );
