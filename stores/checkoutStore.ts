@@ -74,7 +74,12 @@ export const useCheckoutStore = create<CheckoutState>()(
           const sellerId = Number(sellerIdStr);
           const quote = state.sellerRateQuotes.find((q) => q.sellerId === sellerId);
           if (quote?.freeShippingApplied) return sum; // zero out for free-shipping sellers
-          return sum + Math.round(r.rate * 100);
+          // Defensive: a stray non-numeric `rate` (bad server shape, aborted
+          // parse) becomes NaN under Math.round, and every downstream total
+          // — including the tax-estimate query — inherits NaN. Coerce to a
+          // safe 0 so a broken rate can never brick checkout with a 400.
+          const cents = Math.round(Number(r.rate) * 100);
+          return sum + (Number.isFinite(cents) ? cents : 0);
         }, 0);
       },
 
