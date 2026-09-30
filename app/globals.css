@@ -1,5 +1,14 @@
 @import "tailwindcss";
 
+/*
+ * Tailwind Typography — powers the `prose` utility used on rendered
+ * product descriptions (HTML from the seller's rich-text editor).
+ * Without this plugin, Tailwind v4's Preflight strips the browser's
+ * default list-style and margins, so a <ul><li> description renders as
+ * a wall of plain text.
+ */
+@plugin "@tailwindcss/typography";
+
 @theme {
   --container-max: 1480px;
   --color-bg-site: #F0F2F2;
