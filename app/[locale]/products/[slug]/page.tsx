@@ -1,72 +1,94 @@
 import { getTranslations } from 'next-intl/server';
-import { currentCountry, countrySiteUrl } from '@/config/countries';
-import { generateAlternates } from '@/lib/seo';
+import type { Metadata } from 'next';
+import { currentCountry, countrySiteUrl, buildPath } from '@/config/countries';
+import { resolveSeo, deploymentCountry } from '@/lib/seo/resolve';
+import { buildBreadcrumbJsonLd, buildProductJsonLd, jsonLdScript } from '@/lib/seo/jsonLd';
 import { fetchHandicraftProduct, countryName } from '@/lib/api/handicraft';
 import { ProductDetailClient } from './ProductDetailClient';
 
 /**
- * Metadata, enriched for a handicraft listing.
- *
- * A general product keeps the existing title and description. A handmade one
- * gets the maker and the origin in both, because that is what someone is
- * searching for — "hand block printed cotton throw from Kutch", not the SKU.
+ * Metadata — merges the agency-managed SEO overrides and Gemini auto-fill
+ * with the handicraft enrichment (maker + origin) when present. Overrides
+ * win every field; the handicraft helper only runs when the API has no
+ * override and no auto value.
  */
-export async function generateMetadata({ params }: { params: Promise<{ locale: string; slug: string }> }) {
+export async function generateMetadata({ params }: { params: Promise<{ locale: string; slug: string }> }): Promise<Metadata> {
   const { locale, slug } = await params;
   const t = await getTranslations({ locale, namespace: 'Products' });
-  const fallbackTitle = slug.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
 
-  const product = await fetchHandicraftProduct(currentCountry.toUpperCase(), slug);
-  const handicraft = product?.handicraft;
+  const seo = await resolveSeo({
+    pageType: 'product',
+    pageKey: slug,
+    country: deploymentCountry(),
+  });
 
-  // The Canadian and American pages for one product are near-identical text on
-  // two domains, which search engines read as duplicates and rank as neither.
-  // These tags say they are the same product for different markets, so each
-  // one ranks in its own country instead of the two diluting each other. The
-  // product page is the page this matters most on and the one that had none.
-  const alternates = await generateAlternates(
-    countrySiteUrl[currentCountry],
-    `/products/${slug}`,
-  );
+  // Only enrich with handicraft text when no override has been set — the
+  // override is the more specific signal.
+  let enrichedTitle = seo.title;
+  let enrichedDescription = seo.description;
+  let enrichedKeywords = seo.keywords;
+  let ogImages: { url: string }[] | undefined;
 
-  if (!product || !handicraft) {
-    return { title: fallbackTitle, description: t('allProducts'), alternates };
+  if (seo.source !== 'override') {
+    try {
+      const hc = await fetchHandicraftProduct(currentCountry.toUpperCase(), slug);
+      if (hc?.handicraft) {
+        const origin = countryName(hc.handicraft.craft_origin_country);
+        const parts = [
+          hc.handicraft.is_handmade ? 'Handmade' : 'Artisan-made',
+          hc.handicraft.craft_technique ? `using ${hc.handicraft.craft_technique.toLowerCase()}` : null,
+          `by ${hc.handicraft.artisan_name}`,
+          origin ? `in ${hc.handicraft.craft_origin_region ? `${hc.handicraft.craft_origin_region}, ` : ''}${origin}` : null,
+        ].filter(Boolean);
+        enrichedTitle = `${hc.name} — Handmade by ${hc.handicraft.artisan_name} | Cartzii`;
+        enrichedDescription = `${parts.join(' ')}. ${hc.shortDescription || ''}`.trim();
+        enrichedKeywords = Array.from(new Set([
+          'handmade', 'artisan', hc.handicraft.artisan_name,
+          ...(hc.handicraft.craft_technique ? [hc.handicraft.craft_technique] : []),
+          ...hc.handicraft.material_used,
+          ...seo.keywords,
+        ]));
+        if (hc.images?.[0]) ogImages = [{ url: hc.images[0] }];
+      }
+    } catch { /* ignore enrichment failures */ }
   }
 
-  const origin = countryName(handicraft.craft_origin_country);
-  const parts = [
-    handicraft.is_handmade ? 'Handmade' : 'Artisan-made',
-    handicraft.craft_technique ? `using ${handicraft.craft_technique.toLowerCase()}` : null,
-    `by ${handicraft.artisan_name}`,
-    origin ? `in ${handicraft.craft_origin_region ? `${handicraft.craft_origin_region}, ` : ''}${origin}` : null,
-  ].filter(Boolean);
-
   return {
-    title: `${product.name} — Handmade by ${handicraft.artisan_name} | Cartzii`,
-    description: `${parts.join(' ')}. ${product.shortDescription || ''}`.trim(),
-    alternates,
-    keywords: [
-      'handmade', 'artisan', handicraft.artisan_name,
-      ...(handicraft.craft_technique ? [handicraft.craft_technique] : []),
-      ...handicraft.material_used,
-    ],
+    title: enrichedTitle || t('allProducts'),
+    description: enrichedDescription,
+    keywords: enrichedKeywords.length ? enrichedKeywords : undefined,
+    alternates: { canonical: seo.canonical, languages: seo.alternates },
     openGraph: {
-      title: `${product.name} — Handmade by ${handicraft.artisan_name}`,
-      description: parts.join(' '),
+      title: enrichedTitle,
+      description: enrichedDescription,
+      url: seo.canonical,
+      siteName: 'Cartzii',
+      images: ogImages,
+      locale,
       type: 'website',
-      images: product.images.slice(0, 1),
     },
+    twitter: {
+      card: 'summary_large_image',
+      title: enrichedTitle,
+      description: enrichedDescription,
+      images: ogImages?.map((i) => i.url),
+    },
+    robots: seo.noIndex
+      ? { index: false, follow: false }
+      : { index: true, follow: true },
   };
 }
 
 export default async function ProductDetailPage({ params }: { params: Promise<{ locale: string; slug: string }> }) {
-  const { slug } = await params;
+  const { locale, slug } = await params;
+  const t = await getTranslations({ locale, namespace: 'Products' });
 
-  // Structured data for a handicraft listing. Fetched server-side so it is in
-  // the initial HTML, where a crawler will actually see it — data injected
-  // after hydration is routinely missed.
+  // Structured data. Fetched server-side so it is in the initial HTML,
+  // where a crawler will actually see it — data injected after
+  // hydration is routinely missed.
   const product = await fetchHandicraftProduct(currentCountry.toUpperCase(), slug);
   const handicraft = product?.handicraft;
+  const origin = countrySiteUrl[deploymentCountry().toLowerCase()] ?? countrySiteUrl.us;
 
   const jsonLd = product && handicraft
     ? {
@@ -92,6 +114,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
           availability: product.inStock
             ? 'https://schema.org/InStock'
             : 'https://schema.org/OutOfStock',
+          url: `${origin}${buildPath(`/products/${slug}`)}`,
         },
         ...(product.reviewCount > 0
           ? {
@@ -103,6 +126,27 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
             }
           : {}),
       }
+    : product
+      ? buildProductJsonLd({
+          name: product.name,
+          description: product.description || product.shortDescription,
+          images: product.images,
+          sku: product.sku,
+          brand: null,
+          price: product.salePrice ?? product.price,
+          currency: product.currency,
+          availability: product.inStock ? 'InStock' : 'OutOfStock',
+          url: `${origin}${buildPath(`/products/${slug}`)}`,
+          rating: product.reviewCount > 0 ? product.rating : null,
+          reviewCount: product.reviewCount > 0 ? product.reviewCount : null,
+        })
+      : null;
+
+  const breadcrumbs = product
+    ? buildBreadcrumbJsonLd([
+        { name: t('allProducts'), url: `${origin}${buildPath('/products')}` },
+        { name: product.name, url: `${origin}${buildPath(`/products/${slug}`)}` },
+      ])
     : null;
 
   return (
@@ -110,7 +154,13 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
       {jsonLd && (
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+          dangerouslySetInnerHTML={{ __html: jsonLdScript(jsonLd) }}
+        />
+      )}
+      {breadcrumbs && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: jsonLdScript(breadcrumbs) }}
         />
       )}
       <ProductDetailClient slug={slug} />
