@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Link } from '@/i18n/navigation';
 import Image from 'next/image';
 import { useRouter, usePathname } from '@/i18n/navigation';
-import { Search, ShoppingCart, Heart, User, LogOut, Package, Star, Settings, Truck } from 'lucide-react';
+import { Search, ShoppingCart, Heart, User, LogOut, Package, Star, Settings, Truck, LifeBuoy } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { buildPath } from '@/config/countries';
 import { useCartStore } from '@/stores/cartStore';
@@ -206,6 +206,13 @@ export function Header() {
                               onClick={() => setUserMenuOpen(false)}
                             >
                               <Settings className="w-4 h-4" /> {t('accountSettings')}
+                            </Link>
+                            <Link
+                              href={buildPath('/account/help')}
+                              className="flex items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 hover:text-primary transition-colors"
+                              onClick={() => setUserMenuOpen(false)}
+                            >
+                              <LifeBuoy className="w-4 h-4" /> Need help
                             </Link>
                             <div className="border-t border-gray-100 my-1" />
                             <button
