@@ -116,6 +116,12 @@ export interface Product {
    * enrichment.
    */
   sellerSlug?: string | null;
+  /**
+   * Seller's origin country (ISO-2). Shown next to the store name on the
+   * product detail page — "Sold by Test3 store, Germany" — so a buyer
+   * can see at a glance where the item ships from.
+   */
+  sellerCountry?: string | null;
   // ---- Optional shipping measurements (from `/getProductBySlug` etc.) ------
   /** Product weight (nullable — only shown when present). */
   weight?: number | null;

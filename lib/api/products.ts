@@ -492,6 +492,13 @@ export function mapProduct(raw: APIProduct, country: string): Product {
     // flat `sellerSlug` (detail response) — both are populated by
     // the api-server today, either is safe.
     sellerSlug: raw.seller?.slug ?? (raw as { sellerSlug?: string | null }).sellerSlug ?? null,
+    // Seller origin ISO — mirrors the two shapes the API returns: nested
+    // `seller.country` on the detail response, flat `sellerCountry`
+    // everywhere else. Null when the seller row has no country yet.
+    sellerCountry:
+      (raw.seller as { country?: string | null } | null | undefined)?.country
+      ?? (raw as { sellerCountry?: string | null }).sellerCountry
+      ?? null,
     // Resolved server-side (seller window → platform default). Left undefined
     // when the API predates it, so the badge hides rather than showing NaN.
     returnPolicy: raw.returnPolicy,

@@ -20,6 +20,22 @@ import { isLowStock, isOutOfStock, maxPurchasable } from '@/lib/stock';
 import { OutOfStockButton } from './OutOfStockButton';
 import { DdpBadge } from '@/components/international/DdpBadge';
 
+/**
+ * ISO-2 → English country name. Uses the browser's own Intl table so
+ * adding a new seller country needs no dictionary update here. Falls
+ * back to the ISO itself if the browser can't resolve it (very old UA).
+ */
+const REGION_NAMES =
+  typeof Intl !== 'undefined'
+    ? new Intl.DisplayNames(['en'], { type: 'region' })
+    : null;
+
+function countryDisplayName(iso: string): string {
+  if (!iso) return '';
+  const upper = iso.toUpperCase();
+  return REGION_NAMES?.of(upper) ?? upper;
+}
+
 interface ProductInfoProps {
   product: Product;
   onVariantChange?: (
@@ -125,7 +141,11 @@ export function ProductInfo({ product, onVariantChange, onShowReviews, onWriteRe
       {/* Store name — links to the seller's public storefront when
           the API returned a slug (post-wizard sellers always have one).
           Falls back to plain text for legacy sellers with no
-          storefront row yet. */}
+          storefront row yet.
+          The country suffix ("Sold by Test3 store, Germany") helps a
+          buyer identify where their parcel ships from before they add
+          to cart — surfacing it inline avoids a round trip to the
+          storefront page just to see origin. */}
       {product.sellerName && (
         product.sellerSlug ? (
           <Link
@@ -133,10 +153,24 @@ export function ProductInfo({ product, onVariantChange, onShowReviews, onWriteRe
             className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
           >
             <Store className="h-3.5 w-3.5" aria-hidden="true" />
-            <span>Sold by <span className="font-medium">{product.sellerName}</span></span>
+            <span>
+              Sold by <span className="font-medium">{product.sellerName}</span>
+              {product.sellerCountry && (
+                <span className="text-slate-500">
+                  , {countryDisplayName(product.sellerCountry)}
+                </span>
+              )}
+            </span>
           </Link>
         ) : (
-          <p className="text-sm text-primary">{product.sellerName}</p>
+          <p className="text-sm text-primary">
+            {product.sellerName}
+            {product.sellerCountry && (
+              <span className="text-slate-500">
+                , {countryDisplayName(product.sellerCountry)}
+              </span>
+            )}
+          </p>
         )
       )}
 
