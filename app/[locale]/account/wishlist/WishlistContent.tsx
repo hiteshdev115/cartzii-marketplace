@@ -72,7 +72,7 @@ export function WishlistContent() {
           actionHref="/products"
         />
       ) : (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+        <div className="product-grid">
           {items.map((item) => {
             const p = item.product;
             const primaryImage = p.images?.find((img) => img.isprimary) || p.images?.[0];
@@ -104,8 +104,8 @@ export function WishlistContent() {
                       {p.productname}
                     </h3>
                     {p.pricing ? (
-                      <div className="flex items-baseline gap-2">
-                        <span className="text-sm font-bold text-primary">
+                      <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                        <span className="text-base font-bold text-primary">
                           {formatPrice(
                             parseFloat(p.pricing.discountprice || p.pricing.price),
                             locale,

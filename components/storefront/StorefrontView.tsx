@@ -244,7 +244,7 @@ function ProductsTab({ slug }: { slug: string }) {
 
   return (
     <div>
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+      <div className="product-grid">
         {rows.map((p) => (
           <ProductCard key={p.id} product={p} />
         ))}

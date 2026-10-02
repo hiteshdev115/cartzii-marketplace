@@ -68,7 +68,7 @@ export function HandicraftProductCard({ product }: { product: Product }) {
 
         {handicraft && <CraftOrigin handicraft={handicraft} className="mt-0.5 truncate" />}
 
-        <div className="mt-2 flex items-baseline gap-2">
+        <div className="mt-2 flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
           <span className="text-base font-extrabold text-slate-900">
             {formatPrice(price, product.currency)}
           </span>

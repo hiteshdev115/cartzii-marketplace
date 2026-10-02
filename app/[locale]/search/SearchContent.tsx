@@ -149,7 +149,7 @@ export function SearchContent() {
               <p className="text-sm text-slate-500 mb-6">
                 {pagination?.total ?? results.length} {t('resultsFor', { query })}
               </p>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-6">
+              <div className="product-grid">
                 {results.map((item) => {
                   const isWishlisted = hydrated && wishlistItems.some((w) => w.product.productid === item.productid);
 

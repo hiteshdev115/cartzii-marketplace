@@ -26,7 +26,7 @@ interface ProductCardProps {
   compact?: boolean;
 }
 
-export function ProductCard({ product, compact = false }: ProductCardProps) {
+export function ProductCard({ product, compact = true }: ProductCardProps) {
   const outOfStock = isOutOfStock(product);
   const locale = useLocale();
   const t = useTranslations('Home');

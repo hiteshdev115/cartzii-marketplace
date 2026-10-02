@@ -17,7 +17,7 @@ export function ProductCardSkeleton() {
   return (
     <div className="card p-0" aria-busy="true" aria-label="Loading product">
       <Skeleton className="aspect-square w-full rounded-none" />
-      <div className="p-4 space-y-3">
+      <div className="p-3 space-y-3">
         <Skeleton className="h-3 w-16" />
         <Skeleton className="h-4 w-full" />
         <Skeleton className="h-4 w-3/4" />

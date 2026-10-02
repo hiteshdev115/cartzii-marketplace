@@ -166,7 +166,7 @@ function SkeletonCard() {
   return (
     <div className="bg-white rounded-2xl overflow-hidden shadow-sm border border-slate-100 animate-pulse">
       <div className="aspect-square bg-slate-200" />
-      <div className="p-4 space-y-2">
+      <div className="p-3 space-y-2">
         <div className="h-3 bg-slate-200 rounded w-1/3" />
         <div className="h-4 bg-slate-200 rounded w-3/4" />
         <div className="h-3 bg-slate-200 rounded w-1/2" />
@@ -247,7 +247,7 @@ function ProductCardItem({ item, countryCode }: ProductCardItemProps) {
       </Link>
 
       {/* Info */}
-      <div className="p-4">
+      <div className="p-3">
         {item.categoryName && (
           <p className="text-xs text-slate-400 font-medium uppercase tracking-wide mb-1 truncate">
             {item.categoryName}
@@ -282,7 +282,7 @@ function ProductCardItem({ item, countryCode }: ProductCardItemProps) {
         )}
 
         {/* Price */}
-        <div className="flex items-baseline gap-2 mb-3">
+        <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 mb-3">
           {origPrice > 0 || hasSale ? (
             <>
               <span className="text-base font-bold text-primary">
@@ -477,7 +477,7 @@ export function CategoryPageContent({ slug, categoryName, categoryDescription }:
 
       {/* ---- Grid ---- */}
       {loading ? (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+        <div className="product-grid">
           {Array.from({ length: PAGE_SIZE }).map((_, i) => (
             <SkeletonCard key={i} />
           ))}
@@ -515,7 +515,7 @@ export function CategoryPageContent({ slug, categoryName, categoryDescription }:
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+          <div className="product-grid">
             {products.map((product) => (
               <ProductCardItem key={product.productid} item={product} countryCode={countryCode} />
             ))}

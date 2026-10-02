@@ -353,7 +353,7 @@ export function DollarStreetPageClient() {
           {/* ── Products grid ──────────────────────────────────────── */}
           <div className="flex-1 min-w-0">
             {loading ? (
-              <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+              <div className="product-grid">
                 {Array.from({ length: 12 }).map((_, i) => <ProductCardSkeleton key={i} />)}
               </div>
             ) : displayed.length === 0 ? (
@@ -378,7 +378,7 @@ export function DollarStreetPageClient() {
               </div>
             ) : (
               <>
-                <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+                <div className="product-grid">
                   {paginated.map((product) => (
                     <ProductCard key={product.id} product={product} />
                   ))}

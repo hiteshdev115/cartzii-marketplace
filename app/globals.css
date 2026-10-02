@@ -73,6 +73,19 @@
   @apply bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden hover:-translate-y-1 hover:shadow-lg transition-all duration-300;
 }
 
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+@media (min-width: 640px) {
+  .product-grid {
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 200px), 1fr));
+    gap: 16px;
+  }
+}
+
 /* Badges */
 .badge-sale {
   @apply bg-red-600 text-white px-2.5 py-0.5 rounded-full text-xs font-bold;

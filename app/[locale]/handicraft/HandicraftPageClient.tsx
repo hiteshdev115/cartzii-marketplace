@@ -137,7 +137,7 @@ export function HandicraftPageClient() {
                 <h2 className="text-2xl font-extrabold text-slate-900">Featured pieces</h2>
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4">
+            <div className="product-grid">
               {featured.map((product) => (
                 <HandicraftProductCard key={product.id} product={product} />
               ))}
@@ -165,7 +165,7 @@ export function HandicraftPageClient() {
 
             <div className="min-w-0 flex-1">
               {!loaded ? (
-                <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4">
+                <div className="product-grid">
                   {Array.from({ length: 8 }).map((_, i) => (
                     <div key={i} className="animate-pulse overflow-hidden rounded-2xl border border-slate-100 bg-white">
                       <div className="aspect-square bg-slate-200" />
@@ -196,7 +196,7 @@ export function HandicraftPageClient() {
                   <p className="mb-4 text-sm text-slate-500">
                     <span className="font-bold text-slate-800">{total.toLocaleString()}</span> pieces
                   </p>
-                  <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4">
+                  <div className="product-grid">
                     {products.map((product) => (
                       <HandicraftProductCard key={product.id} product={product} />
                     ))}
