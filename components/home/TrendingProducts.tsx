@@ -9,7 +9,7 @@ import { ProductCardSkeleton } from '@/components/ui/Skeleton';
 import { Link } from '@/i18n/navigation';
 import type { Product } from '@/types';
 
-const MAX_TRENDING = 8;
+const MAX_TRENDING = 12;
 
 /**
  * Ranks the reviewed products, most-reviewed first.
@@ -77,10 +77,10 @@ export function TrendingProducts() {
           </Link>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3 sm:gap-4">
           {loading
-            ? Array.from({ length: 4 }).map((_, i) => <ProductCardSkeleton key={i} />)
-            : trending.map((product) => <ProductCard key={product.id} product={product} />)}
+            ? Array.from({ length: 6 }).map((_, i) => <ProductCardSkeleton key={i} />)
+            : trending.map((product) => <ProductCard key={product.id} product={product} compact />)}
         </div>
       </div>
     </section>

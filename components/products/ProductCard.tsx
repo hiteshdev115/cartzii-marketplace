@@ -23,9 +23,10 @@ import { DdpBadge } from '@/components/international/DdpBadge';
 
 interface ProductCardProps {
   product: Product;
+  compact?: boolean;
 }
 
-export function ProductCard({ product }: ProductCardProps) {
+export function ProductCard({ product, compact = false }: ProductCardProps) {
   const outOfStock = isOutOfStock(product);
   const locale = useLocale();
   const t = useTranslations('Home');
@@ -61,7 +62,9 @@ export function ProductCard({ product }: ProductCardProps) {
             src={product.images[0]}
             alt={`${product.name} - front view`}
             fill
-            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+            sizes={compact
+              ? '(max-width: 640px) 50vw, (max-width: 1024px) 33vw, (max-width: 1280px) 25vw, 17vw'
+              : '(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw'}
             className="object-cover group-hover:scale-105 transition-transform duration-500"
           />
           {product.onSale && product.discount && (
@@ -87,7 +90,7 @@ export function ProductCard({ product }: ProductCardProps) {
         <Heart className={`w-4 h-4 ${wishlisted ? 'fill-red-500 text-red-500' : 'text-slate-600'}`} />
       </button>
 
-      <div className="p-4">
+      <div className={compact ? 'p-3' : 'p-4'}>
         <p className="text-xs text-slate-500 mb-1">{product.brand}</p>
         <Link href={buildPath(`/products/${product.slug}`)}>
           <h3 className="text-sm font-semibold text-slate-900 line-clamp-2 mb-2 hover:text-primary transition-colors">
@@ -100,8 +103,8 @@ export function ProductCard({ product }: ProductCardProps) {
           </div>
         )}
         <StarRating value={product.rating} size="sm" reviewCount={product.reviewCount} />
-        <div className="flex items-center gap-2 mt-2">
-          <span className="text-lg font-bold text-primary">
+        <div className={compact ? 'flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-2' : 'flex items-center gap-2 mt-2'}>
+          <span className={`${compact ? 'text-base' : 'text-lg'} font-bold text-primary`}>
             {formatPrice(product.salePrice || product.price, locale)}
           </span>
           {product.onSale && product.salePrice && (

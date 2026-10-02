@@ -18,7 +18,7 @@ import type { Product } from '@/types';
  */
 export const FLASH_DEAL_MIN_DISCOUNT = SPECIAL_DISCOUNT_MIN;
 
-const MAX_DEALS = 4;
+const MAX_DEALS = 6;
 
 /**
  * The products discounted by at least the threshold, deepest saving first.
@@ -99,10 +99,10 @@ export function FlashDeals() {
             card this replaced had its own image ratio, its own price markup and
             no add-to-cart or wishlist — a deal is a product, not a different
             kind of thing. */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3 sm:gap-4">
           {loading
             ? Array.from({ length: MAX_DEALS }).map((_, i) => <ProductCardSkeleton key={i} />)
-            : deals.map((product) => <ProductCard key={product.id} product={product} />)}
+            : deals.map((product) => <ProductCard key={product.id} product={product} compact />)}
         </div>
       </div>
     </section>
