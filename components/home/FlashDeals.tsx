@@ -6,8 +6,7 @@ import { buildPath, getCountryFromLocale } from '@/config/countries';
 import { fetchAllProducts } from '@/lib/api/products';
 import { discountPercent } from '@/lib/filters/productFilters';
 import { SPECIAL_DISCOUNT_MIN, isDealActive } from '@/lib/deals';
-import { ProductCard } from '@/components/products/ProductCard';
-import { ProductCardSkeleton } from '@/components/ui/Skeleton';
+import { ProductSlider } from './ProductSlider';
 import { Link } from '@/i18n/navigation';
 import type { Product } from '@/types';
 
@@ -17,8 +16,6 @@ import type { Product } from '@/types';
  * highlight it would look broken.
  */
 export const FLASH_DEAL_MIN_DISCOUNT = SPECIAL_DISCOUNT_MIN;
-
-const MAX_DEALS = 6;
 
 /**
  * The products discounted by at least the threshold, deepest saving first.
@@ -71,7 +68,7 @@ export function FlashDeals() {
     };
   }, [locale]);
 
-  const deals = useMemo(() => selectFlashDeals(products).slice(0, MAX_DEALS), [products]);
+  const deals = useMemo(() => selectFlashDeals(products), [products]);
 
   // Nothing discounted deeply enough — drop the section rather than leaving a
   // heading over an empty grid.
@@ -80,7 +77,7 @@ export function FlashDeals() {
   return (
     <section className="py-8 bg-white">
       <div className="max-w-[var(--container-max)] mx-auto px-4 sm:px-6">
-        <div className="flex items-center justify-between mb-10">
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
           <div>
             <h2 className="text-3xl font-bold text-slate-900">⚡ {t('flashDeals')}</h2>
             <p className="mt-2 text-slate-500">
@@ -89,21 +86,13 @@ export function FlashDeals() {
           </div>
           <Link
             href={buildPath('/deals')}
-            className="hidden sm:inline-flex btn-ghost text-primary font-semibold"
+            className="inline-flex btn-ghost text-primary font-semibold"
           >
             View All →
           </Link>
         </div>
 
-        {/* Same grid and same card as every other product listing. The bespoke
-            card this replaced had its own image ratio, its own price markup and
-            no add-to-cart or wishlist — a deal is a product, not a different
-            kind of thing. */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3 sm:gap-4">
-          {loading
-            ? Array.from({ length: MAX_DEALS }).map((_, i) => <ProductCardSkeleton key={i} />)
-            : deals.map((product) => <ProductCard key={product.id} product={product} compact />)}
-        </div>
+        <ProductSlider products={deals} loading={loading} label={t('flashDeals')} />
       </div>
     </section>
   );
