@@ -6,7 +6,6 @@ import { FeaturedCategories } from '@/components/home/FeaturedCategories';
 import { TrendingProducts } from '@/components/home/TrendingProducts';
 import { FlashDeals } from '@/components/home/FlashDeals';
 import { Newsletter } from '@/components/home/Newsletter';
-import { WhyChooseUs } from '@/components/home/WhyChooseUs';
 import { resolveSeo, deploymentCountry } from '@/lib/seo/resolve';
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
@@ -52,7 +51,6 @@ export default function HomePage() {
       <FeaturedCategories />
       <TrendingProducts />
       <FlashDeals />
-      <WhyChooseUs />
       <Newsletter />
     </main>
   );
