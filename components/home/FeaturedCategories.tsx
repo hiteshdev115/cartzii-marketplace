@@ -38,7 +38,7 @@ export function FeaturedCategories() {
 
   useEffect(() => {
     fetchRootCategories()
-      .then((data) => setCategories(data.slice(0, 8)))
+      .then((data) => setCategories(data.slice(0, 12)))
       .catch(() => setCategories([]))
       .finally(() => setLoading(false));
   }, []);
@@ -64,12 +64,11 @@ export function FeaturedCategories() {
         </div>
 
         {/* Grid */}
-        {/* More columns than before: eight 80px squares spread across a
-            four-column grid would sit marooned in whitespace, which is the
-            problem this was meant to remove. */}
-        <div className="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-8 gap-3 sm:gap-4">
+        {/* Tight gap + more columns per breakpoint so eight 80px tiles don't
+            sit marooned in whitespace on wide screens. */}
+        <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 xl:grid-cols-12 gap-x-1.5 gap-y-4 sm:gap-x-2">
           {loading
-            ? Array.from({ length: 8 }).map((_, i) => <CategorySkeleton key={i} />)
+            ? Array.from({ length: 12 }).map((_, i) => <CategorySkeleton key={i} />)
             : categories.map((cat) => {
                 const imgSrc = buildCategoryImageUrl(cat.image);
                 const { icon: Icon, gradient } = getCategoryIconConfig(cat.slug, cat.name);
