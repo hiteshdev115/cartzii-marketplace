@@ -44,7 +44,7 @@ export function FeaturedCategories() {
   }, []);
 
   return (
-    <section className="py-16 bg-[#F0F2F2]">
+    <section className="py-8 bg-[#F0F2F2]">
       <div className="max-w-[var(--container-max)] mx-auto px-4 sm:px-6">
 
         {/* Heading */}

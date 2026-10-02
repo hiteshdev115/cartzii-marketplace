@@ -78,7 +78,7 @@ export function FlashDeals() {
   if (!loading && deals.length === 0) return null;
 
   return (
-    <section className="py-16 bg-white">
+    <section className="py-8 bg-white">
       <div className="max-w-[var(--container-max)] mx-auto px-4 sm:px-6">
         <div className="flex items-center justify-between mb-10">
           <div>
