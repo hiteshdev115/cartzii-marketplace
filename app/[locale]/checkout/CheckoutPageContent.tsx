@@ -123,6 +123,21 @@ export function CheckoutPageContent() {
     setSelectedMethodId(savedMethods[0].id);
     setHasAutoSelected(true);
   }, [isGuestCheckout, savedMethods, hasAutoSelected]);
+
+  // Clear the selected id as soon as it stops matching a method the store
+  // actually has. Without this, deleting the picked card from the saved-card
+  // list leaves `selectedMethodId` pointing at a row that no longer exists,
+  // and PaymentForm keeps rendering the "paying with saved card" summary
+  // (which then sits on "Loading saved card…" forever) instead of showing
+  // the new-card inputs. Also resets the auto-select latch so a subsequent
+  // re-fetch — e.g. the buyer adds a new card from the account page in
+  // another tab — can pre-pick again instead of leaving the form empty.
+  useEffect(() => {
+    if (!selectedMethodId) return;
+    if (savedMethods.some((m) => m.id === selectedMethodId)) return;
+    setSelectedMethodId(null);
+    setHasAutoSelected(false);
+  }, [savedMethods, selectedMethodId]);
   const giftWrapOffered = giftWrapPolicy.available && cartHasHandicraft;
   // The price the SERVER will charge, or zero. Never a client-side constant.
   const giftWrapCents = giftWrapOffered && giftWrapSelected ? giftWrapPolicy.priceCents : 0;
