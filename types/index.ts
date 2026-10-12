@@ -146,6 +146,13 @@ export interface Product {
    * and mock fixtures predate the flag; treat `undefined` as false.
    */
   isFreeDelivery?: boolean;
+  /**
+   * When true, the seller has opted into providing a prepaid return label
+   * for every return regardless of reason. Buyer sees a "Free returns"
+   * badge; buyer-remorse returns go to a full refund with no shipping
+   * deduction. Optional for legacy payloads — treat `undefined` as false.
+   */
+  offersFreeReturns?: boolean;
 }
 
 /** Resolved return terms as returned by the product detail API. */

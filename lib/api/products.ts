@@ -511,6 +511,15 @@ export function mapProduct(raw: APIProduct, country: string): Product {
     // Free-delivery flag surfaced by the API. Falsy legacy responses (undefined
     // / null) collapse to false so the badge only shows for opted-in products.
     isFreeDelivery: Boolean(raw.isfreedelivery),
+    // Seller-level free-returns promise, exposed on both the detail
+    // response (flat `offersFreeReturns`) and the listing shape (nested
+    // on `seller.offersFreeReturns`). Default false on legacy payloads.
+    offersFreeReturns:
+      Boolean(
+        (raw as { offersFreeReturns?: boolean | null }).offersFreeReturns
+        ?? (raw.seller as { offersFreeReturns?: boolean | null } | null | undefined)
+              ?.offersFreeReturns,
+      ),
   };
 }
 

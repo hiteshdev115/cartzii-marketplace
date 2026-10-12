@@ -34,6 +34,13 @@ export interface StorefrontStore {
   primaryLanguage: string | null;
   /** null when the seller has not opted into publishing contact info. */
   contact: StorefrontContact | null;
+  /**
+   * Seller-level promise: every return gets a prepaid label at the
+   * seller's expense regardless of reason. The storefront renders a
+   * "Free returns" badge on the store banner + product-detail pages
+   * when this is true.
+   */
+  offersFreeReturns?: boolean;
   updatedAt: string;
 }
 

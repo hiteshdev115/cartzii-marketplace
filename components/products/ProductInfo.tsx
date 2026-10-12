@@ -329,10 +329,14 @@ export function ProductInfo({ product, onVariantChange, onShowReviews, onWriteRe
             <RotateCcw className="w-5 h-5 text-primary" />
             <span className="text-xs text-slate-600">
               {/* The seller's actual window, not a hardcoded "30-Day" string —
-                  sellers can set their own, so the old fixed copy could lie. */}
-              {product.returnPolicy
-                ? t('returnsWithDays', { days: product.returnPolicy.returnWindowDays })
-                : t('easyReturns')}
+                  sellers can set their own, so the old fixed copy could lie.
+                  When the seller offers free returns, promote that promise
+                  to the trust-badge slot: it converts better than days. */}
+              {product.offersFreeReturns
+                ? 'Free returns'
+                : product.returnPolicy
+                  ? t('returnsWithDays', { days: product.returnPolicy.returnWindowDays })
+                  : t('easyReturns')}
             </span>
           </div>
           <div className="flex flex-col items-center text-center gap-1">
@@ -365,20 +369,56 @@ export function ProductInfo({ product, onVariantChange, onShowReviews, onWriteRe
       {/* Return & exchange policy — resolved per seller by the API. Hidden
           entirely when absent so a legacy payload never renders "undefined".
           Also hidden for digital products; the "final sale" notice above
-          is the only relevant return-policy language for downloads. */}
+          is the only relevant return-policy language for downloads.
+          When the seller offers free returns, the panel adopts an emerald
+          treatment and leads with the promise rather than the window — it's
+          a stronger conversion signal than number of days. */}
       {product.returnPolicy && product.productType !== 'digital' && (
-        <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+        <div
+          className={
+            'rounded-xl border p-4 ' +
+            (product.offersFreeReturns
+              ? 'border-emerald-200 bg-emerald-50'
+              : 'border-slate-200 bg-slate-50')
+          }
+        >
           <div className="flex items-start gap-3">
-            <RotateCcw className="w-5 h-5 text-primary mt-0.5 shrink-0" />
+            <RotateCcw
+              className={
+                'w-5 h-5 mt-0.5 shrink-0 ' +
+                (product.offersFreeReturns ? 'text-emerald-600' : 'text-primary')
+              }
+            />
             <div className="space-y-1">
-              <h3 className="text-sm font-semibold text-slate-900">
-                {t('returnPolicyTitle')}
+              <h3
+                className={
+                  'text-sm font-semibold ' +
+                  (product.offersFreeReturns ? 'text-emerald-900' : 'text-slate-900')
+                }
+              >
+                {product.offersFreeReturns
+                  ? 'Free returns on this item'
+                  : t('returnPolicyTitle')}
               </h3>
-              <p className="text-sm text-slate-600">
-                {t('returnPolicyBody', { days: product.returnPolicy.returnWindowDays })}
+              <p
+                className={
+                  'text-sm ' +
+                  (product.offersFreeReturns ? 'text-emerald-800' : 'text-slate-600')
+                }
+              >
+                {product.offersFreeReturns
+                  ? `This seller provides a prepaid return label for every return within ${product.returnPolicy.returnWindowDays} days of delivery — you'll receive a full refund.`
+                  : t('returnPolicyBody', { days: product.returnPolicy.returnWindowDays })}
               </p>
               {product.returnPolicy.exchangeAllowed && (
-                <p className="text-xs text-slate-500">{t('returnPolicyExchange')}</p>
+                <p
+                  className={
+                    'text-xs ' +
+                    (product.offersFreeReturns ? 'text-emerald-700' : 'text-slate-500')
+                  }
+                >
+                  {t('returnPolicyExchange')}
+                </p>
               )}
             </div>
           </div>
