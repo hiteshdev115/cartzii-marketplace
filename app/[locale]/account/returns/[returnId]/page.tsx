@@ -8,6 +8,7 @@ import { QRCodeSVG } from 'qrcode.react';
 import { ArrowLeft, Check, Download, ExternalLink, Loader2, Package, XCircle } from 'lucide-react';
 import { buildPath } from '@/config/countries';
 import { getReturnById, type ReturnRequest } from '@/lib/api/returns';
+import { DisputeThread } from '@/components/returns/DisputeThread';
 import { subscribeToOrderUpdates } from '@/lib/api/orders';
 import { getReturnStage, type ReturnStageKey } from '@/lib/returnConstants';
 import { cn, safeCurrencyCode } from '@/lib/utils';
@@ -174,17 +175,22 @@ function ReturnDetailContent({ returnId }: { returnId: number }) {
       {/* Status timeline / rejection notice */}
       <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
         {stage.key === 'rejected' ? (
-          <div className="flex items-start gap-3">
-            <XCircle className="h-5 w-5 text-rose-500 shrink-0 mt-0.5" />
-            <div>
-              <p className="text-sm font-semibold text-rose-700">{t('rejectionNoticeTitle')}</p>
-              {ret.sellerNote && (
-                <p className="text-sm text-slate-600 mt-1">
-                  {t('sellerNoteLabel')}: {ret.sellerNote}
+          <>
+            <div className="flex items-start gap-3">
+              <XCircle className="h-5 w-5 text-rose-500 shrink-0 mt-0.5" />
+              <div>
+                <p className="text-sm font-semibold text-rose-700">{t('rejectionNoticeTitle')}</p>
+                {ret.sellerNote && (
+                  <p className="text-sm text-slate-600 mt-1">
+                    {t('sellerNoteLabel')}: {ret.sellerNote}
+                  </p>
+                )}
+                <p className="text-xs text-slate-500 mt-2">
+                  If you want this reviewed, reply in the dispute thread below. Cartzii will step in if you cannot settle it directly with the seller.
                 </p>
-              )}
+              </div>
             </div>
-          </div>
+          </>
         ) : (
           <ol className="relative space-y-0">
             {HAPPY_PATH_STAGES.map((key, idx) => {
@@ -219,6 +225,10 @@ function ReturnDetailContent({ returnId }: { returnId: number }) {
           </ol>
         )}
       </div>
+
+      {/* Dispute chat — only renders if a dispute row exists for this return
+          (seller rejected it). Fetches independently; hidden otherwise. */}
+      <DisputeThread returnId={ret.returnId} />
 
       {/* Shipping label — QR code + printable download, whichever the customer prefers.
           Hidden once the return is fully refunded — nothing left to ship at that point. */}
