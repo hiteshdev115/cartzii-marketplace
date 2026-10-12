@@ -179,6 +179,12 @@ export function SellerRateSelector({
           const deliveryDate = getDeliveryDateStr(rate.estDeliveryDays);
           const isCheapest = rate.rateId === cheapestRate?.rateId;
           const isFastest = fastestRate && rate.rateId === fastestRate.rateId && rate.rateId !== cheapestRate?.rateId;
+          // Prefer the server-converted buyer-facing amount when the
+          // rate came back in a currency ≠ the cart's. Falls back to the
+          // native rate when same-currency (server leaves displayRate
+          // populated too, but defensive fallback keeps us safe).
+          const buyerAmount = typeof rate.displayRate === 'number' ? rate.displayRate : rate.rate;
+          const buyerCurrency = rate.displayCurrency || rate.currency;
 
           return (
             <label
@@ -238,10 +244,10 @@ export function SellerRateSelector({
                     <span
                       className="shrink-0 text-sm font-semibold ml-6 sm:ml-0"
                       aria-label={t('freeShippingAriaLabel', {
-                        originalPrice: formatPrice(rate.rate, locale),
+                        originalPrice: formatPrice(buyerAmount, locale, buyerCurrency),
                       })}
                     >
-                      <s className="text-gray-400 mr-2">{formatPrice(rate.rate, locale)}</s>
+                      <s className="text-gray-400 mr-2">{formatPrice(buyerAmount, locale, buyerCurrency)}</s>
                       <span className="text-green-700">{t('free')}</span>
                     </span>
                   ) : (
@@ -251,7 +257,7 @@ export function SellerRateSelector({
                         isFree ? 'text-emerald-600' : 'text-slate-900',
                       )}
                     >
-                      {isFree ? t('freeShipping') : formatPrice(rate.rate, locale)}
+                      {isFree ? t('freeShipping') : formatPrice(buyerAmount, locale, buyerCurrency)}
                     </span>
                   )}
                 </div>

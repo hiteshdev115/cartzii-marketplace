@@ -5,11 +5,22 @@ export function cn(...inputs: ClassValue[]) {
   return clsx(inputs);
 }
 
-export function formatPrice(amount: number, locale: string = 'en-US'): string {
+/**
+ * Format `amount` as a currency string. By default uses the currency of the
+ * current locale's country config; an explicit `currencyOverride` wins when
+ * passed (used for shipping rates returned in a foreign currency — e.g. a
+ * CA buyer seeing a USD-quoted Canada Post wallet rate).
+ */
+export function formatPrice(
+  amount: number,
+  locale: string = 'en-US',
+  currencyOverride?: string,
+): string {
   const config = getCountryConfig(locale);
+  const currency = (currencyOverride || config.currency).toUpperCase();
   return new Intl.NumberFormat(locale, {
     style: 'currency',
-    currency: config.currency,
+    currency,
   }).format(amount);
 }
 

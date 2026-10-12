@@ -45,9 +45,22 @@ export interface ShippingRate {
   rateId: string;
   carrier: string;
   service: string;
+  /** Native carrier rate — what EasyPost actually bills Cartzii. */
   rate: number;
   currency: string;
   estDeliveryDays?: number | null;
+  /**
+   * Buyer-facing amount in the cart currency. Set when the carrier
+   * returned the rate in a currency different from the cart (e.g.
+   * Canada Post wallet quotes USD even for a CAD buyer). Includes the
+   * server-side FX buffer. Falls back to `rate` when the server didn't
+   * populate it (same-currency case).
+   */
+  displayRate?: number;
+  displayCurrency?: string;
+  fxApplied?: boolean;
+  fxRate?: number;
+  fxBuffer?: number;
 }
 
 export interface SellerRateQuote {

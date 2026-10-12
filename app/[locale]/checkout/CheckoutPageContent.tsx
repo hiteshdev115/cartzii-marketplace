@@ -270,7 +270,15 @@ export function CheckoutPageContent() {
             // per-seller split to credit shipping to the right seller's ledger;
             // it validates the sum against the amount Stripe captured, so this
             // cannot inflate the total, only describe how it divides.
-            amountCents: quote.freeShippingApplied ? 0 : Math.round(rate.rate * 100),
+            //
+            // Prefer the buyer-currency `displayRate` the server returned
+            // after FX conversion (e.g. Canada Post wallet quoted USD →
+            // converted to CAD + 2.5% buffer). Falls back to `rate` when
+            // same-currency (server leaves displayRate populated to match
+            // in that case too, but defensive fallback is cheap).
+            amountCents: quote.freeShippingApplied
+              ? 0
+              : Math.round((typeof rate.displayRate === 'number' ? rate.displayRate : rate.rate) * 100),
           };
         })
         .filter(
