@@ -290,13 +290,38 @@ export function RequestReturnModal({
               <p className="text-sm text-slate-500">{t('calculatingRefund')}</p>
             )}
 
-            {preview && !previewLoading && (
+            {preview && !previewLoading && (() => {
+              // Which specific line this preview is quoting. Making the item
+              // name + quantity visible in the summary avoids the "whole
+              // order amount" confusion: a buyer with multiple lines can
+              // now see at a glance that THIS specific product is what's
+              // being refunded, not the entire order.
+              const selectedItem = items.find((i) => i.orderItemId === selectedItemId);
+              return (
               <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 space-y-2">
                 <p className="text-sm font-semibold text-slate-900">{t('refundSummaryTitle')}</p>
 
+                {selectedItem && (
+                  <div className="flex items-start gap-2 text-xs text-slate-600 pb-1 border-b border-slate-200">
+                    <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-slate-200 text-slate-700 font-semibold text-[10px]">
+                      {selectedItem.quantity}
+                    </span>
+                    <span className="line-clamp-2">
+                      {selectedItem.productName}
+                    </span>
+                  </div>
+                )}
+
                 <dl className="space-y-1 text-sm text-slate-700">
                   <div className="flex justify-between">
-                    <dt>{t('itemPrice')}</dt>
+                    <dt>
+                      {t('itemPrice')}
+                      {selectedItem && selectedItem.quantity > 1 && (
+                        <span className="text-xs text-slate-500 ml-1">
+                          (× {selectedItem.quantity})
+                        </span>
+                      )}
+                    </dt>
                     <dd>{money(preview.refundItemCents)}</dd>
                   </div>
                   <div className="flex justify-between">
@@ -325,7 +350,8 @@ export function RequestReturnModal({
                   {t('originalShippingNotRefunded')}
                 </p>
               </div>
-            )}
+              );
+            })()}
 
             <div>
               <label htmlFor="return-note" className="label">{t('noteLabel')}</label>
