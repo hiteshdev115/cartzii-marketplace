@@ -41,6 +41,8 @@ export interface RatesRequest {
   sellerCarts: SellerCart[];
 }
 
+export type RateIncoterm = 'DDP' | 'DAP' | 'DAT' | 'DOMESTIC';
+
 export interface ShippingRate {
   rateId: string;
   carrier: string;
@@ -61,6 +63,17 @@ export interface ShippingRate {
   fxApplied?: boolean;
   fxRate?: number;
   fxBuffer?: number;
+  /**
+   * Customs terms the buyer is agreeing to:
+   *   DDP      — Delivered Duty Paid: duties collected at checkout,
+   *              nothing owed at the door (Cartzii's rule for all
+   *              cross-border quotes).
+   *   DAP/DAT  — Duties owed at delivery. Filtered out of cross-border
+   *              responses today but defined for safety.
+   *   DOMESTIC — Same-country shipment, no customs applicable.
+   * Optional for legacy / older responses; UI must handle undefined.
+   */
+  incoterm?: RateIncoterm;
 }
 
 export interface SellerRateQuote {

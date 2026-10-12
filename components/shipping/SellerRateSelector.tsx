@@ -227,6 +227,28 @@ export function SellerRateSelector({
                             Fastest
                           </span>
                         )}
+                        {/* Customs terms. DDP = duties paid at checkout, no
+                            bill at the door — the big trust signal for a
+                            cross-border buyer. DAP would mean the opposite
+                            (we don't show these today but the chip would
+                            flag them if we ever did). Domestic shipments
+                            skip the chip entirely — no customs applies. */}
+                        {rate.incoterm === 'DDP' && (
+                          <span
+                            className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-sky-50 text-sky-700 text-[10px] font-semibold uppercase whitespace-nowrap"
+                            title="Delivered Duty Paid — duties and taxes are included in this shipping price. Nothing to pay at delivery."
+                          >
+                            DDP · duties included
+                          </span>
+                        )}
+                        {(rate.incoterm === 'DAP' || rate.incoterm === 'DAT') && (
+                          <span
+                            className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-red-50 text-red-700 text-[10px] font-semibold uppercase whitespace-nowrap"
+                            title="Delivered At Place — duties and taxes are NOT included. You may be asked to pay them before the carrier releases the parcel."
+                          >
+                            {rate.incoterm} · duties at door
+                          </span>
+                        )}
                       </div>
                       {rate.estDeliveryDays != null && (
                         <div className="flex items-center gap-1.5 mt-0.5">
@@ -237,6 +259,16 @@ export function SellerRateSelector({
                               : t('estDelivery', { days: rate.estDeliveryDays })}
                           </p>
                         </div>
+                      )}
+                      {rate.incoterm === 'DDP' && (
+                        <p className="text-[11px] text-sky-700 mt-0.5">
+                          Taxes and import duties are included — no bill at delivery.
+                        </p>
+                      )}
+                      {(rate.incoterm === 'DAP' || rate.incoterm === 'DAT') && (
+                        <p className="text-[11px] text-red-700 mt-0.5">
+                          You may owe import duties and taxes before the carrier releases the parcel.
+                        </p>
                       )}
                     </div>
                   </div>
