@@ -179,7 +179,15 @@ export async function uploadPersonalizationImageAPI(file: File): Promise<string 
       return JSON.parse(raw)?.state?.token ?? null;
     } catch { return null; }
   })();
-  if (token) headers.Authorization = `Bearer ${token}`;
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  } else {
+    // Guest shopper — the server accepts a signed guest token in place of
+    // a Bearer, same as every other cart endpoint. Without this, an un-
+    // logged-in buyer uploading a reference image is rejected with 1009.
+    const guest = process.env.NEXT_PUBLIC_GUEST_API_TOKEN || '';
+    if (guest) headers['x-guest-token'] = guest;
+  }
 
   const res = await fetch(`${base}/api/v1/cart/personalization/upload`, {
     method: 'POST',
