@@ -134,6 +134,18 @@ export function ProductCard({ product, compact = true }: ProductCardProps) {
         ) : null}
         {outOfStock ? (
           <OutOfStockButton className="mt-3 text-xs py-2" />
+        ) : product.handicraft || product.productType === 'handicraft' ? (
+          // Handmade listings often need per-order personalization (note +
+          // reference image) that can only be entered on the detail page, so
+          // the tile sends the buyer there instead of silently adding a line
+          // the maker has no instructions for.
+          <Link
+            href={buildPath(`/products/${product.slug}`)}
+            className="mt-3 w-full btn-primary text-xs py-2 inline-flex items-center justify-center"
+            aria-label={`View ${product.name}`}
+          >
+            View
+          </Link>
         ) : (
           <button
             onClick={() => addToCart(product, 1, undefined, undefined, locale)}
