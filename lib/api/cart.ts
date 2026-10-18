@@ -1,5 +1,5 @@
 import { api } from './client';
-import { currentCurrency } from '@/config/countries';
+import { currentCurrency, currentCountry } from '@/config/countries';
 
 // ---- API response shapes --------------------------------------------------
 
@@ -150,6 +150,11 @@ export async function addCartItemAPI(
  * Upload the reference image for a handmade listing's personalization.
  * Returns the stored R2 URL that gets passed back on /cart/add as
  * `personalizationImageUrl`.
+ *
+ * Bypasses the shared `api` client because that client JSON-stringifies every
+ * body and sets `Content-Type: application/json` — both wrong for multipart.
+ * We hand the raw FormData to fetch and let the browser pick a
+ * `multipart/form-data; boundary=...` content-type on its own.
  */
 interface PersonalizationUploadResponse {
   success?: number;
@@ -161,13 +166,29 @@ interface PersonalizationUploadResponse {
 export async function uploadPersonalizationImageAPI(file: File): Promise<string | null> {
   const fd = new FormData();
   fd.append('image', file);
-  const res = await api.post<PersonalizationUploadResponse>(
-    '/api/v1/cart/personalization/upload',
-    fd,
-    CART_CONFIG,
-  );
-  if ('success' in res && res.data?.url) return res.data.url;
-  return null;
+
+  const base = process.env.NEXT_PUBLIC_API_URL || 'https://staging-api.cartzii.com';
+  const headers: Record<string, string> = {
+    Accept: 'application/json',
+    'X-Portal-Locale': currentCountry,
+  };
+  const token = (() => {
+    try {
+      const raw = typeof window !== 'undefined' ? window.localStorage.getItem('cartzii-auth') : null;
+      if (!raw) return null;
+      return JSON.parse(raw)?.state?.token ?? null;
+    } catch { return null; }
+  })();
+  if (token) headers.Authorization = `Bearer ${token}`;
+
+  const res = await fetch(`${base}/api/v1/cart/personalization/upload`, {
+    method: 'POST',
+    headers,
+    body: fd,
+  });
+  if (!res.ok) return null;
+  const json = (await res.json().catch(() => null)) as PersonalizationUploadResponse | null;
+  return json?.data?.url ?? null;
 }
 
 const EMPTY_CART_RESULT = {
