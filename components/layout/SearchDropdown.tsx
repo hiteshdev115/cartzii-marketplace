@@ -9,7 +9,6 @@ import { searchProductsAPI } from '@/lib/api';
 import type { SearchProductResult } from '@/lib/api';
 import { buildPath, getCountryFromLocale } from '@/config/countries';
 import { useDebounce } from '@/hooks/useDebounce';
-import { formatPrice } from '@/lib/utils';
 
 const IMAGE_CDN_URL =
   process.env.NEXT_PUBLIC_IMAGE_CDN_URL ||
@@ -101,24 +100,6 @@ export function SearchDropdown({ query, onSelect, visible }: SearchDropdownProps
                     </p>
                     <p className="text-xs text-slate-500 truncate">{item.categoryname}</p>
                   </div>
-                  {item.pricing && (
-                    <div className="text-right flex-shrink-0">
-                      {item.pricing.discountprice ? (
-                        <>
-                          <p className="text-sm font-semibold text-primary">
-                            {formatPrice(parseFloat(item.pricing.discountprice), locale)}
-                          </p>
-                          <p className="text-xs text-slate-400 line-through">
-                            {formatPrice(parseFloat(item.pricing.price), locale)}
-                          </p>
-                        </>
-                      ) : (
-                        <p className="text-sm font-semibold text-slate-900">
-                          {formatPrice(parseFloat(item.pricing.price), locale)}
-                        </p>
-                      )}
-                    </div>
-                  )}
                 </Link>
               </li>
             ))}
