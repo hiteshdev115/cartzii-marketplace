@@ -49,6 +49,7 @@ export {
   clearCartAPI,
   getCartCountAPI,
   buildCartImageUrl,
+  uploadPersonalizationImageAPI,
 } from './cart';
 export type {
   CartAPIItem,

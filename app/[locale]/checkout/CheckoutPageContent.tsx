@@ -251,6 +251,14 @@ export function CheckoutPageContent() {
           unitPrice: Math.round(price * 100),
           totalPrice: Math.round(price * item.quantity * 100),
           currencyCode: currency.toUpperCase(),
+          // Carry the buyer's customization request onto the order so the
+          // maker sees exactly what was asked for alongside this line.
+          ...(item.personalizationNote
+            ? { personalizationNote: item.personalizationNote }
+            : {}),
+          ...(item.personalizationImageUrl
+            ? { personalizationImageUrl: item.personalizationImageUrl }
+            : {}),
         };
       });
 

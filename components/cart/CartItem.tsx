@@ -43,6 +43,27 @@ export function CartItem({ item }: CartItemProps) {
             {item.selectedSize && `Size: ${item.selectedSize}`}
           </p>
         ) : null}
+        {(item.personalizationNote || item.personalizationImageUrl) && (
+          <div className="mt-2 flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50/50 px-2.5 py-1.5">
+            {item.personalizationImageUrl && (
+              <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded border border-amber-200 bg-white">
+                <Image
+                  src={item.personalizationImageUrl}
+                  alt="Personalization reference"
+                  fill
+                  sizes="40px"
+                  className="object-cover"
+                />
+              </div>
+            )}
+            {item.personalizationNote && (
+              <p className="text-xs text-slate-700 line-clamp-3">
+                <span className="font-medium text-slate-800">Personalization: </span>
+                {item.personalizationNote}
+              </p>
+            )}
+          </div>
+        )}
         <div className="flex items-center justify-between mt-3">
           <QuantitySelector value={item.quantity} onChange={(q) => updateQuantity(item.product.id, q, item.selectedColor, item.selectedSize)} max={99} />
           <div className="text-right">

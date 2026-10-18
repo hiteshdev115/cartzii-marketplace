@@ -63,6 +63,8 @@ export interface CartAPIItem {
   updatedat: string;
   product: CartAPIProduct;
   variant: CartAPIVariant | null;
+  personalizationnote?: string | null;
+  personalizationimageurl?: string | null;
 }
 
 export interface CartAPISummary {
@@ -129,6 +131,9 @@ export interface AddCartItemParams {
   selectedAttributes?: Record<string, string>;
   name?: string;
   image?: string;
+  /** Customer customization request for a handmade listing that opted in. */
+  personalizationNote?: string;
+  personalizationImageUrl?: string;
 }
 
 const CART_CONFIG = { skipGuestToken: true };
@@ -138,6 +143,30 @@ export async function addCartItemAPI(
 ): Promise<CartAPIItem | null> {
   const res = await api.post<CartMutateResponse>('/api/v1/cart/add', params, CART_CONFIG);
   if ('success' in res && res.data) return res.data;
+  return null;
+}
+
+/**
+ * Upload the reference image for a handmade listing's personalization.
+ * Returns the stored R2 URL that gets passed back on /cart/add as
+ * `personalizationImageUrl`.
+ */
+interface PersonalizationUploadResponse {
+  success?: number;
+  error?: number;
+  message: string;
+  data?: { url: string; width: number | null; height: number | null };
+}
+
+export async function uploadPersonalizationImageAPI(file: File): Promise<string | null> {
+  const fd = new FormData();
+  fd.append('image', file);
+  const res = await api.post<PersonalizationUploadResponse>(
+    '/api/v1/cart/personalization/upload',
+    fd,
+    CART_CONFIG,
+  );
+  if ('success' in res && res.data?.url) return res.data.url;
   return null;
 }
 

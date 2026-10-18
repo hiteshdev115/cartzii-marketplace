@@ -4,7 +4,9 @@ import { useState, useEffect, useCallback } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import { buildPath } from '@/config/countries';
-import { Heart, ShoppingCart, Store, Truck, RotateCcw, Shield, Download, Zap } from 'lucide-react';
+import { Heart, ShoppingCart, Store, Truck, RotateCcw, Shield, Download, Zap, Upload, X, Loader2 } from 'lucide-react';
+import Image from 'next/image';
+import { uploadPersonalizationImageAPI } from '@/lib/api';
 import { Product } from '@/types';
 import { formatPrice } from '@/lib/utils';
 import { StarRating } from '@/components/ui/StarRating';
@@ -84,6 +86,46 @@ export function ProductInfo({ product, onVariantChange, onShowReviews, onWriteRe
   const [selectedSize, setSelectedSize] = useState(product.sizes?.[0]);
   const [quantity, setQuantity] = useState(1);
 
+  // ── Personalization (handmade listings that opted in) ──────────────────
+  const personalizationEnabled = Boolean(product.handicraft?.allows_personalization);
+  const [personalizationNote, setPersonalizationNote] = useState('');
+  const [personalizationImageUrl, setPersonalizationImageUrl] = useState<string | null>(null);
+  const [personalizationUploading, setPersonalizationUploading] = useState(false);
+  const [personalizationError, setPersonalizationError] = useState<string | null>(null);
+
+  const handlePersonalizationImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      setPersonalizationError('Please choose an image file.');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setPersonalizationError('Image must be 5 MB or smaller.');
+      return;
+    }
+    setPersonalizationError(null);
+    setPersonalizationUploading(true);
+    try {
+      const url = await uploadPersonalizationImageAPI(file);
+      if (!url) {
+        setPersonalizationError('Upload failed. Please try again.');
+      } else {
+        setPersonalizationImageUrl(url);
+      }
+    } catch {
+      setPersonalizationError('Upload failed. Please try again.');
+    } finally {
+      setPersonalizationUploading(false);
+    }
+  };
+
+  const clearPersonalizationImage = () => {
+    setPersonalizationImageUrl(null);
+    setPersonalizationError(null);
+  };
+
   const findMatchingVariant = useCallback((color?: string, size?: string) => {
     if (!product.detailVariants?.length) return undefined;
     // Try exact match (color + size)
@@ -124,7 +166,16 @@ export function ProductInfo({ product, onVariantChange, onShowReviews, onWriteRe
   }, [selectedColor, selectedSize, findMatchingVariant, onVariantChange]);
 
   const handleAddToCart = () => {
-    addToCart(product, quantity, selectedColor, selectedSize, locale);
+    addToCart(product, quantity, selectedColor, selectedSize, locale, {
+      note: personalizationEnabled ? personalizationNote : null,
+      imageUrl: personalizationEnabled ? personalizationImageUrl : null,
+    });
+    // Reset the per-add personalization — a second buyer of the same item in
+    // the same session shouldn't inherit the previous note silently.
+    if (personalizationEnabled) {
+      setPersonalizationNote('');
+      setPersonalizationImageUrl(null);
+    }
   };
 
   return (
@@ -259,6 +310,79 @@ export function ProductInfo({ product, onVariantChange, onShowReviews, onWriteRe
                 {size}
               </button>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* Personalization — only shown when the seller opted this handmade
+          listing in. Note is optional, image is optional. Both ride through
+          cart → order so the maker sees them with the fulfilment. */}
+      {personalizationEnabled && (
+        <div className="rounded-xl border border-amber-200 bg-amber-50/40 p-4 space-y-3">
+          <div>
+            <h3 className="text-sm font-semibold text-slate-900">Add personalization (optional)</h3>
+            <p className="mt-0.5 text-xs text-slate-600">
+              Add a note or a reference image (logo, name, photo). The maker will see
+              both with your order.
+            </p>
+          </div>
+          <div>
+            <label htmlFor="personalization-note" className="sr-only">Personalization note</label>
+            <textarea
+              id="personalization-note"
+              value={personalizationNote}
+              onChange={(e) => setPersonalizationNote(e.target.value.slice(0, 1000))}
+              rows={3}
+              maxLength={1000}
+              placeholder='e.g. "Please engrave the name Mia in script, roughly centered."'
+              className="w-full rounded-lg border border-amber-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:border-amber-400 focus:ring-amber-400 focus:outline-none"
+            />
+            <p className="mt-1 text-right text-[11px] text-slate-500">
+              {personalizationNote.length} / 1000
+            </p>
+          </div>
+          <div className="flex items-start gap-3">
+            {personalizationImageUrl ? (
+              <div className="relative h-16 w-16 overflow-hidden rounded-lg border border-amber-200 bg-white">
+                <Image
+                  src={personalizationImageUrl}
+                  alt="Personalization reference"
+                  fill
+                  sizes="64px"
+                  className="object-cover"
+                />
+                <button
+                  type="button"
+                  onClick={clearPersonalizationImage}
+                  className="absolute -top-1.5 -right-1.5 rounded-full bg-white p-0.5 shadow ring-1 ring-slate-200 hover:ring-red-200"
+                  aria-label="Remove reference image"
+                >
+                  <X className="h-3.5 w-3.5 text-slate-600" />
+                </button>
+              </div>
+            ) : (
+              <label className="flex h-16 w-16 cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed border-amber-300 bg-white text-slate-500 hover:border-amber-400 hover:text-slate-700">
+                {personalizationUploading ? (
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                ) : (
+                  <Upload className="h-5 w-5" />
+                )}
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  disabled={personalizationUploading}
+                  onChange={handlePersonalizationImageSelect}
+                />
+              </label>
+            )}
+            <div className="text-xs text-slate-600">
+              <p className="font-medium text-slate-800">Reference image (optional)</p>
+              <p>JPG or PNG, up to 5&nbsp;MB.</p>
+              {personalizationError && (
+                <p className="mt-1 text-red-600">{personalizationError}</p>
+              )}
+            </div>
           </div>
         </div>
       )}

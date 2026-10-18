@@ -40,6 +40,9 @@ export interface OrderItem {
    * a link to the buyer's Library instead of a shipment status pill.
    */
   productType?: 'general' | 'handicraft' | 'digital' | null;
+  /** Buyer customization — present when the handmade listing opted in. */
+  personalizationNote?: string | null;
+  personalizationImageUrl?: string | null;
 }
 
 // Shared address shape — used by both OrderConfirmation and PlaceOrderPayload
@@ -172,6 +175,9 @@ export interface PlaceOrderItem {
   /** quantity × unitPrice, in smallest currency unit (cents). */
   totalPrice: number;
   currencyCode: string;
+  /** Customer customization request for a handmade listing that opted in. */
+  personalizationNote?: string;
+  personalizationImageUrl?: string;
 }
 
 /**

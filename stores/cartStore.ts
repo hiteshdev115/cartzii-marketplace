@@ -164,6 +164,8 @@ function mapAPIItemToCartItem(item: CartAPIItem): CartItem {
     price: item.price,
     countryCode: item.countrycode ?? undefined,
     currencyCode: item.currencycode ?? undefined,
+    personalizationNote: item.personalizationnote ?? null,
+    personalizationImageUrl: item.personalizationimageurl ?? null,
   };
 }
 
@@ -199,6 +201,8 @@ export interface BackendCartItem {
    * fall back to a product default.
    */
   selectedAttributes?: Record<string, string>;
+  personalizationnote?: string | null;
+  personalizationimageurl?: string | null;
 }
 
 // Map BackendCartItem → local CartItem
@@ -269,6 +273,8 @@ function mapBackendItemToCartItem(item: BackendCartItem): CartItem {
     price: item.price,
     countryCode: item.countrycode ?? undefined,
     currencyCode: item.currencycode ?? undefined,
+    personalizationNote: item.personalizationnote ?? null,
+    personalizationImageUrl: item.personalizationimageurl ?? null,
   };
 }
 
@@ -297,6 +303,7 @@ interface CartStore {
     color?: string,
     size?: string,
     locale?: string,
+    personalization?: { note?: string | null; imageUrl?: string | null },
   ) => Promise<void>;
   removeItem: (
     productId: string,
@@ -345,7 +352,12 @@ export const useCartStore = create<CartStore>()(
       openDrawer: () => set({ isDrawerOpen: true }),
       closeDrawer: () => set({ isDrawerOpen: false }),
 
-      addItem: async (product, quantity = 1, requestedColor, requestedSize, locale) => {
+      addItem: async (product, quantity = 1, requestedColor, requestedSize, locale, personalization) => {
+        // Normalise once so every branch — guest state, API, dedupe — agrees.
+        const persNote = typeof personalization?.note === 'string' && personalization.note.trim()
+          ? personalization.note.trim().slice(0, 1000) : null;
+        const persImg = typeof personalization?.imageUrl === 'string' && personalization.imageUrl.trim()
+          ? personalization.imageUrl.trim() : null;
         // Resolved once, up front: every branch below (guest state, guest cart
         // persistence, optimistic update, API call) keys off this pair, and
         // they must all agree or the same product lands in the cart twice.
@@ -393,20 +405,23 @@ export const useCartStore = create<CartStore>()(
         const userId = getAuthUserId();
 
         if (!userId) {
-          // Guest: update Zustand local state
+          // Guest: update Zustand local state. A personalized add never merges
+          // with an existing line, mirroring the server dedupe rule.
           set((state) => {
-            const existing = state.items.find(
-              (item) =>
-                item.product.id === product.id &&
-                item.selectedColor === color &&
-                item.selectedSize === size,
-            );
+            const existing = !persNote && !persImg
+              ? state.items.find(
+                  (item) =>
+                    item.product.id === product.id &&
+                    item.selectedColor === color &&
+                    item.selectedSize === size &&
+                    !item.personalizationNote &&
+                    !item.personalizationImageUrl,
+                )
+              : undefined;
             if (existing) {
               return {
                 items: state.items.map((item) =>
-                  item.product.id === product.id &&
-                  item.selectedColor === color &&
-                  item.selectedSize === size
+                  item === existing
                     ? { ...item, quantity: item.quantity + quantity }
                     : item,
                 ),
@@ -415,7 +430,11 @@ export const useCartStore = create<CartStore>()(
             return {
               items: [
                 ...state.items,
-                { product: lineProduct, quantity, selectedColor: color, selectedSize: size },
+                {
+                  product: lineProduct, quantity, selectedColor: color, selectedSize: size,
+                  personalizationNote: persNote,
+                  personalizationImageUrl: persImg,
+                },
               ],
             };
           });
@@ -436,20 +455,23 @@ export const useCartStore = create<CartStore>()(
           return;
         }
 
-        // Authenticated: optimistic update then API call
+        // Authenticated: optimistic update then API call. A personalized add
+        // never merges with an existing line, mirroring the server dedupe rule.
         set((state) => {
-          const existing = state.items.find(
-            (item) =>
-              item.product.id === product.id &&
-              item.selectedColor === color &&
-              item.selectedSize === size,
-          );
+          const existing = !persNote && !persImg
+            ? state.items.find(
+                (item) =>
+                  item.product.id === product.id &&
+                  item.selectedColor === color &&
+                  item.selectedSize === size &&
+                  !item.personalizationNote &&
+                  !item.personalizationImageUrl,
+              )
+            : undefined;
           if (existing) {
             return {
               items: state.items.map((item) =>
-                item.product.id === product.id &&
-                item.selectedColor === color &&
-                item.selectedSize === size
+                item === existing
                   ? { ...item, quantity: item.quantity + quantity }
                   : item,
               ),
@@ -458,7 +480,11 @@ export const useCartStore = create<CartStore>()(
           return {
             items: [
               ...state.items,
-              { product, quantity, selectedColor: color, selectedSize: size },
+              {
+                product, quantity, selectedColor: color, selectedSize: size,
+                personalizationNote: persNote,
+                personalizationImageUrl: persImg,
+              },
             ],
           };
         });
@@ -483,6 +509,8 @@ export const useCartStore = create<CartStore>()(
             },
             name: product.name,
             image: lineProduct.images?.[0],
+            ...(persNote ? { personalizationNote: persNote } : {}),
+            ...(persImg ? { personalizationImageUrl: persImg } : {}),
           });
 
           // Refresh from server to get accurate cartId and merged quantities
