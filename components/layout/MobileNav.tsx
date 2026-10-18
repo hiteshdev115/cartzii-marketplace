@@ -207,7 +207,7 @@ export function MobileNav() {
           <div className="fixed inset-0 bg-black/50" onClick={() => setOpen(false)} aria-hidden="true" />
           <div className="fixed left-0 top-0 bottom-0 w-80 bg-white shadow-xl flex flex-col">
             <div className="flex items-center justify-between p-4 border-b">
-              <Image src="/assets/cartzii-logo.png" alt="Cartzii" width={160} height={45} className="h-11 w-auto object-contain" />
+              <Image src="/assets/cz-logo.png" alt="Cartzii" width={160} height={45} className="h-11 w-auto object-contain" />
               <button
                 onClick={() => setOpen(false)}
                 className="p-2 hover:bg-slate-100 rounded-lg"
