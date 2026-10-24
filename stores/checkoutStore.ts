@@ -74,7 +74,19 @@ export const useCheckoutStore = create<CheckoutState>()(
           const sellerId = Number(sellerIdStr);
           const quote = state.sellerRateQuotes.find((q) => q.sellerId === sellerId);
           if (quote?.freeShippingApplied) return sum; // zero out for free-shipping sellers
-          return sum + Math.round(r.rate * 100);
+          // Prefer the server-converted buyer-currency amount — this is
+          // what the UI showed the buyer and what we're charging them.
+          // Using the raw `r.rate` on a USD-quoted Canada Post wallet rate
+          // would charge the buyer $8 instead of $11 and leave Cartzii
+          // ~30% underwater on that shipment.
+          //
+          // Defensive: a stray non-numeric amount becomes NaN under
+          // Math.round, and every downstream total — including the
+          // tax-estimate query — inherits NaN. Coerce to a safe 0 so a
+          // broken rate can never brick checkout with a 400.
+          const amount = typeof r.displayRate === 'number' ? r.displayRate : r.rate;
+          const cents = Math.round(Number(amount) * 100);
+          return sum + (Number.isFinite(cents) ? cents : 0);
         }, 0);
       },
 

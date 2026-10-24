@@ -12,6 +12,8 @@ export interface HandicraftDetails {
   material_used: string[];
   is_handmade: boolean;
   is_one_of_a_kind: boolean;
+  /** Seller opted this listing in to buyer personalization (note + image). */
+  allows_personalization?: boolean;
   certifications: string[];
   production_lead_time_days: number | null;
   is_made_to_order: boolean;
@@ -116,6 +118,12 @@ export interface Product {
    * enrichment.
    */
   sellerSlug?: string | null;
+  /**
+   * Seller's origin country (ISO-2). Shown next to the store name on the
+   * product detail page — "Sold by Test3 store, Germany" — so a buyer
+   * can see at a glance where the item ships from.
+   */
+  sellerCountry?: string | null;
   // ---- Optional shipping measurements (from `/getProductBySlug` etc.) ------
   /** Product weight (nullable — only shown when present). */
   weight?: number | null;
@@ -140,6 +148,13 @@ export interface Product {
    * and mock fixtures predate the flag; treat `undefined` as false.
    */
   isFreeDelivery?: boolean;
+  /**
+   * When true, the seller has opted into providing a prepaid return label
+   * for every return regardless of reason. Buyer sees a "Free returns"
+   * badge; buyer-remorse returns go to a full refund with no shipping
+   * deduction. Optional for legacy payloads — treat `undefined` as false.
+   */
+  offersFreeReturns?: boolean;
 }
 
 /** Resolved return terms as returned by the product detail API. */
@@ -205,6 +220,9 @@ export interface CartItem {
   price?: string;
   countryCode?: string;
   currencyCode?: string;
+  /** Customer customization request for a handmade listing that opted in. */
+  personalizationNote?: string | null;
+  personalizationImageUrl?: string | null;
 }
 
 export interface WishlistItem {

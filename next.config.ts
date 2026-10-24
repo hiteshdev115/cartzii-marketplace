@@ -20,6 +20,23 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "pub-e0f1bdc809544c0cb31dcf32dd668394.r2.dev" },
     ],
   },
+  async rewrites() {
+    // Google Search Console / Merchant Center verification. Google probes a
+    // single filename like `googleXYZ.html` at the site root. The App Router
+    // cannot express a folder named `google[token]` cleanly, so we rewrite
+    // the probe onto a route handler that reads the expected token from env.
+    //
+    // The rewrite is bounded to filenames starting with `google` and ending
+    // in `.html`, so no other `.html` request is captured. If the env var
+    // `NEXT_PUBLIC_GOOGLE_SITE_VERIFY` is unset the handler 404s — fine,
+    // because then there is no token to verify against anyway.
+    return [
+      {
+        source: "/:token(google[a-zA-Z0-9]+).html",
+        destination: "/api/google-verify/:token",
+      },
+    ];
+  },
 };
 
 export default withNextIntl(nextConfig);

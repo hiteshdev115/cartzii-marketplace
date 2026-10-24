@@ -334,18 +334,10 @@ function OrderCard({ order, locale, tCart, tCheckout, tAccount, onRequestReturn,
           </Link>
           <p className="text-xs text-slate-500">{formatDateTime(order.orderDate, locale)}</p>
         </div>
-        <div className="flex items-center gap-2 text-xs">
-          <span className={`rounded-full px-2 py-0.5 ${statusBadge.className}`}>
+        <div className="flex flex-wrap items-center gap-2 text-xs">
+          <span className={`inline-flex items-center rounded-md px-3 py-1.5 text-xs font-semibold ring-1 ring-inset ring-current/20 ${statusBadge.className}`}>
             {statusBadge.label}
           </span>
-          {/* Suppressed on a digital-only order: the payment badge also reads
-              "Completed", and two identical pills side by side was the
-              confusing part of the original report. */}
-          {!isDigitalOnly && order.paymentStatus && (
-            <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-emerald-700">
-              {order.paymentStatus}
-            </span>
-          )}
         </div>
       </div>
 
@@ -501,11 +493,14 @@ function SellerBlock({
         </p>
         <div className="flex items-center gap-2">
           {sellerAllDigital ? (
-            <span className={`rounded-full px-2 py-0.5 text-xs ${DIGITAL_COMPLETED_BADGE.className}`}>
+            <span className={`inline-flex items-center rounded-md px-3 py-1.5 text-xs font-semibold ring-1 ring-inset ring-current/20 ${DIGITAL_COMPLETED_BADGE.className}`}>
               {DIGITAL_COMPLETED_BADGE.label}
             </span>
           ) : (
-            <StatusBadge status={shipment?.currentStatus ?? 'label_created'} />
+            <StatusBadge
+              status={shipment?.currentStatus ?? 'label_created'}
+              className="rounded-md px-3 py-1.5 font-semibold ring-1 ring-inset ring-current/20"
+            />
           )}
           <p className="text-xs text-slate-500">
             {seller.itemCount} {seller.itemCount === 1 ? tCart('item') : tCheckout('items')}
@@ -595,11 +590,14 @@ function ItemRow({
         {showStatus && (
           <div className="mt-1">
             {isDigital ? (
-              <span className={`rounded-full px-2 py-0.5 text-xs ${DIGITAL_COMPLETED_BADGE.className}`}>
+              <span className={`inline-flex items-center rounded-md px-3 py-1.5 text-xs font-semibold ring-1 ring-inset ring-current/20 ${DIGITAL_COMPLETED_BADGE.className}`}>
                 {DIGITAL_COMPLETED_BADGE.label}
               </span>
             ) : (
-              <StatusBadge status={shipment?.currentStatus ?? 'label_created'} />
+              <StatusBadge
+                status={shipment?.currentStatus ?? 'label_created'}
+                className="rounded-md px-3 py-1.5 font-semibold ring-1 ring-inset ring-current/20"
+              />
             )}
           </div>
         )}

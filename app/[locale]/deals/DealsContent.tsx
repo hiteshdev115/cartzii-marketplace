@@ -54,7 +54,7 @@ export function DealsContent() {
       </div>
 
       {loading ? (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-6">
+        <div className="product-grid">
           {Array.from({ length: 10 }).map((_, i) => <ProductCardSkeleton key={i} />)}
         </div>
       ) : deals.length === 0 ? (
@@ -70,7 +70,7 @@ export function DealsContent() {
       // replaced used a 4:3 image, its own price markup and had neither
       // add-to-cart nor wishlist — so a shopper browsing deals could not do
       // the one thing the page exists for.
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-6">
+      <div className="product-grid">
         {deals.map((product) => (
           <ProductCard key={product.id} product={product} />
         ))}

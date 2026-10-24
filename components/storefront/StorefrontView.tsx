@@ -140,6 +140,11 @@ function StorefrontBanner({ store, productCount }: { store: StorefrontStore; pro
           <span className="text-xs text-white/80">
             {productCount} {productCount === 1 ? 'product' : 'products'}
           </span>
+          {store.offersFreeReturns && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/90 px-2 py-0.5 text-xs font-medium text-white backdrop-blur">
+              ↩︎ Free returns
+            </span>
+          )}
         </div>
         {store.description && (
           <p className="mt-2 max-w-3xl text-sm text-white/90 drop-shadow md:text-base">
@@ -167,6 +172,11 @@ function StorefrontBanner({ store, productCount }: { store: StorefrontStore; pro
           <span className="text-xs text-slate-500">
             {productCount} {productCount === 1 ? 'product' : 'products'}
           </span>
+          {store.offersFreeReturns && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-800">
+              ↩︎ Free returns
+            </span>
+          )}
         </div>
         {store.description && (
           <p className="mt-2 max-w-3xl text-sm text-slate-600 md:text-base">
@@ -244,7 +254,7 @@ function ProductsTab({ slug }: { slug: string }) {
 
   return (
     <div>
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+      <div className="product-grid">
         {rows.map((p) => (
           <ProductCard key={p.id} product={p} />
         ))}

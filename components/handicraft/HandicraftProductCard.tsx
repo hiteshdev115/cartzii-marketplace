@@ -68,7 +68,7 @@ export function HandicraftProductCard({ product }: { product: Product }) {
 
         {handicraft && <CraftOrigin handicraft={handicraft} className="mt-0.5 truncate" />}
 
-        <div className="mt-2 flex items-baseline gap-2">
+        <div className="mt-2 flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
           <span className="text-base font-extrabold text-slate-900">
             {formatPrice(price, product.currency)}
           </span>
@@ -78,6 +78,14 @@ export function HandicraftProductCard({ product }: { product: Product }) {
             </span>
           )}
         </div>
+
+        <Link
+          href={buildPath(`/products/${product.slug}`)}
+          className="mt-3 inline-flex w-full items-center justify-center rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1"
+          aria-label={`View ${product.name}`}
+        >
+          View
+        </Link>
       </div>
     </div>
   );

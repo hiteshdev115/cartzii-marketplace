@@ -8,7 +8,11 @@ const inter = Inter({ subsets: ["latin"] });
 export const metadata: Metadata = {
   title: "Cartzii Marketplace",
   description: "Discover products you'll love on Cartzii Marketplace",
-  icons: { icon: "/cartzii-fevicon.png" },
+  icons: {
+    icon: "/assets/fevicon-cartzii.svg",
+    shortcut: "/assets/fevicon-cartzii.svg",
+    apple: "/assets/cartzii-fevicon.png",
+  },
 };
 
 export default async function RootLayout({

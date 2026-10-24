@@ -10,9 +10,19 @@ interface ProductGalleryProps {
   productName: string;
 }
 
+// How much the image scales up under the cursor. 2× is the Amazon default —
+// enough to read fine detail (stitching, print quality) without cropping
+// the image so hard that the buyer loses their bearings.
+const ZOOM_SCALE = 2;
+
 export function ProductGallery({ images, productName }: ProductGalleryProps) {
   const [selected, setSelected] = useState(0);
   const [prevImages, setPrevImages] = useState(images);
+  // Cursor position as PERCENTAGES of the image box. Fed to transform-origin
+  // so the point under the cursor stays anchored while the image scales up
+  // around it — the natural "loupe" behaviour buyers expect.
+  const [zoomOrigin, setZoomOrigin] = useState({ x: 50, y: 50 });
+  const [isZoomed, setIsZoomed] = useState(false);
 
   // Reset to first image when the images array changes (e.g. variant switch)
   if (prevImages !== images) {
@@ -23,17 +33,45 @@ export function ProductGallery({ images, productName }: ProductGalleryProps) {
   const prev = () => setSelected((i) => (i === 0 ? images.length - 1 : i - 1));
   const next = () => setSelected((i) => (i === images.length - 1 ? 0 : i + 1));
 
+  function handleMove(e: React.MouseEvent<HTMLDivElement>) {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = Math.max(0, Math.min(100, ((e.clientX - rect.left) / rect.width)  * 100));
+    const y = Math.max(0, Math.min(100, ((e.clientY - rect.top)  / rect.height) * 100));
+    setZoomOrigin({ x, y });
+  }
+
+  // Fine-pointer only: touch devices don't have a hover state, and enabling
+  // this on them would leave the image scaled up after every tap.
+  function handleEnter(e: React.PointerEvent<HTMLDivElement>) {
+    if (e.pointerType === 'touch' || e.pointerType === 'pen') return;
+    setIsZoomed(true);
+  }
+
   return (
     <div className="space-y-4 min-w-0">
       {/* Main image with arrows */}
-      <div className="relative aspect-square overflow-hidden rounded-2xl bg-slate-100 group">
+      <div
+        className="relative aspect-square overflow-hidden rounded-2xl bg-slate-100 group cursor-zoom-in"
+        onPointerEnter={handleEnter}
+        onPointerLeave={() => setIsZoomed(false)}
+        onMouseMove={handleMove}
+      >
         <Image
           src={images[selected]}
           alt={`${productName} - view ${selected + 1}`}
           fill
           sizes="(max-width: 768px) 100vw, 50vw"
-          className="object-cover"
+          // `origin-center` is overridden by the inline transform-origin
+          // below when zoomed. `will-change-transform` hints the browser
+          // to promote the element onto its own layer, so the scale
+          // animation stays at 60fps even on modest hardware.
+          className="object-cover transition-transform duration-200 will-change-transform"
+          style={{
+            transform:       isZoomed ? `scale(${ZOOM_SCALE})` : 'scale(1)',
+            transformOrigin: `${zoomOrigin.x}% ${zoomOrigin.y}%`,
+          }}
           priority
+          draggable={false}
         />
 
         {images.length > 1 && (

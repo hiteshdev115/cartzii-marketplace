@@ -26,7 +26,7 @@ export function Newsletter() {
   };
 
   return (
-    <section className="py-10 bg-gradient-to-br from-primary to-primary-dark">
+    <section className="py-8 bg-gradient-to-br from-primary to-primary-dark">
       <div className="max-w-[var(--container-max)] mx-auto px-4 sm:px-6">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-5">
           <div className="md:max-w-md">

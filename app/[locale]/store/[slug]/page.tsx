@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 
-import { generateAlternates } from '@/lib/seo';
+import { resolveSeo, deploymentCountry } from '@/lib/seo/resolve';
 import { fetchStorefront } from '@/lib/api/storefront';
 import { StorefrontView } from '@/components/storefront/StorefrontView';
 
@@ -28,29 +28,39 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!envelope) {
     return { title: 'Store not found · Cartzii', robots: { index: false } };
   }
-  const { store } = envelope;
-  const title = `${store.storeName} · Cartzii`;
-  const description = store.about
-    ? store.about.slice(0, 160)
-    : store.description
-      ? store.description.slice(0, 160)
-      : `Shop ${store.storeName} on Cartzii.`;
 
-  const alternates = await generateAlternates(
-    process.env.NEXT_PUBLIC_BASE_URL || 'https://cartzii.com',
-    `/store/${slug}`,
-  );
+  // Resolve agency-managed SEO on top of what the API already returned
+  // for this storefront. The storefront's own banner image is still what
+  // Open Graph points at.
+  const seo = await resolveSeo({
+    pageType: 'storefront',
+    pageKey: slug,
+    country: deploymentCountry(),
+  });
 
   return {
-    title,
-    description,
-    alternates,
+    title: seo.title,
+    description: seo.description,
+    keywords: seo.keywords.length ? seo.keywords : undefined,
+    alternates: { canonical: seo.canonical, languages: seo.alternates },
     openGraph: {
-      title,
-      description,
-      images: store.bannerUrl ? [{ url: store.bannerUrl }] : undefined,
+      title: seo.title,
+      description: seo.description,
+      url: seo.canonical,
+      siteName: 'Cartzii',
+      images: envelope.store.bannerUrl ? [{ url: envelope.store.bannerUrl }] : undefined,
       locale,
+      type: 'website',
     },
+    twitter: {
+      card: 'summary_large_image',
+      title: seo.title,
+      description: seo.description,
+      images: envelope.store.bannerUrl ? [envelope.store.bannerUrl] : undefined,
+    },
+    robots: seo.noIndex
+      ? { index: false, follow: false }
+      : { index: true, follow: true },
   };
 }
 

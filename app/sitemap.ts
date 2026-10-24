@@ -1,20 +1,55 @@
 import { MetadataRoute } from 'next';
 import { allProducts } from '@/lib/mockData';
 import { fetchRootCategories } from '@/lib/api';
-import { deploymentLocales, localeUrlPath } from '@/config/countries';
+import {
+  currentCountry,
+  deploymentLocales,
+  localeUrlPath,
+} from '@/config/countries';
 
 // Re-exported from lib/seo so one definition decides this deployment's origin.
 import { BASE_URL } from '@/lib/seo';
 
+interface ApiSitemapEntry {
+  loc: string;
+  lastmod?: string;
+  changefreq?: 'always' | 'hourly' | 'daily' | 'weekly' | 'monthly' | 'yearly' | 'never';
+  priority?: number;
+}
+
+interface ApiSitemapResponse {
+  success: boolean;
+  data?: {
+    country: string;
+    entries: ApiSitemapEntry[];
+  };
+}
+
 /**
  * This deployment's sitemap — its own country only.
  *
- * Each page is listed once per LANGUAGE this deployment serves — so twice on
- * cartzii.ca (/products and /fr/products) and once on cartzii.com. It is not
- * listed once per country: the other country is a different domain with its
- * own sitemap, and hreflang in the page head is what ties the two together.
+ * Primary path is the api-server's `/public/seo/sitemap` endpoint: it is
+ * the source of truth for every category, storefront and product currently
+ * sold here. The static-page / mock-data branch is a safety net for the
+ * boot window when the API has not yet come up — a sitemap that errors is
+ * what gets dropped from Search Console, not just the one bad entry.
  */
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const country = currentCountry.toUpperCase();
+
+  // 1) Preferred source — api-server.
+  const apiEntries = await fetchApiSitemap(country);
+  if (apiEntries && apiEntries.length > 0) {
+    return apiEntries.map((e) => ({
+      url: e.loc,
+      lastModified: e.lastmod ? new Date(e.lastmod) : new Date(),
+      changeFrequency: e.changefreq ?? 'weekly',
+      priority: e.priority ?? 0.5,
+    }));
+  }
+
+  // 2) Fallback — compose from mockData + static paths. Mirrors the
+  //    previous behaviour so a broken API never ships an empty sitemap.
   const staticPaths: { path: string; changeFrequency: 'daily' | 'monthly'; priority: number }[] = [
     { path: '', changeFrequency: 'daily', priority: 1 },
     { path: '/products', changeFrequency: 'daily', priority: 0.9 },
@@ -56,4 +91,21 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }
 
   return [...staticPages, ...productPages, ...categoryPages];
+}
+
+async function fetchApiSitemap(country: string): Promise<ApiSitemapEntry[] | null> {
+  const base = (process.env.NEXT_PUBLIC_API_URL ?? process.env.API_URL ?? '').replace(/\/$/, '');
+  if (!base) return null;
+  try {
+    const res = await fetch(`${base}/api/v1/public/seo/sitemap?country=${encodeURIComponent(country)}`, {
+      headers: { 'X-Portal-Locale': country.toLowerCase() },
+      next: { revalidate: 300 },
+    });
+    if (!res.ok) return null;
+    const json = (await res.json()) as ApiSitemapResponse;
+    if (!json.success || !json.data?.entries) return null;
+    return json.data.entries;
+  } catch {
+    return null;
+  }
 }

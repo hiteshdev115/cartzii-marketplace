@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Link } from '@/i18n/navigation';
 import Image from 'next/image';
 import { useRouter, usePathname } from '@/i18n/navigation';
-import { Search, ShoppingCart, Heart, User, LogOut, Package, Star, Settings, Truck } from 'lucide-react';
+import { Search, ShoppingCart, Heart, User, LogOut, Package, Star, Settings, Truck, LifeBuoy } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { buildPath } from '@/config/countries';
 import { useCartStore } from '@/stores/cartStore';
@@ -207,6 +207,13 @@ export function Header() {
                             >
                               <Settings className="w-4 h-4" /> {t('accountSettings')}
                             </Link>
+                            <Link
+                              href={buildPath('/account/help')}
+                              className="flex items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 hover:text-primary transition-colors"
+                              onClick={() => setUserMenuOpen(false)}
+                            >
+                              <LifeBuoy className="w-4 h-4" /> Need help
+                            </Link>
                             <div className="border-t border-gray-100 my-1" />
                             <button
                               type="button"
@@ -247,7 +254,7 @@ export function Header() {
             <div className="flex items-center justify-between h-12">
               <MobileNav />
               <Link href={buildPath('/')} className="absolute left-1/2 -translate-x-1/2">
-                <Image src="/assets/cartzii-logo.png" alt="Cartzii" width={160} height={45} className="h-10 w-auto object-contain" priority />
+                <Image src="/assets/cz-logo.png" alt="Cartzii" width={160} height={45} className="h-10 w-auto object-contain" priority />
               </Link>
               <div className="flex items-center gap-0.5">
                 <Link
@@ -319,7 +326,7 @@ export function Header() {
             {/* Desktop Row 1: Logo | Search | Icons */}
             <div className="flex items-center h-16 gap-4">
               <Link href={buildPath('/')} className="flex items-center shrink-0">
-                <Image src="/assets/cartzii-logo.png" alt="Cartzii" width={210} height={59} className="h-14 w-auto object-contain" priority />
+                <Image src="/assets/cz-logo.png" alt="Cartzii" width={210} height={59} className="h-14 w-auto object-contain" priority />
               </Link>
 
               {/* Search bar — grows to fill space */}

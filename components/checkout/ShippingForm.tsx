@@ -21,7 +21,8 @@ import { AddressAutocompleteInput } from '@/components/checkout/AddressAutocompl
 import { fetchUserAddresses, createAddress } from '@/lib/api/addresses';
 import { fetchStatesByCountry } from '@/lib/api';
 import { countrySelectOptions, currentCountryIso } from '@/config/countries';
-import { validatePostalCode } from '@/lib/validation/address';
+import { normalizeAddressCountry, validatePostalCode } from '@/lib/validation/address';
+import { countries } from '@/config/countries';
 import type { ApiAddress } from '@/types';
 
 interface ShippingFormProps {
@@ -88,9 +89,10 @@ export function ShippingForm({ onSubmit, defaultValues }: ShippingFormProps) {
   // Returns conflict message if selected country doesn't match portal
   const getConflictError = (selectedISO: string): string | null => {
     if (!portalCountryISO) return null;
-    if (selectedISO !== portalCountryISO) {
+    const country = normalizeAddressCountry(selectedISO, Object.keys(countries));
+    if (country !== portalCountryISO) {
       return t('addressCountryMismatch', {
-        selected: selectedISO || '—',
+        selected: country || '—',
         expected: portalCountryISO,
       });
     }
@@ -258,7 +260,7 @@ export function ShippingForm({ onSubmit, defaultValues }: ShippingFormProps) {
         city: newAddr.city,
         state: newAddr.state,
         zipCode: newAddr.postal_code,
-        country: newAddr.country,
+        country: normalizeAddressCountry(newAddr.country, Object.keys(countries)),
       };
       handleConfirmedAddress(mappedData);
     } catch {
@@ -295,7 +297,7 @@ export function ShippingForm({ onSubmit, defaultValues }: ShippingFormProps) {
       city: selected.city,
       state: selected.state,
       zipCode: selected.postal_code,
-      country: selected.country,
+      country: normalizeAddressCountry(selected.country, Object.keys(countries)),
     };
 
     handleConfirmedAddress(mappedData);
@@ -549,6 +551,7 @@ export function ShippingForm({ onSubmit, defaultValues }: ShippingFormProps) {
               onChange={() => {
                 setSelectedAddressId(address.id);
                 setShowNewAddressForm(false);
+                setSavedAddrConflictError(null);
               }}
               className="mt-1 accent-blue-500"
             />
@@ -586,6 +589,7 @@ export function ShippingForm({ onSubmit, defaultValues }: ShippingFormProps) {
               setSelectedAddressId('new');
               setShowNewAddressForm(true);
               setSaveError(null);
+              setSavedAddrConflictError(null);
             }}
             className="accent-blue-500"
           />
@@ -611,10 +615,10 @@ export function ShippingForm({ onSubmit, defaultValues }: ShippingFormProps) {
           </div>
         </div>
 
-        {savedAddrConflictError && (
+        {(savedAddrConflictError || (selectedSavedAddress && getConflictError(selectedSavedAddress.country))) && (
           <div className="flex items-center gap-2 text-red-600 text-sm p-3 bg-red-50 border border-red-200 rounded-xl">
             <AlertCircle className="w-4 h-4 shrink-0" />
-            <span>{savedAddrConflictError}</span>
+            <span>{selectedSavedAddress ? getConflictError(selectedSavedAddress.country) : savedAddrConflictError}</span>
           </div>
         )}
 

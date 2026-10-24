@@ -1,5 +1,5 @@
 import { api } from './client';
-import { currentCurrency } from '@/config/countries';
+import { currentCurrency, currentCountry } from '@/config/countries';
 
 // ---- API response shapes --------------------------------------------------
 
@@ -63,6 +63,8 @@ export interface CartAPIItem {
   updatedat: string;
   product: CartAPIProduct;
   variant: CartAPIVariant | null;
+  personalizationnote?: string | null;
+  personalizationimageurl?: string | null;
 }
 
 export interface CartAPISummary {
@@ -129,6 +131,9 @@ export interface AddCartItemParams {
   selectedAttributes?: Record<string, string>;
   name?: string;
   image?: string;
+  /** Customer customization request for a handmade listing that opted in. */
+  personalizationNote?: string;
+  personalizationImageUrl?: string;
 }
 
 const CART_CONFIG = { skipGuestToken: true };
@@ -139,6 +144,59 @@ export async function addCartItemAPI(
   const res = await api.post<CartMutateResponse>('/api/v1/cart/add', params, CART_CONFIG);
   if ('success' in res && res.data) return res.data;
   return null;
+}
+
+/**
+ * Upload the reference image for a handmade listing's personalization.
+ * Returns the stored R2 URL that gets passed back on /cart/add as
+ * `personalizationImageUrl`.
+ *
+ * Bypasses the shared `api` client because that client JSON-stringifies every
+ * body and sets `Content-Type: application/json` — both wrong for multipart.
+ * We hand the raw FormData to fetch and let the browser pick a
+ * `multipart/form-data; boundary=...` content-type on its own.
+ */
+interface PersonalizationUploadResponse {
+  success?: number;
+  error?: number;
+  message: string;
+  data?: { url: string; width: number | null; height: number | null };
+}
+
+export async function uploadPersonalizationImageAPI(file: File): Promise<string | null> {
+  const fd = new FormData();
+  fd.append('image', file);
+
+  const base = process.env.NEXT_PUBLIC_API_URL || 'https://staging-api.cartzii.com';
+  const headers: Record<string, string> = {
+    Accept: 'application/json',
+    'X-Portal-Locale': currentCountry,
+  };
+  const token = (() => {
+    try {
+      const raw = typeof window !== 'undefined' ? window.localStorage.getItem('cartzii-auth') : null;
+      if (!raw) return null;
+      return JSON.parse(raw)?.state?.token ?? null;
+    } catch { return null; }
+  })();
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  } else {
+    // Guest shopper — the server accepts a signed guest token in place of
+    // a Bearer, same as every other cart endpoint. Without this, an un-
+    // logged-in buyer uploading a reference image is rejected with 1009.
+    const guest = process.env.NEXT_PUBLIC_GUEST_API_TOKEN || '';
+    if (guest) headers['x-guest-token'] = guest;
+  }
+
+  const res = await fetch(`${base}/api/v1/cart/personalization/upload`, {
+    method: 'POST',
+    headers,
+    body: fd,
+  });
+  if (!res.ok) return null;
+  const json = (await res.json().catch(() => null)) as PersonalizationUploadResponse | null;
+  return json?.data?.url ?? null;
 }
 
 const EMPTY_CART_RESULT = {

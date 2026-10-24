@@ -5,6 +5,7 @@ import { useTranslations, useLocale } from 'next-intl';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { Button } from '@/components/ui/Button';
+import { AddressAutocompleteInput } from '@/components/checkout/AddressAutocompleteInput';
 import { addressSchema, type AddressFormData } from '@/lib/validators';
 import { fetchStatesByCountry } from '@/lib/api';
 import { getCountryFromLocale, countrySelectOptions, currentCountryIso } from '@/config/countries';
@@ -112,15 +113,47 @@ export function AddressForm({ address, onSubmit, onCancel, loading }: AddressFor
         </button>
       </div>
 
-      <Input
-        label={t('street')}
-        name="street"
-        value={form.street}
-        onChange={(e) => update('street', e.target.value)}
-        error={errors.street}
-        maxLength={255}
-        required
-      />
+      {/* Street uses Mapbox autocomplete — same component the checkout
+          uses. When the shopper picks a suggestion, city / state / postal /
+          country auto-fill so the whole form completes in one action. The
+          typed value is written on every keystroke, so typing a full
+          address by hand still works if suggestions don't fire (Mapbox
+          quota exhausted, offline, etc.). See components/checkout/
+          AddressAutocompleteInput.tsx for the shape it emits. */}
+      <div>
+        <label className="block text-sm font-medium text-slate-700 mb-1">
+          {t('street')} <span className="text-red-500">*</span>
+        </label>
+        <AddressAutocompleteInput
+          value={form.street}
+          onChange={(v) => update('street', v)}
+          onSelect={(picked) => {
+            // Merge everything the pick provides. `setForm` in one write
+            // rather than four `update()` calls — clears the state list's
+            // reset side-effect, so the fetched state list stays around
+            // long enough for the auto-picked ISO code to match an option.
+            setForm((prev) => ({
+              ...prev,
+              street:      picked.addressLine1 || prev.street,
+              city:        picked.city || prev.city,
+              state:       picked.stateOrProvince || prev.state,
+              postal_code: picked.postalCode || prev.postal_code,
+              country:     picked.country || prev.country,
+            }));
+            // Clear any stale field errors on the fields we just filled.
+            setErrors((prev) => {
+              const next = { ...prev };
+              for (const k of ['street', 'city', 'state', 'postal_code', 'country']) {
+                delete next[k];
+              }
+              return next;
+            });
+          }}
+          placeholder={t('street')}
+          ariaLabel={t('street')}
+        />
+        {errors.street && <p className="mt-1 text-xs text-red-600">{errors.street}</p>}
+      </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Input

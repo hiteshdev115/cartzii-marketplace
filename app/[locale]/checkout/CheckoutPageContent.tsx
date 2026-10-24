@@ -123,6 +123,21 @@ export function CheckoutPageContent() {
     setSelectedMethodId(savedMethods[0].id);
     setHasAutoSelected(true);
   }, [isGuestCheckout, savedMethods, hasAutoSelected]);
+
+  // Clear the selected id as soon as it stops matching a method the store
+  // actually has. Without this, deleting the picked card from the saved-card
+  // list leaves `selectedMethodId` pointing at a row that no longer exists,
+  // and PaymentForm keeps rendering the "paying with saved card" summary
+  // (which then sits on "Loading saved card…" forever) instead of showing
+  // the new-card inputs. Also resets the auto-select latch so a subsequent
+  // re-fetch — e.g. the buyer adds a new card from the account page in
+  // another tab — can pre-pick again instead of leaving the form empty.
+  useEffect(() => {
+    if (!selectedMethodId) return;
+    if (savedMethods.some((m) => m.id === selectedMethodId)) return;
+    setSelectedMethodId(null);
+    setHasAutoSelected(false);
+  }, [savedMethods, selectedMethodId]);
   const giftWrapOffered = giftWrapPolicy.available && cartHasHandicraft;
   // The price the SERVER will charge, or zero. Never a client-side constant.
   const giftWrapCents = giftWrapOffered && giftWrapSelected ? giftWrapPolicy.priceCents : 0;
@@ -236,6 +251,14 @@ export function CheckoutPageContent() {
           unitPrice: Math.round(price * 100),
           totalPrice: Math.round(price * item.quantity * 100),
           currencyCode: currency.toUpperCase(),
+          // Carry the buyer's customization request onto the order so the
+          // maker sees exactly what was asked for alongside this line.
+          ...(item.personalizationNote
+            ? { personalizationNote: item.personalizationNote }
+            : {}),
+          ...(item.personalizationImageUrl
+            ? { personalizationImageUrl: item.personalizationImageUrl }
+            : {}),
         };
       });
 
@@ -255,7 +278,15 @@ export function CheckoutPageContent() {
             // per-seller split to credit shipping to the right seller's ledger;
             // it validates the sum against the amount Stripe captured, so this
             // cannot inflate the total, only describe how it divides.
-            amountCents: quote.freeShippingApplied ? 0 : Math.round(rate.rate * 100),
+            //
+            // Prefer the buyer-currency `displayRate` the server returned
+            // after FX conversion (e.g. Canada Post wallet quoted USD →
+            // converted to CAD + 2.5% buffer). Falls back to `rate` when
+            // same-currency (server leaves displayRate populated to match
+            // in that case too, but defensive fallback is cheap).
+            amountCents: quote.freeShippingApplied
+              ? 0
+              : Math.round((typeof rate.displayRate === 'number' ? rate.displayRate : rate.rate) * 100),
           };
         })
         .filter(

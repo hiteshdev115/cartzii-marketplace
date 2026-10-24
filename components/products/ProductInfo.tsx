@@ -4,7 +4,9 @@ import { useState, useEffect, useCallback } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import { buildPath } from '@/config/countries';
-import { Heart, ShoppingCart, Store, Truck, RotateCcw, Shield, Download, Zap } from 'lucide-react';
+import { Heart, ShoppingCart, Store, Truck, RotateCcw, Shield, Download, Zap, Upload, X, Loader2 } from 'lucide-react';
+import Image from 'next/image';
+import { uploadPersonalizationImageAPI } from '@/lib/api';
 import { Product } from '@/types';
 import { formatPrice } from '@/lib/utils';
 import { StarRating } from '@/components/ui/StarRating';
@@ -19,6 +21,22 @@ import { useHydrated } from '@/hooks/useHydration';
 import { isLowStock, isOutOfStock, maxPurchasable } from '@/lib/stock';
 import { OutOfStockButton } from './OutOfStockButton';
 import { DdpBadge } from '@/components/international/DdpBadge';
+
+/**
+ * ISO-2 → English country name. Uses the browser's own Intl table so
+ * adding a new seller country needs no dictionary update here. Falls
+ * back to the ISO itself if the browser can't resolve it (very old UA).
+ */
+const REGION_NAMES =
+  typeof Intl !== 'undefined'
+    ? new Intl.DisplayNames(['en'], { type: 'region' })
+    : null;
+
+function countryDisplayName(iso: string): string {
+  if (!iso) return '';
+  const upper = iso.toUpperCase();
+  return REGION_NAMES?.of(upper) ?? upper;
+}
 
 interface ProductInfoProps {
   product: Product;
@@ -68,6 +86,46 @@ export function ProductInfo({ product, onVariantChange, onShowReviews, onWriteRe
   const [selectedSize, setSelectedSize] = useState(product.sizes?.[0]);
   const [quantity, setQuantity] = useState(1);
 
+  // ── Personalization (handmade listings that opted in) ──────────────────
+  const personalizationEnabled = Boolean(product.handicraft?.allows_personalization);
+  const [personalizationNote, setPersonalizationNote] = useState('');
+  const [personalizationImageUrl, setPersonalizationImageUrl] = useState<string | null>(null);
+  const [personalizationUploading, setPersonalizationUploading] = useState(false);
+  const [personalizationError, setPersonalizationError] = useState<string | null>(null);
+
+  const handlePersonalizationImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      setPersonalizationError('Please choose an image file.');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setPersonalizationError('Image must be 5 MB or smaller.');
+      return;
+    }
+    setPersonalizationError(null);
+    setPersonalizationUploading(true);
+    try {
+      const url = await uploadPersonalizationImageAPI(file);
+      if (!url) {
+        setPersonalizationError('Upload failed. Please try again.');
+      } else {
+        setPersonalizationImageUrl(url);
+      }
+    } catch {
+      setPersonalizationError('Upload failed. Please try again.');
+    } finally {
+      setPersonalizationUploading(false);
+    }
+  };
+
+  const clearPersonalizationImage = () => {
+    setPersonalizationImageUrl(null);
+    setPersonalizationError(null);
+  };
+
   const findMatchingVariant = useCallback((color?: string, size?: string) => {
     if (!product.detailVariants?.length) return undefined;
     // Try exact match (color + size)
@@ -108,7 +166,16 @@ export function ProductInfo({ product, onVariantChange, onShowReviews, onWriteRe
   }, [selectedColor, selectedSize, findMatchingVariant, onVariantChange]);
 
   const handleAddToCart = () => {
-    addToCart(product, quantity, selectedColor, selectedSize, locale);
+    addToCart(product, quantity, selectedColor, selectedSize, locale, {
+      note: personalizationEnabled ? personalizationNote : null,
+      imageUrl: personalizationEnabled ? personalizationImageUrl : null,
+    });
+    // Reset the per-add personalization — a second buyer of the same item in
+    // the same session shouldn't inherit the previous note silently.
+    if (personalizationEnabled) {
+      setPersonalizationNote('');
+      setPersonalizationImageUrl(null);
+    }
   };
 
   return (
@@ -125,7 +192,11 @@ export function ProductInfo({ product, onVariantChange, onShowReviews, onWriteRe
       {/* Store name — links to the seller's public storefront when
           the API returned a slug (post-wizard sellers always have one).
           Falls back to plain text for legacy sellers with no
-          storefront row yet. */}
+          storefront row yet.
+          The country suffix ("Sold by Test3 store, Germany") helps a
+          buyer identify where their parcel ships from before they add
+          to cart — surfacing it inline avoids a round trip to the
+          storefront page just to see origin. */}
       {product.sellerName && (
         product.sellerSlug ? (
           <Link
@@ -133,10 +204,24 @@ export function ProductInfo({ product, onVariantChange, onShowReviews, onWriteRe
             className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
           >
             <Store className="h-3.5 w-3.5" aria-hidden="true" />
-            <span>Sold by <span className="font-medium">{product.sellerName}</span></span>
+            <span>
+              Sold by <span className="font-medium">{product.sellerName}</span>
+              {product.sellerCountry && (
+                <span className="text-slate-500">
+                  , {countryDisplayName(product.sellerCountry)}
+                </span>
+              )}
+            </span>
           </Link>
         ) : (
-          <p className="text-sm text-primary">{product.sellerName}</p>
+          <p className="text-sm text-primary">
+            {product.sellerName}
+            {product.sellerCountry && (
+              <span className="text-slate-500">
+                , {countryDisplayName(product.sellerCountry)}
+              </span>
+            )}
+          </p>
         )
       )}
 
@@ -229,6 +314,80 @@ export function ProductInfo({ product, onVariantChange, onShowReviews, onWriteRe
         </div>
       )}
 
+      {/* Personalization — only shown when the seller opted this handmade
+          listing in. Note is optional, image is optional. Both ride through
+          cart → order so the maker sees them with the fulfilment. */}
+      {personalizationEnabled && (
+        <div className="rounded-xl border border-amber-200 bg-amber-50/40 p-4 space-y-3">
+          <div>
+            <h3 className="text-sm font-semibold text-slate-900">Add personalization (optional)</h3>
+            <p className="mt-0.5 text-xs text-slate-600">
+              Add a note or a reference image (logo, name, photo). The maker will see
+              both with your order.
+            </p>
+          </div>
+          <div>
+            <label htmlFor="personalization-note" className="sr-only">Personalization note</label>
+            <textarea
+              id="personalization-note"
+              value={personalizationNote}
+              onChange={(e) => setPersonalizationNote(e.target.value.slice(0, 1000))}
+              rows={3}
+              maxLength={1000}
+              placeholder='e.g. "Please engrave the name Mia in script, roughly centered."'
+              className="w-full rounded-lg border border-amber-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:border-amber-400 focus:ring-amber-400 focus:outline-none"
+            />
+            <p className="mt-1 text-right text-[11px] text-slate-500">
+              {personalizationNote.length} / 1000
+            </p>
+          </div>
+          <div className="flex items-start gap-3">
+            {personalizationImageUrl ? (
+              <div className="relative h-16 w-16 overflow-hidden rounded-lg border border-amber-200 bg-white">
+                <Image
+                  src={personalizationImageUrl}
+                  alt="Personalization reference"
+                  fill
+                  sizes="64px"
+                  className="object-cover"
+                />
+                <button
+                  type="button"
+                  onClick={clearPersonalizationImage}
+                  className="absolute -top-1.5 -right-1.5 rounded-full bg-white p-0.5 shadow ring-1 ring-slate-200 hover:ring-red-200"
+                  aria-label="Remove reference image"
+                >
+                  <X className="h-3.5 w-3.5 text-slate-600" />
+                </button>
+              </div>
+            ) : (
+              <label className="flex h-16 w-16 cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed border-amber-300 bg-white text-slate-500 hover:border-amber-400 hover:text-slate-700">
+                {personalizationUploading ? (
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                ) : (
+                  <Upload className="h-5 w-5" />
+                )}
+                <input
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  className="hidden"
+                  disabled={personalizationUploading}
+                  onChange={handlePersonalizationImageSelect}
+                />
+              </label>
+            )}
+            <div className="text-xs text-slate-600">
+              <p className="font-medium text-slate-800">Reference image (optional)</p>
+              <p>JPG or PNG, up to 5&nbsp;MB.</p>
+              {personalizationError && (
+                <p className="mt-1 text-red-600">{personalizationError}</p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Quantity & Add to cart */}
       <div className="flex flex-wrap items-center gap-3 sm:gap-4">
         {/* Capped at what exists, so a shopper cannot build a cart the
@@ -295,10 +454,14 @@ export function ProductInfo({ product, onVariantChange, onShowReviews, onWriteRe
             <RotateCcw className="w-5 h-5 text-primary" />
             <span className="text-xs text-slate-600">
               {/* The seller's actual window, not a hardcoded "30-Day" string —
-                  sellers can set their own, so the old fixed copy could lie. */}
-              {product.returnPolicy
-                ? t('returnsWithDays', { days: product.returnPolicy.returnWindowDays })
-                : t('easyReturns')}
+                  sellers can set their own, so the old fixed copy could lie.
+                  When the seller offers free returns, promote that promise
+                  to the trust-badge slot: it converts better than days. */}
+              {product.offersFreeReturns
+                ? 'Free returns'
+                : product.returnPolicy
+                  ? t('returnsWithDays', { days: product.returnPolicy.returnWindowDays })
+                  : t('easyReturns')}
             </span>
           </div>
           <div className="flex flex-col items-center text-center gap-1">
@@ -331,20 +494,56 @@ export function ProductInfo({ product, onVariantChange, onShowReviews, onWriteRe
       {/* Return & exchange policy — resolved per seller by the API. Hidden
           entirely when absent so a legacy payload never renders "undefined".
           Also hidden for digital products; the "final sale" notice above
-          is the only relevant return-policy language for downloads. */}
+          is the only relevant return-policy language for downloads.
+          When the seller offers free returns, the panel adopts an emerald
+          treatment and leads with the promise rather than the window — it's
+          a stronger conversion signal than number of days. */}
       {product.returnPolicy && product.productType !== 'digital' && (
-        <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+        <div
+          className={
+            'rounded-xl border p-4 ' +
+            (product.offersFreeReturns
+              ? 'border-emerald-200 bg-emerald-50'
+              : 'border-slate-200 bg-slate-50')
+          }
+        >
           <div className="flex items-start gap-3">
-            <RotateCcw className="w-5 h-5 text-primary mt-0.5 shrink-0" />
+            <RotateCcw
+              className={
+                'w-5 h-5 mt-0.5 shrink-0 ' +
+                (product.offersFreeReturns ? 'text-emerald-600' : 'text-primary')
+              }
+            />
             <div className="space-y-1">
-              <h3 className="text-sm font-semibold text-slate-900">
-                {t('returnPolicyTitle')}
+              <h3
+                className={
+                  'text-sm font-semibold ' +
+                  (product.offersFreeReturns ? 'text-emerald-900' : 'text-slate-900')
+                }
+              >
+                {product.offersFreeReturns
+                  ? 'Free returns on this item'
+                  : t('returnPolicyTitle')}
               </h3>
-              <p className="text-sm text-slate-600">
-                {t('returnPolicyBody', { days: product.returnPolicy.returnWindowDays })}
+              <p
+                className={
+                  'text-sm ' +
+                  (product.offersFreeReturns ? 'text-emerald-800' : 'text-slate-600')
+                }
+              >
+                {product.offersFreeReturns
+                  ? `This seller provides a prepaid return label for every return within ${product.returnPolicy.returnWindowDays} days of delivery — you'll receive a full refund.`
+                  : t('returnPolicyBody', { days: product.returnPolicy.returnWindowDays })}
               </p>
               {product.returnPolicy.exchangeAllowed && (
-                <p className="text-xs text-slate-500">{t('returnPolicyExchange')}</p>
+                <p
+                  className={
+                    'text-xs ' +
+                    (product.offersFreeReturns ? 'text-emerald-700' : 'text-slate-500')
+                  }
+                >
+                  {t('returnPolicyExchange')}
+                </p>
               )}
             </div>
           </div>
