@@ -370,6 +370,7 @@ export function ProductInfo({ product, onVariantChange, onShowReviews, onWriteRe
                 <input
                   type="file"
                   accept="image/*"
+                  capture="environment"
                   className="hidden"
                   disabled={personalizationUploading}
                   onChange={handlePersonalizationImageSelect}

@@ -244,6 +244,7 @@ export function ReviewForm({ productId, reviews = [], onReviewPosted }: ReviewFo
           ref={fileInputRef}
           type="file"
           accept={ACCEPTED_TYPES}
+          capture="environment"
           multiple
           onChange={handleFileChange}
           className="hidden"
