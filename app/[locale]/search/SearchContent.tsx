@@ -5,13 +5,12 @@ import { useTranslations, useLocale } from 'next-intl';
 import { useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import { Link } from '@/i18n/navigation';
-import { Search as SearchIcon, Loader2, Heart, ShoppingCart } from 'lucide-react';
+import { Search as SearchIcon, Loader2, Heart, ShoppingCart, AlertCircle } from 'lucide-react';
 import { searchProductsAPI } from '@/lib/api';
 import { useCartStore } from '@/stores/cartStore';
 import type { Product } from '@/types';
-import type { SearchProductResult, SearchPagination } from '@/lib/api';
+import type { SearchProductResult } from '@/lib/api';
 import { Breadcrumb } from '@/components/layout/Breadcrumb';
-import { Pagination } from '@/components/ui/Pagination';
 import { buildPath, getCountryFromLocale, currentCurrency } from '@/config/countries';
 import { formatPrice } from '@/lib/utils';
 import { useWishlistStore } from '@/stores/wishlistStore';
@@ -30,18 +29,32 @@ function buildImageUrl(url: string | undefined): string {
   return `${IMAGE_CDN_URL}/${url}`;
 }
 
+const PAGE_SIZE = 20;
+
 export function SearchContent() {
   const t = useTranslations('Search');
   const locale = useLocale();
   const countryCode = getCountryFromLocale(locale);
   const searchParams = useSearchParams();
   const query = searchParams.get('q') || '';
+  // Cumulative results across pages — infinite scroll APPENDS, never replaces.
   const [results, setResults] = useState<SearchProductResult[]>([]);
-  const [pagination, setPagination] = useState<SearchPagination | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  // Two loading flags: `loading` is the initial fetch (big centre spinner),
+  // `loadingMore` is the subsequent "load more as you scroll" fetch (small
+  // footer spinner). Keeping them separate stops a bottom-of-page spinner
+  // from flashing on first search and vice-versa.
+  const [loading, setLoading] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const requestRef = useRef(0);
   const prevQueryRef = useRef(query);
+  // Sentinel we attach an IntersectionObserver to. When it enters the
+  // viewport, we fetch the next page. Rendered right under the grid.
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
+
   const toggleWishlist = useWishlistStore((s) => s.toggleItem);
   const wishlistItems = useWishlistStore((s) => s.items);
   const userId = useAuthStore((s) => s.userId);
@@ -95,41 +108,106 @@ export function SearchContent() {
     toggleWishlist(userId, productId);
   };
 
-  // Reset page when query changes from URL
+  // Reset accumulated results whenever the query changes from the URL
+  // (shopper edited the search box and pressed Enter again).
   useEffect(() => {
     if (prevQueryRef.current !== query) {
       prevQueryRef.current = query;
       setPage(1);
+      setResults([]);
+      setTotal(0);
+      setHasMore(true);
+      setError(null);
     }
   }, [query]);
 
-  const performSearch = useCallback(async (q: string, countrycode: string, pg: number) => {
+  /**
+   * One function for both the initial fetch and every subsequent "load more"
+   * fetch. The `append` flag decides whether to replace the array (page 1)
+   * or to concatenate (pages 2+).
+   *
+   * Request de-dup via `requestRef`: if the shopper types a new query while
+   * an older fetch is still in flight, the older response is dropped on
+   * arrival so the UI never flashes stale results.
+   */
+  const performSearch = useCallback(async (q: string, countrycode: string, pg: number, append: boolean) => {
     const id = ++requestRef.current;
-    setLoading(true);
+    if (append) setLoadingMore(true); else setLoading(true);
+    setError(null);
 
     try {
       const res = await searchProductsAPI({
-        q,
-        countrycode,
-        page: pg,
-        limit: 20,
+        q, countrycode, page: pg, limit: PAGE_SIZE,
       });
       if (id !== requestRef.current) return;
-      setResults(res.data);
-      setPagination(res.pagination);
-    } catch {
+      const incoming = res.data ?? [];
+      setResults((prev) => (append ? [...prev, ...incoming] : incoming));
+      setTotal(res.pagination?.total ?? incoming.length);
+      // `hasMore` lives off whether the new cumulative length can still grow.
+      // We compute it from the pagination total when present (authoritative)
+      // and fall back to "the server returned a full page" otherwise.
+      const nextLen = (append ? results.length : 0) + incoming.length;
+      const serverTotal = res.pagination?.total;
+      if (typeof serverTotal === 'number') {
+        setHasMore(nextLen < serverTotal);
+      } else {
+        setHasMore(incoming.length >= PAGE_SIZE);
+      }
+    } catch (err) {
       if (id !== requestRef.current) return;
-      setResults([]);
-      setPagination(null);
+      // Explicit error state so the shopper sees "something went wrong" + a
+      // retry affordance instead of a silent empty page they can't
+      // distinguish from "no matches".
+      const message = err instanceof Error && err.message
+        ? err.message
+        : t('errorGeneric');
+      setError(message);
+      if (!append) {
+        setResults([]);
+        setTotal(0);
+      }
+      setHasMore(false);
     } finally {
-      if (id === requestRef.current) setLoading(false);
+      if (id === requestRef.current) {
+        if (append) setLoadingMore(false); else setLoading(false);
+      }
     }
-  }, []);
+  }, [results.length, t]);
 
+  // Fire the search on query / country / page change. Page 1 is a fresh
+  // fetch (replaces results); pages 2+ append onto what's already there.
   useEffect(() => {
     if (query.trim().length < 3) return;
-    performSearch(query.trim(), countryCode, page);
-  }, [query, countryCode, page, performSearch]);
+    performSearch(query.trim(), countryCode, page, page > 1);
+    // We don't want performSearch's identity to re-run this effect — it
+    // changes with results.length. The query/page/country deps are the
+    // meaningful triggers.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [query, countryCode, page]);
+
+  /**
+   * Infinite scroll. IntersectionObserver on a sentinel element below the
+   * grid: when it enters the viewport (or gets within 400px of it — the
+   * `rootMargin`), we increment `page`, which triggers the effect above.
+   *
+   * 400px rootMargin starts the next fetch while the shopper is still
+   * scrolling the current page, so the new items land before they reach the
+   * bottom — "load more happens around halfway" per the ask.
+   */
+  useEffect(() => {
+    if (!hasMore || loading || loadingMore) return;
+    const node = sentinelRef.current;
+    if (!node) return;
+
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) setPage((p) => p + 1);
+      },
+      { rootMargin: '400px' },
+    );
+    io.observe(node);
+    return () => io.disconnect();
+  }, [hasMore, loading, loadingMore]);
 
   const hasQuery = query.trim().length >= 3;
 
@@ -140,14 +218,40 @@ export function SearchContent() {
       {/* Results */}
       {hasQuery ? (
         <>
-          {loading ? (
+          {/* INITIAL load — big centred spinner. Only shows when the result
+              list is empty (first search). Subsequent pages use the small
+              footer spinner below the grid. */}
+          {loading && results.length === 0 ? (
             <div className="flex items-center justify-center py-16">
               <Loader2 className="w-8 h-8 text-primary animate-spin" />
+            </div>
+          ) : /* ERROR with no results we can still show — explain + offer
+                  retry. If we have cached results from a prior page, don't
+                  take them away; just surface the error at the bottom. */
+            error && results.length === 0 ? (
+            <div className="rounded-xl border border-rose-200 bg-rose-50 p-6 text-center">
+              <AlertCircle className="mx-auto h-10 w-10 text-rose-500" />
+              <h2 className="mt-3 text-base font-semibold text-slate-900">
+                {t('errorHeading')}
+              </h2>
+              <p className="mt-1 text-sm text-slate-700">{error}</p>
+              <button
+                type="button"
+                onClick={() => {
+                  setError(null);
+                  setPage(1);
+                  setResults([]);
+                  setHasMore(true);
+                }}
+                className="mt-4 inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-sm font-semibold text-white hover:bg-primary/90"
+              >
+                {t('tryAgain')}
+              </button>
             </div>
           ) : results.length > 0 ? (
             <>
               <p className="text-sm text-slate-500 mb-6">
-                {pagination?.total ?? results.length} {t('resultsFor', { query })}
+                {total || results.length} {t('resultsFor', { query })}
               </p>
               <div className="product-grid">
                 {results.map((item) => {
@@ -216,14 +320,41 @@ export function SearchContent() {
                   );
                 })}
               </div>
-              {pagination && pagination.totalPages > 1 && (
-                <div className="mt-8">
-                  <Pagination
-                    currentPage={page}
-                    totalPages={pagination.totalPages}
-                    onPageChange={setPage}
-                  />
+              {/* ── Infinite-scroll footer ──
+                  Three states, mutually exclusive:
+                    • loadingMore → compact spinner, next page in flight
+                    • hasMore     → sentinel the IntersectionObserver watches
+                    • else        → short "end of results" line
+                  An inline error (when we DID manage to show some results)
+                  sits above the loader so the shopper can still retry. */}
+              {error && results.length > 0 && (
+                <div className="mt-6 flex items-center justify-center gap-2 text-sm text-rose-700">
+                  <AlertCircle className="h-4 w-4" />
+                  <span>{error}</span>
+                  <button
+                    type="button"
+                    onClick={() => performSearch(query.trim(), countryCode, page, true)}
+                    className="ml-2 underline hover:text-rose-900"
+                  >
+                    {t('tryAgain')}
+                  </button>
                 </div>
+              )}
+
+              {loadingMore && (
+                <div className="mt-8 flex items-center justify-center py-4 text-slate-500">
+                  <Loader2 className="h-6 w-6 animate-spin" />
+                </div>
+              )}
+
+              {!loadingMore && hasMore && (
+                <div ref={sentinelRef} className="h-10" aria-hidden="true" />
+              )}
+
+              {!hasMore && results.length > 0 && (
+                <p className="mt-8 text-center text-xs text-slate-400">
+                  {t('endOfResults')}
+                </p>
               )}
             </>
           ) : (

@@ -560,7 +560,11 @@
     "clearRecent": "Clear",
     "viewAllResults": "View all {count} results",
     "minCharacters": "Type at least 3 characters to search",
-    "priceUnavailable": "Price unavailable"
+    "priceUnavailable": "Price unavailable",
+    "errorHeading": "Something went wrong",
+    "errorGeneric": "We couldn't load search results right now. Please try again.",
+    "tryAgain": "Try again",
+    "endOfResults": "You've reached the end of the results."
   },
   "Deals": {
     "title": "Deals & Offers",

@@ -560,7 +560,11 @@
     "clearRecent": "Effacer",
     "viewAllResults": "Voir les {count} résultats",
     "minCharacters": "Tapez au moins 3 caractères pour rechercher",
-    "priceUnavailable": "Prix non disponible"
+    "priceUnavailable": "Prix non disponible",
+    "errorHeading": "Une erreur s'est produite",
+    "errorGeneric": "Impossible de charger les résultats pour l'instant. Veuillez réessayer.",
+    "tryAgain": "Réessayer",
+    "endOfResults": "Vous avez atteint la fin des résultats."
   },
   "Deals": {
     "title": "Offres et Promotions",
