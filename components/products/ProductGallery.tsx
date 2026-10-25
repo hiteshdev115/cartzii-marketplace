@@ -1,8 +1,8 @@
 'use client';
 
 import Image from 'next/image';
-import { useState } from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface ProductGalleryProps {
@@ -23,6 +23,10 @@ export function ProductGallery({ images, productName }: ProductGalleryProps) {
   // around it — the natural "loupe" behaviour buyers expect.
   const [zoomOrigin, setZoomOrigin] = useState({ x: 50, y: 50 });
   const [isZoomed, setIsZoomed] = useState(false);
+  // Fullscreen "showcase" lightbox. Opened by clicking the main image or a
+  // thumbnail — the shopper reviews each image at full size then closes with
+  // X, the backdrop, or Esc. Keyboard arrows move between images while open.
+  const [isLightboxOpen, setLightboxOpen] = useState(false);
 
   // Reset to first image when the images array changes (e.g. variant switch)
   if (prevImages !== images) {
@@ -47,6 +51,27 @@ export function ProductGallery({ images, productName }: ProductGalleryProps) {
     setIsZoomed(true);
   }
 
+  // Keyboard controls + body scroll lock while the lightbox is open.
+  // Deferred setup through a microtask so React doesn't see state-mutating
+  // calls synchronously in the effect body (lint rule).
+  useEffect(() => {
+    if (!isLightboxOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape')     { setLightboxOpen(false); }
+      else if (e.key === 'ArrowLeft')  { prev(); }
+      else if (e.key === 'ArrowRight') { next(); }
+    };
+    window.addEventListener('keydown', onKey);
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      document.body.style.overflow = prevOverflow;
+    };
+    // prev/next are stable closures over setSelected which is stable; no deps.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLightboxOpen]);
+
   return (
     <div className="space-y-4 min-w-0">
       {/* Main image with arrows */}
@@ -55,6 +80,11 @@ export function ProductGallery({ images, productName }: ProductGalleryProps) {
         onPointerEnter={handleEnter}
         onPointerLeave={() => setIsZoomed(false)}
         onMouseMove={handleMove}
+        onClick={() => setLightboxOpen(true)}
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setLightboxOpen(true); }}
+        aria-label="Open image gallery"
       >
         <Image
           src={images[selected]}
@@ -76,15 +106,17 @@ export function ProductGallery({ images, productName }: ProductGalleryProps) {
 
         {images.length > 1 && (
           <>
+            {/* stopPropagation so clicking an inner control doesn't ALSO
+                open the lightbox — the outer div is a click target too. */}
             <button
-              onClick={prev}
+              onClick={(e) => { e.stopPropagation(); prev(); }}
               className="absolute left-2 sm:left-3 top-1/2 -translate-y-1/2 w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/80 backdrop-blur-sm shadow-md flex items-center justify-center transition-opacity hover:bg-white opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
               aria-label="Previous image"
             >
               <ChevronLeft className="w-5 h-5 text-slate-700" />
             </button>
             <button
-              onClick={next}
+              onClick={(e) => { e.stopPropagation(); next(); }}
               className="absolute right-2 sm:right-3 top-1/2 -translate-y-1/2 w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/80 backdrop-blur-sm shadow-md flex items-center justify-center transition-opacity hover:bg-white opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
               aria-label="Next image"
             >
@@ -96,7 +128,7 @@ export function ProductGallery({ images, productName }: ProductGalleryProps) {
               {images.map((_, i) => (
                 <button
                   key={i}
-                  onClick={() => setSelected(i)}
+                  onClick={(e) => { e.stopPropagation(); setSelected(i); }}
                   className={cn(
                     'w-2 h-2 rounded-full transition-all',
                     selected === i ? 'bg-white w-4' : 'bg-white/50 hover:bg-white/80'
@@ -115,7 +147,7 @@ export function ProductGallery({ images, productName }: ProductGalleryProps) {
           {images.map((img, i) => (
             <button
               key={i}
-              onClick={() => setSelected(i)}
+              onClick={() => { setSelected(i); setLightboxOpen(true); }}
               className={cn(
                 'relative w-16 h-16 sm:w-20 sm:h-20 rounded-xl overflow-hidden border-2 shrink-0 transition-colors',
                 selected === i ? 'border-primary' : 'border-transparent hover:border-slate-300'
@@ -126,6 +158,97 @@ export function ProductGallery({ images, productName }: ProductGalleryProps) {
               <Image src={img} alt={`${productName} thumbnail ${i + 1}`} fill className="object-cover" sizes="80px" />
             </button>
           ))}
+        </div>
+      )}
+
+      {/* ── Fullscreen showcase gallery ──
+          A plain overlay (not a Portal) is enough because the parent page
+          is static below it and `fixed inset-0 z-[100]` sits above every
+          header/sidebar in the app. Backdrop click closes; the inner
+          figure stops propagation so clicking the image or arrows doesn't
+          dismiss. */}
+      {isLightboxOpen && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-sm"
+          onClick={() => setLightboxOpen(false)}
+          role="dialog"
+          aria-modal="true"
+          aria-label={`${productName} image gallery`}
+        >
+          {/* Close */}
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); setLightboxOpen(false); }}
+            className="absolute top-4 right-4 sm:top-6 sm:right-6 w-11 h-11 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors"
+            aria-label="Close gallery"
+          >
+            <X className="w-6 h-6" />
+          </button>
+
+          {/* Image counter */}
+          {images.length > 1 && (
+            <div className="absolute top-5 left-1/2 -translate-x-1/2 text-white/80 text-sm font-medium tabular-nums">
+              {selected + 1} / {images.length}
+            </div>
+          )}
+
+          {/* Prev / Next */}
+          {images.length > 1 && (
+            <>
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); prev(); }}
+                className="absolute left-3 sm:left-6 top-1/2 -translate-y-1/2 w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors"
+                aria-label="Previous image"
+              >
+                <ChevronLeft className="w-6 h-6" />
+              </button>
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); next(); }}
+                className="absolute right-3 sm:right-6 top-1/2 -translate-y-1/2 w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors"
+                aria-label="Next image"
+              >
+                <ChevronRight className="w-6 h-6" />
+              </button>
+            </>
+          )}
+
+          {/* The image. `object-contain` keeps the aspect ratio so the
+              shopper sees the whole product, no cropping. */}
+          <div
+            className="relative w-full h-full max-w-5xl max-h-[90vh] mx-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <Image
+              src={images[selected]}
+              alt={`${productName} - view ${selected + 1}`}
+              fill
+              sizes="100vw"
+              className="object-contain select-none"
+              draggable={false}
+              priority
+            />
+          </div>
+
+          {/* Dot indicators mirror the main view so the lightbox still
+              reads as the same gallery, just bigger. */}
+          {images.length > 1 && (
+            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-1.5">
+              {images.map((_, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); setSelected(i); }}
+                  className={cn(
+                    'h-2 rounded-full transition-all',
+                    selected === i ? 'bg-white w-5' : 'bg-white/40 hover:bg-white/70 w-2'
+                  )}
+                  aria-label={`Go to image ${i + 1}`}
+                />
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>
