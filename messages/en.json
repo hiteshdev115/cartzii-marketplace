@@ -564,7 +564,10 @@
     "errorHeading": "Something went wrong",
     "errorGeneric": "We couldn't load search results right now. Please try again.",
     "tryAgain": "Try again",
-    "endOfResults": "You've reached the end of the results."
+    "endOfResults": "You've reached the end of the results.",
+    "didYouMean": "Showing results for \"{effective}\" — nothing matched \"{query}\" exactly.",
+    "noMatchHeading": "No results for \"{query}\"",
+    "noMatchSuggestion": "Here's what shoppers are buying right now while you refine your search."
   },
   "Deals": {
     "title": "Deals & Offers",

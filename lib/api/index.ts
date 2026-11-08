@@ -23,8 +23,8 @@ export {
 export { fetchAllCountries, fetchStatesByCountry } from './geo';
 export type { CountryOption, StateOption } from './geo';
 export { fetchUserProfile, updateUserProfile } from './users';
-export { searchProductsAPI } from './search';
-export type { SearchProductResult, SearchPagination, SearchParams } from './search';
+export { searchProductsAPI, reportSearchClick } from './search';
+export type { SearchProductResult, SearchPagination, SearchParams, SearchMeta, SearchMatchType } from './search';
 export {
   fetchWishlistItems,
   addToWishlistAPI,

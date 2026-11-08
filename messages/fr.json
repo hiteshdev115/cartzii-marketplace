@@ -564,7 +564,10 @@
     "errorHeading": "Une erreur s'est produite",
     "errorGeneric": "Impossible de charger les résultats pour l'instant. Veuillez réessayer.",
     "tryAgain": "Réessayer",
-    "endOfResults": "Vous avez atteint la fin des résultats."
+    "endOfResults": "Vous avez atteint la fin des résultats.",
+    "didYouMean": "Résultats pour « {effective} » — rien ne correspond exactement à « {query} ».",
+    "noMatchHeading": "Aucun résultat pour « {query} »",
+    "noMatchSuggestion": "Voici ce que les acheteurs achètent en ce moment pendant que vous affinez votre recherche."
   },
   "Deals": {
     "title": "Offres et Promotions",

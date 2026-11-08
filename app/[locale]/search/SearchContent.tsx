@@ -5,11 +5,11 @@ import { useTranslations, useLocale } from 'next-intl';
 import { useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import { Link } from '@/i18n/navigation';
-import { Search as SearchIcon, Loader2, Heart, ShoppingCart, AlertCircle } from 'lucide-react';
-import { searchProductsAPI } from '@/lib/api';
+import { Search as SearchIcon, Loader2, Heart, ShoppingCart, AlertCircle, Sparkles } from 'lucide-react';
+import { searchProductsAPI, reportSearchClick } from '@/lib/api';
 import { useCartStore } from '@/stores/cartStore';
 import type { Product } from '@/types';
-import type { SearchProductResult } from '@/lib/api';
+import type { SearchProductResult, SearchMeta } from '@/lib/api';
 import { Breadcrumb } from '@/components/layout/Breadcrumb';
 import { buildPath, getCountryFromLocale, currentCurrency } from '@/config/countries';
 import { formatPrice } from '@/lib/utils';
@@ -49,6 +49,10 @@ export function SearchContent() {
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Server-reported match type + corrected query. Drives the "Showing
+  // results for X" banner. Captured from the FIRST page of results; later
+  // pages inherit the same matchType and shouldn't overwrite it.
+  const [searchMeta, setSearchMeta] = useState<SearchMeta | null>(null);
   const requestRef = useRef(0);
   const prevQueryRef = useRef(query);
   // Sentinel we attach an IntersectionObserver to. When it enters the
@@ -118,6 +122,7 @@ export function SearchContent() {
       setTotal(0);
       setHasMore(true);
       setError(null);
+      setSearchMeta(null);
     }
   }, [query]);
 
@@ -143,6 +148,10 @@ export function SearchContent() {
       const incoming = res.data ?? [];
       setResults((prev) => (append ? [...prev, ...incoming] : incoming));
       setTotal(res.pagination?.total ?? incoming.length);
+      // Only overwrite the match banner on page 1 — the server's matchType
+      // is the same across pages of the same query, and overwriting would
+      // flash the banner off-and-on as the shopper scrolls.
+      if (!append && res.search) setSearchMeta(res.search);
       // `hasMore` lives off whether the new cumulative length can still grow.
       // We compute it from the pagination total when present (authoritative)
       // and fall back to "the server returned a full page" otherwise.
@@ -250,11 +259,41 @@ export function SearchContent() {
             </div>
           ) : results.length > 0 ? (
             <>
+              {/* ── Match-type banner ─────────────────────────────────────
+                  'strict' / 'loose' / 'prefix' → no banner, results spoke
+                    for themselves.
+                  'fuzzy' / 'relaxed' → typo-correction banner so the
+                    shopper knows we interpreted their query loosely.
+                  'suggested' → no match at all; banner frames the grid
+                    as "no results — here are bestsellers" so an empty
+                    answer doesn't look like a product grid of random items.
+                  The accented copy comes from next-intl; the icon is
+                  rendered inline for consistency with the error box above. */}
+              {searchMeta?.matchType === 'fuzzy' || searchMeta?.matchType === 'relaxed' ? (
+                <div className="mb-4 flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4">
+                  <Sparkles className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" />
+                  <p className="text-sm text-amber-900">
+                    {t('didYouMean', { effective: searchMeta.effectiveQuery, query })}
+                  </p>
+                </div>
+              ) : searchMeta?.matchType === 'suggested' ? (
+                <div className="mb-4 flex items-start gap-3 rounded-xl border border-slate-200 bg-slate-50 p-4">
+                  <SearchIcon className="mt-0.5 h-5 w-5 shrink-0 text-slate-500" />
+                  <div className="text-sm text-slate-700">
+                    <p className="font-medium text-slate-900">
+                      {t('noMatchHeading', { query })}
+                    </p>
+                    <p className="mt-0.5 text-slate-500">
+                      {t('noMatchSuggestion')}
+                    </p>
+                  </div>
+                </div>
+              ) : null}
               <p className="text-sm text-slate-500 mb-6">
                 {total || results.length} {t('resultsFor', { query })}
               </p>
               <div className="product-grid">
-                {results.map((item) => {
+                {results.map((item, index) => {
                   const isWishlisted = hydrated && wishlistItems.some((w) => w.product.productid === item.productid);
 
                   return (
@@ -269,7 +308,20 @@ export function SearchContent() {
                       >
                         <Heart className={`w-4 h-4 ${isWishlisted ? 'fill-red-500 text-red-500' : 'text-slate-600'}`} />
                       </button>
-                      <Link href={buildPath(`/products/${item.slug}`)}>
+                      <Link
+                        href={buildPath(`/products/${item.slug}`)}
+                        onClick={() => {
+                          // 1-indexed grid position. Fire-and-forget; the
+                          // reporter swallows all errors so navigation is
+                          // never blocked by an analytics hiccup.
+                          reportSearchClick({
+                            q: query,
+                            countrycode: countryCode,
+                            productid: item.productid,
+                            position: index + 1,
+                          });
+                        }}
+                      >
                         <div className="aspect-square bg-slate-50 overflow-hidden">
                           <Image
                             src={buildImageUrl(item.primaryImage?.imageurl)}
