@@ -336,23 +336,39 @@ export function SearchContent() {
                           <h3 className="text-sm font-medium text-slate-900 line-clamp-2 mb-2">
                             {item.productname}
                           </h3>
-                          {item.pricing ? (
-                            <div className="flex items-baseline gap-2">
-                              <span className="text-sm font-bold text-primary">
-                                {formatPrice(
-                                  parseFloat(item.pricing.discountprice || item.pricing.price),
-                                  locale,
-                                )}
-                              </span>
-                              {item.pricing.discountprice && (
-                                <span className="text-xs text-slate-400 line-through">
-                                  {formatPrice(parseFloat(item.pricing.price), locale)}
+                          {(() => {
+                            // Guard against malformed price strings — if the
+                            // server slips through a row where `price` isn't
+                            // numeric (empty string, bad migration, variant
+                            // row with pricing-less default), parseFloat
+                            // would produce NaN and the UI would render
+                            // $NaN. Degrade gracefully to "Price unavailable"
+                            // instead.
+                            const rawPrice = item.pricing?.price;
+                            const rawDiscount = item.pricing?.discountprice;
+                            const priceNum = rawPrice != null ? parseFloat(rawPrice) : NaN;
+                            const discountNum = rawDiscount ? parseFloat(rawDiscount) : NaN;
+                            const displayNum = Number.isFinite(discountNum) ? discountNum
+                              : Number.isFinite(priceNum) ? priceNum
+                              : null;
+
+                            if (displayNum == null || !item.pricing) {
+                              return <span className="text-xs text-slate-400">{t('priceUnavailable')}</span>;
+                            }
+
+                            return (
+                              <div className="flex items-baseline gap-2">
+                                <span className="text-sm font-bold text-primary">
+                                  {formatPrice(displayNum, locale)}
                                 </span>
-                              )}
-                            </div>
-                          ) : (
-                            <span className="text-xs text-slate-400">{t('priceUnavailable')}</span>
-                          )}
+                                {Number.isFinite(discountNum) && Number.isFinite(priceNum) && (
+                                  <span className="text-xs text-slate-400 line-through">
+                                    {formatPrice(priceNum, locale)}
+                                  </span>
+                                )}
+                              </div>
+                            );
+                          })()}
                         </div>
                       </Link>
                       <div className="px-3 pb-3">
