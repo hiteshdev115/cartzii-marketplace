@@ -10,6 +10,7 @@ import { ProductInfo, type VariantMeasurements } from '@/components/products/Pro
 import { ProductTabs } from '@/components/products/ProductTabs';
 import { ArtisanStory } from '@/components/handicraft/ArtisanStory';
 import { ReviewForm } from '@/components/products/ReviewForm';
+import { RelatedProducts } from '@/components/products/RelatedProducts';
 import { Breadcrumb } from '@/components/layout/Breadcrumb';
 import { Skeleton } from '@/components/ui/Skeleton';
 import type { Product } from '@/types';
@@ -196,6 +197,7 @@ export function ProductDetailClient({ slug }: ProductDetailClientProps) {
         <ProductTabs product={product} reviews={reviews} stats={reviewStats} activeTab={activeTab} onTabChange={setActiveTab} />
         <ReviewForm productId={parseInt(product.id, 10)} reviews={reviews} onReviewPosted={handleReviewPosted} />
       </div>
+      <RelatedProducts productId={product.id} />
     </>
   );
 }

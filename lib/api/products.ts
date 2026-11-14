@@ -617,6 +617,40 @@ export async function fetchProductBySlug(
 // ---- Product → sellerId lookup --------------------------------------------
 // The `GET /api/v1/cart/:userid` response does NOT include `sellerid` on cart
 // items (see cart response inspection in July 2026). To build the multi-seller
+/**
+ * Fetch products related to the one currently being viewed.
+ *
+ * Backend scores by same category + tag overlap + recency-weighted
+ * popularity, then pads from country bestsellers if the category is too
+ * thin to fill the slider. The response is pre-shaped as APIProduct[] so
+ * we can run each row through the normal mapProduct() pipeline.
+ *
+ * Returns [] on any failure — the slider is a non-critical surface and
+ * a product page must never fail to render because the "related" rail
+ * couldn't fetch.
+ */
+export async function fetchRelatedProducts(
+  productId: number | string,
+  country = 'CA',
+  limit = 10,
+): Promise<Product[]> {
+  const pid = Number(productId);
+  if (!Number.isFinite(pid) || pid <= 0) return [];
+  try {
+    const res = await api.get<unknown>(
+      `/api/v1/products/${pid}/related?limit=${encodeURIComponent(String(limit))}`,
+    );
+    const list = unwrap<APIProduct[]>(res);
+    if (!Array.isArray(list)) return [];
+    const cc = country.toUpperCase();
+    return list
+      .filter((p) => hasCountryPricing(p, cc))
+      .map((p) => mapProduct(p, cc));
+  } catch {
+    return [];
+  }
+}
+
 // shipping payload we resolve product → seller via
 // `GET /api/v1/getProductDetailsByCust/:productid`, which does return
 // `sellerid` on the payload. Results are cached in-memory for the tab session

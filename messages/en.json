@@ -90,6 +90,8 @@
   },
   "Products": {
     "allProducts": "All Products",
+    "youMightAlsoLike": "You might also like",
+    "youMightAlsoLikeSubtitle": "Similar products handpicked for you",
     "metaDescription": "Browse all products on Cartzii Marketplace. Find the best deals on electronics, fashion, home, and more.",
     "filters": "Filters",
     "clearFilters": "Clear All",
