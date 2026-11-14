@@ -87,11 +87,33 @@ function resolvePricing(item: CategoryProduct, countryCode: string) {
 }
 
 function getPrimaryImage(item: CategoryProduct): string {
+  // Priority: product-level primary → any active product image →
+  // first variant's primary → any variant image → placeholder.
+  //
+  // Variant-based listings (color/size SKUs) store every image on the
+  // variant, so `productimages` is empty and without the variant fallback
+  // the tile renders a broken/placeholder image. The backend sends the
+  // variant images on this endpoint — we just have to look at them.
   const images = item.productimages ?? [];
-  const primary = images.find((img) => img.isprimary && img.isactive !== false)
+  const productPrimary = images.find((img) => img.isprimary && img.isactive !== false)
     ?? images.find((img) => img.isactive !== false)
     ?? images[0];
-  return buildProductImageUrl(primary?.imageurl);
+  if (productPrimary?.imageurl) {
+    return buildProductImageUrl(productPrimary.imageurl);
+  }
+
+  for (const variant of item.productvariants ?? []) {
+    if (variant.isactive === false) continue;
+    const vImages = variant.images ?? [];
+    const variantPrimary = vImages.find((img) => img.isprimary && img.isactive !== false)
+      ?? vImages.find((img) => img.isactive !== false)
+      ?? vImages[0];
+    if (variantPrimary?.imageurl) {
+      return buildProductImageUrl(variantPrimary.imageurl);
+    }
+  }
+
+  return buildProductImageUrl(undefined);
 }
 
 /**

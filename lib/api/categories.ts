@@ -203,6 +203,10 @@ export interface CategoryProductVariant {
   isactive: boolean;
   pricing: CategoryVariantPricing[];
   attributes?: { attributeName: string; value: string; colorcode: string | null }[];
+  // Variant image gallery — included on this endpoint so the tile can fall
+  // back to a variant's hero when the product itself has no product-level
+  // images (variant-based listings like clothing with color/size SKUs).
+  images?: CategoryProductImage[];
 }
 
 /** Product-level attribute as returned by the category products endpoint. */
