@@ -11,6 +11,7 @@ import { ProductTabs } from '@/components/products/ProductTabs';
 import { ArtisanStory } from '@/components/handicraft/ArtisanStory';
 import { ReviewForm } from '@/components/products/ReviewForm';
 import { RelatedProducts } from '@/components/products/RelatedProducts';
+import { ProductExtras } from '@/components/products/ProductExtras';
 import { Breadcrumb } from '@/components/layout/Breadcrumb';
 import { Skeleton } from '@/components/ui/Skeleton';
 import type { Product } from '@/types';
@@ -197,6 +198,11 @@ export function ProductDetailClient({ slug }: ProductDetailClientProps) {
         <ProductTabs product={product} reviews={reviews} stats={reviewStats} activeTab={activeTab} onTabChange={setActiveTab} />
         <ReviewForm productId={parseInt(product.id, 10)} reviews={reviews} onReviewPosted={handleReviewPosted} />
       </div>
+      {/* Admin-defined category extras the seller filled in — e.g. size
+          chart, ingredients. Collapses to null when there are none, so the
+          block sits between the tabs and the related-products rail only
+          when it actually has content. */}
+      {product.extras && product.extras.length > 0 && <ProductExtras extras={product.extras} />}
       <RelatedProducts productId={product.id} />
     </>
   );

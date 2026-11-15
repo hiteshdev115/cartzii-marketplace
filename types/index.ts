@@ -30,6 +30,20 @@ export interface ProductSellerBadges {
   artisan_verified: boolean;
 }
 
+/**
+ * One admin-defined extra field the seller filled in on a product. Shown
+ * under "Product Details" on the PDP. `fieldtype` decides how it renders:
+ * image → inline <img>, url → anchor, longtext → preserved whitespace,
+ * everything else → plain text.
+ */
+export interface ProductExtra {
+  fieldname: string;
+  fieldlabel: string;
+  fieldtype: 'text' | 'longtext' | 'url' | 'image';
+  fieldvalue: string;
+  displayorder: number;
+}
+
 export interface Product {
   id: string;
   name: string;
@@ -101,6 +115,14 @@ export interface Product {
     startsAt: string;
     endsAt: string;
   };
+  /**
+   * Admin-defined category extras the seller filled in — e.g. "Size Chart"
+   * image, "Ingredients" text. Shown as a "Product Details" section on the
+   * PDP. Empty array when the seller left every field blank (section is
+   * then omitted). See categoryExtrasService for how the fields are
+   * resolved for a category (inheritance walks up the tree).
+   */
+  extras?: ProductExtra[];
   /** Full variant details – populated on detail page only */
   detailVariants?: DetailVariant[];
   /**

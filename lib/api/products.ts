@@ -186,6 +186,18 @@ interface APIProduct {
   // and the storefront shows a "Free Delivery" badge. Optional because
   // legacy responses (and older mock fixtures) predate this field.
   isfreedelivery?: boolean | null;
+  /**
+   * Admin-defined category extras the seller filled in — e.g. a Size Chart
+   * image or Ingredients list. The backend only emits populated fields
+   * (blank values are omitted), so an empty array means nothing to render.
+   */
+  extras?: {
+    fieldname: string;
+    fieldlabel: string;
+    fieldtype: 'text' | 'longtext' | 'url' | 'image';
+    fieldvalue: string;
+    displayorder: number;
+  }[];
 }
 
 // ---- Helpers --------------------------------------------------------------
@@ -485,6 +497,9 @@ export function mapProduct(raw: APIProduct, country: string): Product {
     attributes,
     deal,
     createdAt: raw.createdat,
+    // Backend only sends populated extras (blank ones filtered out), so a
+    // bare `?? []` is enough — no post-filter needed.
+    extras: raw.extras ?? [],
     detailVariants: buildDetailVariants(activeVariants, country),
     sellerId: raw.sellerid,
     sellerName: raw.seller?.storename ?? raw.storename ?? null,
